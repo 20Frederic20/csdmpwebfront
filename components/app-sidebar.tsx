@@ -106,11 +106,6 @@ export function AppSidebar() {
           icon: List,
         },
         {
-          title: "Ajouter",
-          url: "/dashboard/patients/add",
-          icon: Plus,
-        },
-        {
           title: "Importer",
           url: "/dashboard/patients/import",
           icon: Import,
