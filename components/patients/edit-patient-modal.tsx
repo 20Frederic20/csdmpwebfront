@@ -25,6 +25,7 @@ import { Edit } from "lucide-react";
 import { Patient } from "@/features/patients/types/patients.types";
 import { PatientsService } from "@/features/patients/services/patients.service";
 import { useAuthToken } from "@/hooks/use-auth-token";
+import { toast } from "sonner";
 
 interface EditPatientModalProps {
   patient: Patient;
@@ -34,14 +35,12 @@ interface EditPatientModalProps {
 export function EditPatientModal({ patient, onPatientUpdated }: EditPatientModalProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [showErrorDialog, setShowErrorDialog] = useState(false);
   const { token } = useAuthToken();
   const [formData, setFormData] = useState({
     given_name: "",
     family_name: "",
     birth_date: "",
-    gender: "",
+    gender: "male" as 'male' | 'female' | 'other' | 'unknown',
     location: "",
     is_active: true,
   });
@@ -63,16 +62,14 @@ export function EditPatientModal({ patient, onPatientUpdated }: EditPatientModal
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
 
     try {
       await PatientsService.updatePatient(patient.id_, formData, token || undefined);
       setOpen(false);
+      toast.success("Patient modifié avec succès");
       onPatientUpdated();
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Une erreur est survenue lors de la modification du patient';
-      setError(errorMessage);
-      setShowErrorDialog(true);
+      toast.error(err instanceof Error ? err.message : 'Une erreur est survenue lors de la modification du patient');
     } finally {
       setLoading(false);
     }
@@ -80,9 +77,6 @@ export function EditPatientModal({ patient, onPatientUpdated }: EditPatientModal
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    if (error) {
-      setError(null);
-    }
   };
 
   return (
@@ -183,21 +177,6 @@ export function EditPatientModal({ patient, onPatientUpdated }: EditPatientModal
           </form>
         </DialogContent>
       </Dialog>
-      
-      {/* AlertDialog pour les erreurs */}
-      <AlertDialog open={showErrorDialog} onOpenChange={setShowErrorDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Erreur de modification</AlertDialogTitle>
-            <AlertDialogDescription>
-              {error}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogAction>OK</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </>
   );
 }

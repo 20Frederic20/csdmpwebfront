@@ -25,6 +25,7 @@ import { Plus } from "lucide-react";
 import { Patient } from "@/features/patients/types/patients.types";
 import { PatientsService } from "@/features/patients/services/patients.service";
 import { useAuthToken } from "@/hooks/use-auth-token";
+import { toast } from "sonner";
 
 interface AddPatientModalProps {
   onPatientAdded: () => void;
@@ -33,8 +34,6 @@ interface AddPatientModalProps {
 export function AddPatientModal({ onPatientAdded }: AddPatientModalProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [showErrorDialog, setShowErrorDialog] = useState(false);
   const { token } = useAuthToken();
   const [formData, setFormData] = useState({
     given_name: "",
@@ -47,7 +46,6 @@ export function AddPatientModal({ onPatientAdded }: AddPatientModalProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
 
     try {
       await PatientsService.createPatient(formData as Omit<Patient, 'id_' | 'owner_id'>, token || undefined);
@@ -59,11 +57,10 @@ export function AddPatientModal({ onPatientAdded }: AddPatientModalProps) {
         gender: "",
         location: "",
       });
+      toast.success("Patient créé avec succès");
       onPatientAdded();
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Une erreur est survenue lors de la création du patient';
-      setError(errorMessage);
-      setShowErrorDialog(true);
+      toast.error(err instanceof Error ? err.message : 'Une erreur est survenue lors de la création du patient');
     } finally {
       setLoading(false);
     }
@@ -71,10 +68,6 @@ export function AddPatientModal({ onPatientAdded }: AddPatientModalProps) {
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    // Effacer l'erreur quand l'utilisateur modifie le formulaire
-    if (error) {
-      setError(null);
-    }
   };
 
   return (
@@ -162,21 +155,6 @@ export function AddPatientModal({ onPatientAdded }: AddPatientModalProps) {
           </DialogFooter>
         </form>
       </DialogContent>
-      
-      {/* AlertDialog pour les erreurs */}
-      <AlertDialog open={showErrorDialog} onOpenChange={setShowErrorDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Erreur de création</AlertDialogTitle>
-            <AlertDialogDescription>
-              {error}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogAction>OK</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </Dialog>
   );
 }
