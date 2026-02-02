@@ -1,13 +1,11 @@
 export interface Patient {
   id_: string;
-  owner_id: string;
   given_name: string;
   family_name: string;
   birth_date: string;
-  gender: 'male' | 'female' | 'other';
+  gender: 'male' | 'female' | 'other' | 'unknown';
   location: string;
-  is_main: boolean;
-  is_minor: boolean;
+  owner_id: string;
   is_active: boolean;
 }
 
