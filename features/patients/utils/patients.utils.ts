@@ -13,7 +13,7 @@ export const formatBirthDate = (birthDate: string): string => {
   }
 };
 
-export const formatGender = (gender: string): string => {
+export function formatGender(gender: string): string {
   switch (gender) {
     case 'male':
       return 'Homme';
@@ -21,6 +21,8 @@ export const formatGender = (gender: string): string => {
       return 'Femme';
     case 'other':
       return 'Autre';
+    case 'unknown':
+      return 'Inconnu';
     default:
       return gender;
   }
