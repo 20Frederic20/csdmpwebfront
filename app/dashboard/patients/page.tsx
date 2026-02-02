@@ -1,11 +1,21 @@
 'use client';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  PaginationEllipsis,
+} from "@/components/ui/pagination";
 import { Plus, Search, Filter, MoreHorizontal, Eye, Edit, Trash2 } from "lucide-react";
 import {
   DropdownMenu,
@@ -13,62 +23,104 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
-// Données mock pour démonstration
-const mockPatients = [
-  {
-    id: "1",
-    name: "Jean Dupont",
-    email: "jean.dupont@email.com",
-    phone: "06 12 34 56 78",
-    dateOfBirth: "1985-03-15",
-    status: "active",
-    lastVisit: "2024-01-15",
-  },
-  {
-    id: "2", 
-    name: "Marie Martin",
-    email: "marie.martin@email.com",
-    phone: "06 98 76 54 32",
-    dateOfBirth: "1992-07-22",
-    status: "active",
-    lastVisit: "2024-01-10",
-  },
-  {
-    id: "3",
-    name: "Pierre Bernard",
-    email: "pierre.bernard@email.com", 
-    phone: "06 45 67 89 01",
-    dateOfBirth: "1978-11-08",
-    status: "inactive",
-    lastVisit: "2023-12-20",
-  },
-  {
-    id: "4",
-    name: "Sophie Petit",
-    email: "sophie.petit@email.com",
-    phone: "06 23 45 67 89",
-    dateOfBirth: "1995-05-30",
-    status: "active",
-    lastVisit: "2024-01-18",
-  },
-];
+import { PatientsService } from "@/features/patients/services/patients.service";
+import { Patient, PatientsResponse } from "@/features/patients/types/patients.types";
+import { formatPatientName, formatBirthDate, formatGender, getPatientStatusBadge } from "@/features/patients/utils/patients.utils";
+import { useAuthToken } from "@/hooks/use-auth-token";
 
 export default function PatientsPage() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [patients] = useState(mockPatients);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(20);
+  const [patientsData, setPatientsData] = useState<PatientsResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const { token } = useAuthToken();
 
-  const filteredPatients = patients.filter(patient =>
-    patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    patient.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Charger les données depuis l'API
+  const loadPatients = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const offset = (currentPage - 1) * itemsPerPage;
+      const data = await PatientsService.getPatients({
+        limit: itemsPerPage,
+        offset,
+        sorting_field: 'id',
+        sorting_order: 'ASC',
+        search: searchTerm || undefined,
+      }, token || undefined);
+      
+      setPatientsData(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Une erreur est survenue');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const getStatusBadge = (status: string) => {
-    return (
-      <Badge variant={status === "active" ? "default" : "secondary"}>
-        {status === "active" ? "Actif" : "Inactif"}
-      </Badge>
-    );
+  // Charger les données au montage et quand les paramètres changent
+  useEffect(() => {
+    if (token) {
+      loadPatients();
+    } else {
+      setLoading(false);
+      setError('Token d\'authentification manquant');
+    }
+  }, [currentPage, itemsPerPage, searchTerm, token]);
+
+  // Reset page 1 quand la recherche change
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    setCurrentPage(1);
+  };
+
+  // Reset page 1 quand le nombre d'éléments par page change
+  const handleItemsPerPageChange = (value: string) => {
+    setItemsPerPage(Number(value));
+    setCurrentPage(1);
+  };
+
+  // Calcul des données paginées
+  const totalPages = patientsData ? Math.ceil(patientsData.total / itemsPerPage) : 0;
+  const patients = patientsData?.patients || [];
+
+  // Générer les numéros de pages pour la pagination shadcn
+  const generatePaginationItems = () => {
+    const items = [];
+    
+    if (totalPages <= 7) {
+      // Si 7 pages ou moins, afficher toutes
+      for (let i = 1; i <= totalPages; i++) {
+        items.push(i);
+      }
+    } else {
+      // Sinon, afficher avec ellipsis
+      if (currentPage <= 4) {
+        for (let i = 1; i <= 5; i++) {
+          items.push(i);
+        }
+        items.push('ellipsis');
+        items.push(totalPages);
+      } else if (currentPage >= totalPages - 3) {
+        items.push(1);
+        items.push('ellipsis');
+        for (let i = totalPages - 4; i <= totalPages; i++) {
+          items.push(i);
+        }
+      } else {
+        items.push(1);
+        items.push('ellipsis');
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          items.push(i);
+        }
+        items.push('ellipsis');
+        items.push(totalPages);
+      }
+    }
+    
+    return items;
   };
 
   return (
@@ -100,7 +152,7 @@ export default function PatientsPage() {
                 <Input
                   placeholder="Rechercher un patient..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={(e) => handleSearchChange(e.target.value)}
                   className="pl-10"
                 />
               </div>
@@ -116,67 +168,135 @@ export default function PatientsPage() {
       {/* Tableau des patients */}
       <Card>
         <CardHeader>
-          <CardTitle>Liste des patients ({filteredPatients.length})</CardTitle>
+          <CardTitle>Liste des patients ({patientsData?.total || 0})</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nom</TableHead>
-                <TableHead>Contact</TableHead>
-                <TableHead>Date de naissance</TableHead>
-                <TableHead>Statut</TableHead>
-                <TableHead>Dernière visite</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredPatients.map((patient) => (
-                <TableRow key={patient.id}>
-                  <TableCell className="font-medium">{patient.name}</TableCell>
-                  <TableCell>
-                    <div className="space-y-1">
-                      <div className="text-sm">{patient.email}</div>
-                      <div className="text-sm text-muted-foreground">{patient.phone}</div>
-                    </div>
-                  </TableCell>
-                  <TableCell>{patient.dateOfBirth}</TableCell>
-                  <TableCell>{getStatusBadge(patient.status)}</TableCell>
-                  <TableCell>{patient.lastVisit}</TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem>
-                          <Eye className="mr-2 h-4 w-4" />
-                          Voir les détails
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <Edit className="mr-2 h-4 w-4" />
-                          Modifier
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive">
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Supprimer
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-          
-          {filteredPatients.length === 0 && (
+          {loading ? (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground">Chargement des patients...</p>
+            </div>
+          ) : error ? (
+            <div className="text-center py-8">
+              <p className="text-destructive">Erreur: {error}</p>
+              <Button onClick={loadPatients} className="mt-2">
+                Réessayer
+              </Button>
+            </div>
+          ) : patients.length === 0 ? (
             <div className="text-center py-8">
               <p className="text-muted-foreground">
-                Aucun patient trouvé pour cette recherche.
+                {searchTerm ? 'Aucun patient trouvé pour cette recherche.' : 'Aucun patient disponible.'}
               </p>
             </div>
+          ) : (
+            <>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nom</TableHead>
+                    <TableHead>Date de naissance</TableHead>
+                    <TableHead>Genre</TableHead>
+                    <TableHead>Localisation</TableHead>
+                    <TableHead>Statut</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {patients.map((patient) => {
+                    const statusBadge = getPatientStatusBadge(patient);
+                    return (
+                      <TableRow key={patient.id_}>
+                        <TableCell className="font-medium">{formatPatientName(patient)}</TableCell>
+                        <TableCell>{formatBirthDate(patient.birth_date)}</TableCell>
+                        <TableCell>{formatGender(patient.gender)}</TableCell>
+                        <TableCell>{patient.location}</TableCell>
+                        <TableCell>
+                          <Badge variant={statusBadge.variant}>{statusBadge.label}</Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" className="h-8 w-8 p-0">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem>
+                                <Eye className="mr-2 h-4 w-4" />
+                                Voir les détails
+                              </DropdownMenuItem>
+                              <DropdownMenuItem>
+                                <Edit className="mr-2 h-4 w-4" />
+                                Modifier
+                              </DropdownMenuItem>
+                              <DropdownMenuItem className="text-destructive">
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Supprimer
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+              
+              {/* Pagination */}
+              <div className="flex items-center justify-between space-x-2 py-4">
+                <div className="flex items-center space-x-2">
+                  <p className="text-sm text-muted-foreground">
+                    Affichage de {((currentPage - 1) * itemsPerPage) + 1} à {Math.min(currentPage * itemsPerPage, patientsData?.total || 0)} sur {patientsData?.total || 0} résultats
+                  </p>
+                  <Select value={itemsPerPage.toString()} onValueChange={handleItemsPerPageChange}>
+                    <SelectTrigger className="h-8 w-[70px]">
+                      <SelectValue placeholder={itemsPerPage.toString()} />
+                    </SelectTrigger>
+                    <SelectContent side="top">
+                      {[10, 20, 30, 40, 50].map((size) => (
+                        <SelectItem key={size} value={size.toString()}>
+                          {size}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious 
+                        onClick={() => currentPage > 1 && setCurrentPage(currentPage - 1)}
+                        className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                      />
+                    </PaginationItem>
+                    
+                    {generatePaginationItems().map((item, index) => (
+                      <PaginationItem key={index}>
+                        {item === 'ellipsis' ? (
+                          <PaginationEllipsis />
+                        ) : (
+                          <PaginationLink
+                            onClick={() => setCurrentPage(item as number)}
+                            isActive={currentPage === item}
+                            className="cursor-pointer"
+                          >
+                            {item}
+                          </PaginationLink>
+                        )}
+                      </PaginationItem>
+                    ))}
+                    
+                    <PaginationItem>
+                      <PaginationNext 
+                        onClick={() => currentPage < totalPages && setCurrentPage(currentPage + 1)}
+                        className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
