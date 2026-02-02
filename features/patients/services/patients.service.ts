@@ -75,7 +75,7 @@ export class PatientsService {
     return response.json();
   }
 
-  static async createPatient(patientData: Omit<Patient, 'id_' | 'owner_id'>, token?: string): Promise<Patient> {
+  static async createPatient(patientData: Omit<Patient, 'id_' | 'owner_id' | 'is_active'>, token?: string): Promise<Patient> {
     const authToken = token || getAuthToken();
     
     const headers: Record<string, string> = {
