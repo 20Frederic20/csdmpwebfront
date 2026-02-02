@@ -16,7 +16,7 @@ import {
   PaginationPrevious,
   PaginationEllipsis,
 } from "@/components/ui/pagination";
-import { Plus, Search, Filter, MoreHorizontal, Eye, Edit, Trash2 } from "lucide-react";
+import { Plus, Search, Filter, MoreHorizontal, Eye, Edit, Trash2, ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,6 +27,9 @@ import { PatientsService } from "@/features/patients/services/patients.service";
 import { Patient, PatientsResponse } from "@/features/patients/types/patients.types";
 import { formatPatientName, formatBirthDate, formatGender, getPatientStatusBadge } from "@/features/patients/utils/patients.utils";
 import { useAuthToken } from "@/hooks/use-auth-token";
+import { AddPatientModal } from "@/components/patients/add-patient-modal";
+import { ViewPatientModal } from "@/components/patients/view-patient-modal";
+import { EditPatientModal } from "@/components/patients/edit-patient-modal";
 
 export default function PatientsPage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -35,6 +38,8 @@ export default function PatientsPage() {
   const [patientsData, setPatientsData] = useState<PatientsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [sortingField, setSortingField] = useState('id');
+  const [sortingOrder, setSortingOrder] = useState<'ASC' | 'DESC'>('ASC');
   const { token } = useAuthToken();
 
   // Charger les données depuis l'API
@@ -47,8 +52,8 @@ export default function PatientsPage() {
       const data = await PatientsService.getPatients({
         limit: itemsPerPage,
         offset,
-        sorting_field: 'id',
-        sorting_order: 'ASC',
+        sorting_field: sortingField,
+        sorting_order: sortingOrder,
         search: searchTerm || undefined,
       }, token || undefined);
       
@@ -68,7 +73,30 @@ export default function PatientsPage() {
       setLoading(false);
       setError('Token d\'authentification manquant');
     }
-  }, [currentPage, itemsPerPage, searchTerm, token]);
+  }, [currentPage, itemsPerPage, searchTerm, sortingField, sortingOrder, token]);
+
+  // Gestion du tri
+  const handleSort = (field: string) => {
+    if (sortingField === field) {
+      // Même champ : inverser l'ordre
+      setSortingOrder(sortingOrder === 'ASC' ? 'DESC' : 'ASC');
+    } else {
+      // Nouveau champ : réinitialiser à ASC
+      setSortingField(field);
+      setSortingOrder('ASC');
+    }
+    setCurrentPage(1); // Revenir à la première page
+  };
+
+  // Obtenir l'icône de tri pour un champ
+  const getSortIcon = (field: string) => {
+    if (sortingField !== field) {
+      return <ChevronsUpDown className="h-4 w-4" />;
+    }
+    return sortingOrder === 'ASC' 
+      ? <ChevronUp className="h-4 w-4" />
+      : <ChevronDown className="h-4 w-4" />;
+  };
 
   // Reset page 1 quand la recherche change
   const handleSearchChange = (value: string) => {
@@ -133,10 +161,7 @@ export default function PatientsPage() {
             Gérez la liste de vos patients
           </p>
         </div>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          Ajouter un patient
-        </Button>
+        <AddPatientModal onPatientAdded={loadPatients} />
       </div>
 
       {/* Filtres et recherche */}
@@ -193,11 +218,51 @@ export default function PatientsPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Nom</TableHead>
-                    <TableHead>Date de naissance</TableHead>
-                    <TableHead>Genre</TableHead>
-                    <TableHead>Localisation</TableHead>
-                    <TableHead>Statut</TableHead>
+                    <TableHead 
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => handleSort('given_name')}
+                    >
+                      <div className="flex items-center gap-2">
+                        Nom
+                        {getSortIcon('given_name')}
+                      </div>
+                    </TableHead>
+                    <TableHead 
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => handleSort('birth_date')}
+                    >
+                      <div className="flex items-center gap-2">
+                        Date de naissance
+                        {getSortIcon('birth_date')}
+                      </div>
+                    </TableHead>
+                    <TableHead 
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => handleSort('gender')}
+                    >
+                      <div className="flex items-center gap-2">
+                        Genre
+                        {getSortIcon('gender')}
+                      </div>
+                    </TableHead>
+                    <TableHead 
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => handleSort('location')}
+                    >
+                      <div className="flex items-center gap-2">
+                        Localisation
+                        {getSortIcon('location')}
+                      </div>
+                    </TableHead>
+                    <TableHead 
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => handleSort('is_active')}
+                    >
+                      <div className="flex items-center gap-2">
+                        Statut
+                        {getSortIcon('is_active')}
+                      </div>
+                    </TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -211,7 +276,9 @@ export default function PatientsPage() {
                         <TableCell>{formatGender(patient.gender)}</TableCell>
                         <TableCell>{patient.location}</TableCell>
                         <TableCell>
-                          <Badge variant={statusBadge.variant}>{statusBadge.label}</Badge>
+                          <Badge variant={statusBadge.variant as "default" | "secondary" | "destructive" | "outline"}>
+                            {statusBadge.label}
+                          </Badge>
                         </TableCell>
                         <TableCell className="text-right">
                           <DropdownMenu>
@@ -221,14 +288,8 @@ export default function PatientsPage() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem>
-                                <Eye className="mr-2 h-4 w-4" />
-                                Voir les détails
-                              </DropdownMenuItem>
-                              <DropdownMenuItem>
-                                <Edit className="mr-2 h-4 w-4" />
-                                Modifier
-                              </DropdownMenuItem>
+                              <ViewPatientModal patient={patient} />
+                              <EditPatientModal patient={patient} onPatientUpdated={loadPatients} />
                               <DropdownMenuItem className="text-destructive">
                                 <Trash2 className="mr-2 h-4 w-4" />
                                 Supprimer
