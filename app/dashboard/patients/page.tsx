@@ -24,12 +24,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { PatientsService } from "@/features/patients/services/patients.service";
-import { Patient, PatientsResponse } from "@/features/patients/types/patients.types";
+import { PatientsResponse } from "@/features/patients/types/patients.types";
 import { formatPatientName, formatBirthDate, formatGender, getPatientStatusBadge } from "@/features/patients/utils/patients.utils";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { AddPatientModal } from "@/components/patients/add-patient-modal";
 import { ViewPatientModal } from "@/components/patients/view-patient-modal";
 import { EditPatientModal } from "@/components/patients/edit-patient-modal";
+import { DeletePatientModal } from "@/components/patients/delete-patient-modal";
 
 export default function PatientsPage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -281,21 +282,11 @@ export default function PatientsPage() {
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" className="h-8 w-8 p-0">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <ViewPatientModal patient={patient} />
-                              <EditPatientModal patient={patient} onPatientUpdated={loadPatients} />
-                              <DropdownMenuItem className="text-destructive">
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Supprimer
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                          <div className="flex items-center justify-end gap-1">
+                            <ViewPatientModal patient={patient} />
+                            <EditPatientModal patient={patient} onPatientUpdated={loadPatients} />
+                            <DeletePatientModal patient={patient} onPatientDeleted={loadPatients} />
+                          </div>
                         </TableCell>
                       </TableRow>
                     );
