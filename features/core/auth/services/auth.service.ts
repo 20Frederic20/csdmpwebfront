@@ -2,29 +2,15 @@
 
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
+import { authenticateUser } from './auth-api.service';
 import { AuthResponse, User } from '../types/auth.types';
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
 
 export async function loginAction(formData: FormData) {
   const health_id = formData.get('health_id') as string;
   const password = formData.get('password') as string;
 
-  const res = await fetch(`${API_BASE}/account/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ health_id, password }),
-    credentials: 'include', // important if backend sets cookie too (optional)
-  });
-
-  if (!res.ok) {
-    throw new Error('Invalid credentials');
-  }
-
-  const data: AuthResponse = await res.json();
-  
-  console.log('Login response:', data); // Debug
-  console.log('expires_in value:', data.expires_in); // Debug
+  // Authentifier l'utilisateur
+  const data = await authenticateUser(health_id, password);
 
   // Set HttpOnly cookie from Next.js (most secure & SSR-friendly)
   const cookieStore = await cookies();
@@ -37,6 +23,7 @@ export async function loginAction(formData: FormData) {
   });
 
   console.log('Cookie set successfully'); // Debug
+  
   redirect('/dashboard');
 }
 
