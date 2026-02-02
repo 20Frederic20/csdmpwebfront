@@ -16,12 +16,15 @@ import { Label } from "@/components/ui/label"
 import Link from "next/link";
 
 import { loginAction } from '@/features/core/auth/services/auth.service';
+import { useLoginActions } from '@/hooks/use-login-actions';
 
 export default function LoginPage() {
 
     const router = useRouter();
     const [error, setError] = useState<string | null>(null);
     const [isPending, startTransition] = useTransition();
+    const { handleLoginSuccess } = useLoginActions();
+    
     async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();
         setError(null);
@@ -29,7 +32,30 @@ export default function LoginPage() {
         const formData = new FormData(event.currentTarget);
 
         startTransition(async () => {
-            await loginAction(formData);
+            try {
+                // Appeler le server action pour le cookie HttpOnly
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        health_id: formData.get('health_id'),
+                        password: formData.get('password'),
+                    }),
+                });
+
+                if (!response.ok) {
+                    throw new Error('Invalid credentials');
+                }
+
+                const data = await response.json();
+                
+                // Gérer le succès côté client
+                handleLoginSuccess(data.access_token);
+            } catch (err: any) {
+                setError(err.message || 'Une erreur est survenue lors de la connexion.');
+            }
         });
     }
     return (
