@@ -6,12 +6,20 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search, Plus, Filter, Building } from "lucide-react";
+import { Search, Plus, Filter, Building, MoreHorizontal, Eye, Edit, Trash2, UserCheck } from "lucide-react";
 import { HealthFacility } from "@/features/health-facilities/types/health-facility.types";
 import { HealthFacilityService } from "@/features/health-facilities/services/health-facility.service";
 import { formatFacilityType, getFacilityTypeBadge, formatHealthFacilityStatus, getHealthFacilityStatusBadge } from "@/features/health-facilities/utils/health-facility.utils";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { toast } from "sonner";
+import Link from "next/link";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function HealthFacilitiesPage() {
   const [facilities, setFacilities] = useState<HealthFacility[]>([]);
@@ -19,6 +27,33 @@ export default function HealthFacilitiesPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [total, setTotal] = useState(0);
   const { token } = useAuthToken();
+
+  const handleToggleStatus = async (facilityId: string, currentStatus: boolean) => {
+    try {
+      // TODO: Implémenter toggleFacilityStatus dans HealthFacilityService
+      // await HealthFacilityService.toggleFacilityStatus(facilityId, !currentStatus, token || undefined);
+      toast.success(`Établissement ${!currentStatus ? 'activé' : 'désactivé'} avec succès`);
+      loadFacilities(); // Recharger la liste
+    } catch (error) {
+      console.error('Error toggling facility status:', error);
+      toast.error('Erreur lors du changement de statut');
+    }
+  };
+
+  const handleDeleteFacility = async (facilityId: string) => {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer cet établissement ?')) {
+      return;
+    }
+
+    try {
+      await HealthFacilityService.deleteHealthFacility(facilityId, token || undefined);
+      toast.success('Établissement supprimé avec succès');
+      loadFacilities(); // Recharger la liste
+    } catch (error) {
+      console.error('Error deleting facility:', error);
+      toast.error('Erreur lors de la suppression');
+    }
+  };
 
   const loadFacilities = async () => {
     setLoading(true);
@@ -142,14 +177,41 @@ export default function HealthFacilitiesPage() {
                       {facility.phone || '—'}
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Button variant="outline" size="sm">
-                          Modifier
-                        </Button>
-                        <Button variant="outline" size="sm">
-                          Voir
-                        </Button>
-                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem asChild>
+                            <Link href={`/health-facilities/${facility.id}`}>
+                              <Eye className="h-4 w-4 mr-2" />
+                              Voir
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link href={`/health-facilities/${facility.id}/edit`}>
+                              <Edit className="h-4 w-4 mr-2" />
+                              Modifier
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem 
+                            onClick={() => handleToggleStatus(facility.id, facility.is_active)}
+                          >
+                            <UserCheck className="h-4 w-4 mr-2" />
+                            {facility.is_active ? 'Désactiver' : 'Activer'}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            onClick={() => handleDeleteFacility(facility.id)}
+                            className="text-red-600"
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Supprimer
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 ))}

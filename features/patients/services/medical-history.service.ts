@@ -1,6 +1,8 @@
 import { PatientMedicalHistory, CreateMedicalHistoryRequest, UpdateMedicalHistoryRequest, PatientMedicalHistoryResponse } from '../types/medical-history.types';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+const API_BASE = process.env.NODE_ENV === 'development' 
+  ? '/api/v1'  // Utilise le proxy Next.js en développement
+  : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1');
 
 const getAuthToken = (): string | null => {
   if (typeof window !== 'undefined') {

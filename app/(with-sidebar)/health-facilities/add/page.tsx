@@ -1,15 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Building, User, Phone, MapPin } from "lucide-react";
+import { ArrowLeft, Building, User, Phone, MapPin, Users } from "lucide-react";
 import { CreateHealthFacilityRequest, AdminUser } from "@/features/health-facilities/types/health-facility.types";
 import { HealthFacilityService } from "@/features/health-facilities/services/health-facility.service";
+import { UserService } from "@/features/users/services/user.service";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -18,7 +19,8 @@ export default function AddHealthFacilityPage() {
   const router = useRouter();
   const { token } = useAuthToken();
   const [loading, setLoading] = useState(false);
-  const [createAdminUser, setCreateAdminUser] = useState(false);
+  const [adminMode, setAdminMode] = useState<'create' | 'select'>('select');
+  const [availableUsers, setAvailableUsers] = useState<any[]>([]);
 
   const [formData, setFormData] = useState<CreateHealthFacilityRequest>({
     name: "",
@@ -40,6 +42,25 @@ export default function AddHealthFacilityPage() {
     roles: ["user"],
   });
 
+  // Charger la liste des utilisateurs disponibles
+  useEffect(() => {
+    const loadUsers = async () => {
+      try {
+        const response = await UserService.getUsers({
+          limit: 100,
+          is_active: true
+        }, token || undefined);
+        setAvailableUsers(response.data || []);
+      } catch (error) {
+        console.error('Error loading users:', error);
+      }
+    };
+
+    if (token) {
+      loadUsers();
+    }
+  }, [token]);
+
   const handleInputChange = (field: string, value: string | boolean | null) => {
     setFormData(prev => ({
       ...prev,
@@ -59,14 +80,28 @@ export default function AddHealthFacilityPage() {
     setLoading(true);
 
     try {
+      // Validation : un admin est obligatoire
+      if (adminMode === 'select' && !formData.admin_user_id) {
+        toast.error("Veuillez sélectionner un administrateur existant");
+        setLoading(false);
+        return;
+      }
+
+      if (adminMode === 'create' && !adminUserData.given_name && !adminUserData.family_name) {
+        toast.error("Veuillez remplir les informations de l'administrateur");
+        setLoading(false);
+        return;
+      }
+
       const submitData: CreateHealthFacilityRequest = {
         ...formData,
-        admin_user: createAdminUser ? adminUserData : null,
+        admin_user: adminMode === 'create' ? adminUserData : null,
+        admin_user_id: adminMode === 'select' ? formData.admin_user_id : null,
       };
 
       await HealthFacilityService.createHealthFacility(submitData, token || undefined);
       toast.success("Établissement de santé créé avec succès");
-      router.push("/dashboard/health-facilities");
+      router.push("/health-facilities");
     } catch (error) {
       console.error('Error creating health facility:', error);
       toast.error(error instanceof Error ? error.message : 'Une erreur est survenue lors de la création de l\'établissement');
@@ -197,18 +232,57 @@ export default function AddHealthFacilityPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="create_admin"
-                checked={createAdminUser}
-                onChange={(e) => setCreateAdminUser(e.target.checked)}
-                className="rounded border-gray-300"
-              />
-              <Label htmlFor="create_admin">Créer un compte administrateur pour cet établissement</Label>
+            <div className="space-y-4">
+              <Label className="text-base font-medium">Choix de l'administrateur <span className="text-red-500">*</span></Label>
+              
+              <div className="flex gap-4">
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="adminMode"
+                    checked={adminMode === 'select'}
+                    onChange={() => setAdminMode('select')}
+                    className="text-blue-600"
+                  />
+                  <span>Sélectionner un utilisateur existant</span>
+                </label>
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="adminMode"
+                    checked={adminMode === 'create'}
+                    onChange={() => setAdminMode('create')}
+                    className="text-blue-600"
+                  />
+                  <span>Créer un nouvel administrateur</span>
+                </label>
+              </div>
             </div>
 
-            {createAdminUser && (
+            {adminMode === 'select' && (
+              <div className="space-y-4 border-t pt-4">
+                <div className="space-y-2">
+                  <Label htmlFor="admin_user_id">Utilisateur existant <span className="text-red-500">*</span></Label>
+                  <Select 
+                    value={formData.admin_user_id || ""} 
+                    onValueChange={(value) => handleInputChange("admin_user_id", value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sélectionner un utilisateur" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableUsers.map((user) => (
+                        <SelectItem key={user.id_} value={user.id_}>
+                          {user.given_name} {user.family_name} ({user.health_id})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
+
+            {adminMode === 'create' && (
               <div className="space-y-4 border-t pt-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -218,7 +292,7 @@ export default function AddHealthFacilityPage() {
                       value={adminUserData.given_name}
                       onChange={(e) => handleAdminUserChange("given_name", e.target.value)}
                       placeholder="Jean"
-                      required={createAdminUser}
+                      required
                     />
                   </div>
                   <div className="space-y-2">
@@ -228,7 +302,7 @@ export default function AddHealthFacilityPage() {
                       value={adminUserData.family_name}
                       onChange={(e) => handleAdminUserChange("family_name", e.target.value)}
                       placeholder="Dupont"
-                      required={createAdminUser}
+                      required
                     />
                   </div>
                 </div>
@@ -241,7 +315,7 @@ export default function AddHealthFacilityPage() {
                       value={adminUserData.health_id}
                       onChange={(e) => handleAdminUserChange("health_id", e.target.value)}
                       placeholder="TG123456"
-                      required={createAdminUser}
+                      required
                     />
                   </div>
                   <div className="space-y-2">
@@ -252,7 +326,7 @@ export default function AddHealthFacilityPage() {
                       value={adminUserData.password}
                       onChange={(e) => handleAdminUserChange("password", e.target.value)}
                       placeholder="••••••••"
-                      required={createAdminUser}
+                      required
                     />
                   </div>
                 </div>
@@ -262,7 +336,7 @@ export default function AddHealthFacilityPage() {
         </Card>
 
         <div className="flex justify-end gap-4">
-          <Link href="/dashboard/health-facilities">
+          <Link href="/health-facilities">
             <Button variant="outline" type="button">
               Annuler
             </Button>

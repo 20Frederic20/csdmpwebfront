@@ -16,7 +16,7 @@ import {
   PaginationPrevious,
   PaginationEllipsis,
 } from "@/components/ui/pagination";
-import { Search, Filter, ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react";
+import { Search, Filter, ChevronUp, ChevronDown, ChevronsUpDown, MoreHorizontal, Eye, Edit, Trash2, UserCheck } from "lucide-react";
 import { PatientsService } from "@/features/patients/services/patients.service";
 import { PatientsResponse } from "@/features/patients/types/patients.types";
 import { formatPatientName, formatBirthDate, formatGender, getPatientStatusBadge } from "@/features/patients/utils/patients.utils";
@@ -25,6 +25,13 @@ import { AddPatientModal } from "@/components/patients/add-patient-modal";
 import { ViewPatientModal } from "@/components/patients/view-patient-modal";
 import { EditPatientModal } from "@/components/patients/edit-patient-modal";
 import { DeletePatientModal } from "@/components/patients/delete-patient-modal";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function PatientsPage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -36,6 +43,17 @@ export default function PatientsPage() {
   const [sortingField, setSortingField] = useState('id');
   const [sortingOrder, setSortingOrder] = useState<'ASC' | 'DESC'>('ASC');
   const { token } = useAuthToken();
+
+  const handleToggleStatus = async (patientId: string, currentStatus: boolean) => {
+    try {
+      // TODO: Implémenter togglePatientStatus dans PatientsService
+      // await PatientsService.togglePatientStatus(patientId, !currentStatus, token);
+      console.log('Toggle patient status:', patientId, !currentStatus);
+      loadPatients(); // Recharger la liste
+    } catch (error) {
+      console.error('Error toggling patient status:', error);
+    }
+  };
 
   // Charger les données depuis l'API
   const loadPatients = async () => {
@@ -276,11 +294,37 @@ export default function PatientsPage() {
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-1">
-                            <ViewPatientModal patient={patient} />
-                            <EditPatientModal patient={patient} onPatientUpdated={loadPatients} />
-                            <DeletePatientModal patient={patient} onPatientDeleted={loadPatients} />
-                          </div>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem asChild>
+                                <div className="w-full">
+                                  <ViewPatientModal patient={patient} />
+                                </div>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem asChild>
+                                <div className="w-full">
+                                  <EditPatientModal patient={patient} onPatientUpdated={loadPatients} />
+                                </div>
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem 
+                                onClick={() => handleToggleStatus(patient.id_, patient.is_active)}
+                              >
+                                <UserCheck className="h-4 w-4 mr-2" />
+                                {patient.is_active ? 'Désactiver' : 'Activer'}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem asChild>
+                                <div className="w-full text-red-600">
+                                  <DeletePatientModal patient={patient} onPatientDeleted={loadPatients} />
+                                </div>
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </TableCell>
                       </TableRow>
                     );
