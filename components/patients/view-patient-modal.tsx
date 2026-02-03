@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Eye } from "lucide-react";
 import { Patient } from "@/features/patients/types/patients.types";
 import { formatPatientName, formatBirthDate, formatGender, getPatientStatusBadge } from "@/features/patients/utils/patients.utils";
-import { PatientAllergies } from "./patient-allergies";
+import { PatientMedicalInfo } from "./patient-medical-info";
 
 interface ViewPatientModalProps {
   patient: Patient;
@@ -37,7 +37,7 @@ export function ViewPatientModal({ patient }: ViewPatientModalProps) {
           <Eye className="h-4 w-4" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Détails du patient</DialogTitle>
           <DialogDescription>
@@ -96,8 +96,8 @@ export function ViewPatientModal({ patient }: ViewPatientModalProps) {
             </div>
           </div>
 
-          {/* Allergies */}
-          <PatientAllergies patientId={patient.id_} key={refreshKey} />
+          {/* Informations médicales */}
+          <PatientMedicalInfo patientId={patient.id_} />
         </div>
       </DialogContent>
     </Dialog>
