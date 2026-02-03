@@ -14,6 +14,8 @@ import { useAuthToken } from "@/hooks/use-auth-token";
 import { AddAllergyModal } from "./add-allergy-modal";
 import { AddLifestyleModal } from "./add-lifestyle-modal";
 import { AddMedicalHistoryModal } from "./add-medical-history-modal";
+import { AddVaccinationModal } from "./add-vaccination-modal";
+import { AddFamilyHistoryModal } from "./add-family-history-modal";
 import { LifestyleSection } from "./lifestyle-section";
 import { MedicalHistorySection } from "./medical-history-section";
 
@@ -106,6 +108,16 @@ export function PatientMedicalInfo({ patientId }: PatientMedicalInfoProps) {
     // Recharger le style de vie quand on en ajoute un
     setLoadedSections(prev => ({ ...prev, lifestyle: false }));
     loadSection('lifestyle');
+  };
+
+  const handleFamilyHistoryAdded = () => {
+    // Recharger la section antécédents familiaux
+    loadSection('familyHistory');
+  };
+
+  const handleVaccinationAdded = () => {
+    // Recharger la section vaccinations
+    loadSection('vaccinations');
   };
 
   const handleMedicalHistoryAdded = () => {
@@ -207,6 +219,43 @@ export function PatientMedicalInfo({ patientId }: PatientMedicalInfoProps) {
             
             {isOpen && (
               <CardContent>
+                <div className="flex justify-end mb-4">
+                  {/* Bouton Ajouter pour antécédents médicaux */}
+                  {section.key === 'medicalHistory' && (
+                    <AddMedicalHistoryModal 
+                      patientId={patientId} 
+                      onMedicalHistoryAdded={handleMedicalHistoryAdded} 
+                    />
+                  )}
+                  {/* Bouton Ajouter pour antécédents familiaux */}
+                  {section.key === 'familyHistory' && (
+                    <AddFamilyHistoryModal 
+                      patientId={patientId} 
+                      onFamilyHistoryAdded={handleFamilyHistoryAdded} 
+                    />
+                  )}
+                  {/* Bouton Ajouter pour vaccinations */}
+                  {section.key === 'vaccinations' && (
+                    <AddVaccinationModal 
+                      patientId={patientId} 
+                      onVaccinationAdded={handleVaccinationAdded} 
+                    />
+                  )}
+                  {/* Bouton Ajouter pour allergies */}
+                  {section.key === 'allergies' && (
+                    <AddAllergyModal 
+                      patientId={patientId} 
+                      onAllergyAdded={handleAllergyAdded} 
+                    />
+                  )}
+                  {/* Bouton Ajouter pour lifestyle */}
+                  {section.key === 'lifestyle' && (
+                    <AddLifestyleModal 
+                      patientId={patientId} 
+                      onLifestyleAdded={handleLifestyleAdded} 
+                    />
+                  )}
+                </div>
                 {section.component}
               </CardContent>
             )}
@@ -238,16 +287,12 @@ function AllergiesSection({ allergies, loading, patientId, onAllergyAdded }: {
         <p className="text-muted-foreground mb-4">
           Aucune allergie enregistrée pour ce patient.
         </p>
-        <AddAllergyModal patientId={patientId} onAllergyAdded={onAllergyAdded} />
       </div>
     );
   }
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
-        <AddAllergyModal patientId={patientId} onAllergyAdded={onAllergyAdded} />
-      </div>
       <div className="space-y-4 max-h-[300px] overflow-y-auto">
         {allergies.map((allergy, index) => {
           if (!allergy) return null;

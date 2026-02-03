@@ -36,7 +36,6 @@ export function MedicalHistorySection({ medicalHistory, loading, patientId, onMe
         <p className="text-muted-foreground mb-4">
           Aucun antécédent médical enregistré pour ce patient.
         </p>
-        <AddMedicalHistoryModal patientId={patientId} onMedicalHistoryAdded={onMedicalHistoryAdded} />
       </div>
     );
   }
@@ -46,9 +45,6 @@ export function MedicalHistorySection({ medicalHistory, loading, patientId, onMe
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
-        <AddMedicalHistoryModal patientId={patientId} onMedicalHistoryAdded={onMedicalHistoryAdded} />
-      </div>
       <div className="space-y-4 max-h-[400px] overflow-y-auto">
         {sortedHistory.map((history, index) => {
           const categoryBadge = getMedicalCategoryBadge(history.category);

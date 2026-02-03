@@ -35,7 +35,6 @@ export function LifestyleSection({ lifestyle, loading, patientId, onLifestyleAdd
         <p className="text-muted-foreground mb-4">
           Aucune information sur le style de vie enregistrée pour ce patient.
         </p>
-        <AddLifestyleModal patientId={patientId} onLifestyleAdded={onLifestyleAdded} />
       </div>
     );
   }
@@ -45,9 +44,6 @@ export function LifestyleSection({ lifestyle, loading, patientId, onLifestyleAdd
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
-        <AddLifestyleModal patientId={patientId} onLifestyleAdded={onLifestyleAdded} />
-      </div>
       <div className="border rounded-lg p-6 space-y-6">
         {/* En-tête avec badges principaux */}
         <div className="flex items-start justify-between gap-4">
