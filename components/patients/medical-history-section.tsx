@@ -56,7 +56,7 @@ export function MedicalHistorySection({ medicalHistory, loading, patientId, onMe
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1">
                   <h4 className="font-semibold text-lg">{history.description}</h4>
-                  <p className="text-sm text-muted-foreground mt-1">
+                  <p className="text-md text-muted-foreground mt-1">
                     Début: {new Date(history.onset_date).toLocaleDateString('fr-FR')}
                   </p>
                 </div>
@@ -74,7 +74,7 @@ export function MedicalHistorySection({ medicalHistory, loading, patientId, onMe
               </div>
               
               {/* Détails supplémentaires */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-md">
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -127,8 +127,8 @@ export function MedicalHistorySection({ medicalHistory, loading, patientId, onMe
               {/* Notes */}
               {history.notes && (
                 <div className="bg-muted/50 p-3 rounded-lg">
-                  <p className="text-sm font-medium mb-1">Notes</p>
-                  <p className="text-sm text-muted-foreground">{history.notes}</p>
+                  <p className="text-md font-medium mb-1">Notes</p>
+                  <p className="text-md text-muted-foreground">{history.notes}</p>
                 </div>
               )}
               

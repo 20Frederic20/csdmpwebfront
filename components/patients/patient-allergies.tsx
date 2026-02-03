@@ -87,7 +87,7 @@ export function PatientAllergies({ patientId }: PatientAllergiesProps) {
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1">
                         <h4 className="font-semibold text-lg">{allergy.allergen}</h4>
-                        <p className="text-sm text-muted-foreground mt-1">
+                        <p className="text-md text-muted-foreground mt-1">
                           Réaction: {allergy.reaction}
                         </p>
                       </div>
@@ -102,7 +102,7 @@ export function PatientAllergies({ patientId }: PatientAllergiesProps) {
                     </div>
                     
                     {allergy.notes && (
-                      <div className="text-sm text-muted-foreground bg-muted/50 p-2 rounded">
+                      <div className="text-md text-muted-foreground bg-muted/50 p-2 rounded">
                         <strong>Notes:</strong> {allergy.notes}
                       </div>
                     )}

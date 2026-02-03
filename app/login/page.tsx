@@ -93,7 +93,7 @@ export default function LoginPage() {
                                 <Label htmlFor="password">Mot de passe</Label>
                                 <a
                                     href="#"
-                                    className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
+                                    className="ml-auto inline-block text-md underline-offset-4 hover:underline"
                                 >
                                     Mot de passe oublié ?
                                 </a>
@@ -108,7 +108,7 @@ export default function LoginPage() {
                         </div>
 
                         {error && (
-                            <p className="text-sm text-destructive text-center">{error}</p>
+                            <p className="text-md text-destructive text-center">{error}</p>
                         )}
                     </div>
 

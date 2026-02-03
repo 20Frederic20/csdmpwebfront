@@ -364,7 +364,7 @@ export default function PatientsPage() {
               {/* Pagination */}
               <div className="flex items-center justify-between space-x-2 py-4">
                 <div className="flex items-center space-x-2">
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-md text-muted-foreground">
                     Affichage de {((currentPage - 1) * itemsPerPage) + 1} à {Math.min(currentPage * itemsPerPage, patientsData?.total || 0)} sur {patientsData?.total || 0} résultats
                   </p>
                   <Select value={itemsPerPage.toString()} onValueChange={handleItemsPerPageChange}>

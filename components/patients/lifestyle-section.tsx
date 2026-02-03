@@ -49,7 +49,7 @@ export function LifestyleSection({ lifestyle, loading, patientId, onLifestyleAdd
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1">
             <h4 className="font-semibold text-lg mb-2">Style de vie actuel</h4>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-md text-muted-foreground">
               Date d'évaluation: {currentLifestyle.assessment_date ? new Date(currentLifestyle.assessment_date).toLocaleDateString('fr-FR') : 'Non spécifiée'}
             </p>
           </div>
@@ -67,12 +67,12 @@ export function LifestyleSection({ lifestyle, loading, patientId, onLifestyleAdd
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Habitudes */}
           <div className="space-y-4">
-            <h5 className="font-medium text-sm text-muted-foreground uppercase tracking-wider">Habitudes</h5>
+            <h5 className="font-medium text-md text-muted-foreground uppercase tracking-wider">Habitudes</h5>
             
             <div className="flex items-center gap-3">
               <Cigarette className="h-4 w-4 text-muted-foreground" />
               <div className="flex-1">
-                <p className="text-sm font-medium">Tabagisme</p>
+                <p className="text-md font-medium">Tabagisme</p>
                 <Badge variant={getTobaccoStatusBadge(currentLifestyle.tobacco_status).variant as "default" | "secondary" | "destructive" | "outline"} className="mt-1">
                   {getTobaccoStatusBadge(currentLifestyle.tobacco_status).label}
                 </Badge>
@@ -82,7 +82,7 @@ export function LifestyleSection({ lifestyle, loading, patientId, onLifestyleAdd
             <div className="flex items-center gap-3">
               <Wine className="h-4 w-4 text-muted-foreground" />
               <div className="flex-1">
-                <p className="text-sm font-medium">Consommation d'alcool</p>
+                <p className="text-md font-medium">Consommation d'alcool</p>
                 <Badge variant={getAlcoholConsumptionBadge(currentLifestyle.alcohol_consumption).variant as "default" | "secondary" | "destructive" | "outline"} className="mt-1">
                   {getAlcoholConsumptionBadge(currentLifestyle.alcohol_consumption).label}
                 </Badge>
@@ -93,8 +93,8 @@ export function LifestyleSection({ lifestyle, loading, patientId, onLifestyleAdd
               <div className="flex items-center gap-3">
                 <Cigarette className="h-4 w-4 text-muted-foreground" />
                 <div className="flex-1">
-                  <p className="text-sm font-medium">Cigarettes par semaine</p>
-                  <p className="text-sm text-muted-foreground">{currentLifestyle.tobacco_per_week}</p>
+                  <p className="text-md font-medium">Cigarettes par semaine</p>
+                  <p className="text-md text-muted-foreground">{currentLifestyle.tobacco_per_week}</p>
                 </div>
               </div>
             )}
@@ -103,8 +103,8 @@ export function LifestyleSection({ lifestyle, loading, patientId, onLifestyleAdd
               <div className="flex items-center gap-3">
                 <Wine className="h-4 w-4 text-muted-foreground" />
                 <div className="flex-1">
-                  <p className="text-sm font-medium">Unités d'alcool par semaine</p>
-                  <p className="text-sm text-muted-foreground">{currentLifestyle.alcohol_units_per_week}</p>
+                  <p className="text-md font-medium">Unités d'alcool par semaine</p>
+                  <p className="text-md text-muted-foreground">{currentLifestyle.alcohol_units_per_week}</p>
                 </div>
               </div>
             )}
@@ -112,37 +112,37 @@ export function LifestyleSection({ lifestyle, loading, patientId, onLifestyleAdd
 
           {/* Mode de vie */}
           <div className="space-y-4">
-            <h5 className="font-medium text-sm text-muted-foreground uppercase tracking-wider">Mode de vie</h5>
+            <h5 className="font-medium text-md text-muted-foreground uppercase tracking-wider">Mode de vie</h5>
             
             <div className="flex items-center gap-3">
               <Activity className="h-4 w-4 text-muted-foreground" />
               <div className="flex-1">
-                <p className="text-sm font-medium">Activité physique</p>
-                <p className="text-sm text-muted-foreground">{formatPhysicalActivity(currentLifestyle.physical_activity)}</p>
+                <p className="text-md font-medium">Activité physique</p>
+                <p className="text-md text-muted-foreground">{formatPhysicalActivity(currentLifestyle.physical_activity)}</p>
               </div>
             </div>
 
             <div className="flex items-center gap-3">
               <Utensils className="h-4 w-4 text-muted-foreground" />
               <div className="flex-1">
-                <p className="text-sm font-medium">Régime alimentaire</p>
-                <p className="text-sm text-muted-foreground">{currentLifestyle.dietary_regime || 'Non spécifié'}</p>
+                <p className="text-md font-medium">Régime alimentaire</p>
+                <p className="text-md text-muted-foreground">{currentLifestyle.dietary_regime || 'Non spécifié'}</p>
               </div>
             </div>
 
             <div className="flex items-center gap-3">
               <Briefcase className="h-4 w-4 text-muted-foreground" />
               <div className="flex-1">
-                <p className="text-sm font-medium">Risques professionnels</p>
-                <p className="text-sm text-muted-foreground">{currentLifestyle.occupational_risks || 'Non spécifié'}</p>
+                <p className="text-md font-medium">Risques professionnels</p>
+                <p className="text-md text-muted-foreground">{currentLifestyle.occupational_risks || 'Non spécifié'}</p>
               </div>
             </div>
 
             <div className="flex items-center gap-3">
               <Calendar className="h-4 w-4 text-muted-foreground" />
               <div className="flex-1">
-                <p className="text-sm font-medium">Date d'évaluation</p>
-                <p className="text-sm text-muted-foreground">{currentLifestyle.assessment_date ? new Date(currentLifestyle.assessment_date).toLocaleDateString('fr-FR') : 'Non spécifiée'}</p>
+                <p className="text-md font-medium">Date d'évaluation</p>
+                <p className="text-md text-muted-foreground">{currentLifestyle.assessment_date ? new Date(currentLifestyle.assessment_date).toLocaleDateString('fr-FR') : 'Non spécifiée'}</p>
               </div>
             </div>
           </div>
@@ -151,8 +151,8 @@ export function LifestyleSection({ lifestyle, loading, patientId, onLifestyleAdd
         {/* Notes */}
         {currentLifestyle.notes && (
           <div className="bg-muted/50 p-3 rounded-lg">
-            <p className="text-sm font-medium mb-1">Notes</p>
-            <p className="text-sm text-muted-foreground">{currentLifestyle.notes}</p>
+            <p className="text-md font-medium mb-1">Notes</p>
+            <p className="text-md text-muted-foreground">{currentLifestyle.notes}</p>
           </div>
         )}
 

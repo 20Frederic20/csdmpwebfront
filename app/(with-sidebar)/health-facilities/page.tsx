@@ -13,6 +13,16 @@ import { formatFacilityType, getFacilityTypeBadge, formatHealthFacilityStatus, g
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { toast } from "sonner";
 import Link from "next/link";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  PaginationEllipsis,
+} from "@/components/ui/pagination";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,6 +35,8 @@ export default function HealthFacilitiesPage() {
   const [facilities, setFacilities] = useState<HealthFacility[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(20);
   const [total, setTotal] = useState(0);
   const { token } = useAuthToken();
 
@@ -55,20 +67,63 @@ export default function HealthFacilitiesPage() {
     }
   };
 
+  const handleSearch = (value: string) => {
+    setSearchTerm(value);
+    setCurrentPage(1); // Revenir à la première page lors de la recherche
+  };
+
+  const handleItemsPerPageChange = (value: string) => {
+    setItemsPerPage(parseInt(value));
+    setCurrentPage(1); // Revenir à la première page lors du changement d'items par page
+  };
+
+  const totalPages = Math.ceil(total / itemsPerPage);
+
+  const getPaginationItems = () => {
+    const items = [];
+    const maxVisible = 5;
+    
+    if (totalPages <= maxVisible) {
+      for (let i = 1; i <= totalPages; i++) {
+        items.push(i);
+      }
+    } else {
+      const start = Math.max(1, currentPage - 2);
+      const end = Math.min(totalPages, start + maxVisible - 1);
+      
+      if (start > 1) {
+        items.push(1);
+        if (start > 2) items.push('...');
+      }
+      
+      for (let i = start; i <= end; i++) {
+        items.push(i);
+      }
+      
+      if (end < totalPages) {
+        if (end < totalPages - 1) items.push('...');
+        items.push(totalPages);
+      }
+    }
+    
+    return items;
+  };
+
   const loadFacilities = async () => {
     setLoading(true);
     try {
+      const offset = (currentPage - 1) * itemsPerPage;
       const response = await HealthFacilityService.getHealthFacilities({
         search: searchTerm || undefined,
-        limit: 50,
-        offset: 0,
+        limit: itemsPerPage,
+        offset,
       }, token || undefined);
       
       setFacilities(response.data || []);
       setTotal(response.total || 0);
     } catch (error) {
-      console.error('Error loading health facilities:', error);
-      toast.error('Erreur lors du chargement des établissements de santé');
+      console.error('Error loading facilities:', error);
+      toast.error('Erreur lors du chargement des établissements');
       setFacilities([]);
     } finally {
       setLoading(false);
@@ -77,11 +132,7 @@ export default function HealthFacilitiesPage() {
 
   useEffect(() => {
     loadFacilities();
-  }, [searchTerm]);
-
-  const handleSearch = (value: string) => {
-    setSearchTerm(value);
-  };
+  }, [currentPage, itemsPerPage, searchTerm]);
 
   return (
     <div className="container mx-auto py-6 space-y-6">
@@ -145,82 +196,140 @@ export default function HealthFacilitiesPage() {
               </Button>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nom</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Statut</TableHead>
-                  <TableHead>Adresse</TableHead>
-                  <TableHead>Téléphone</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {facilities.map((facility) => (
-                  <TableRow key={facility.id}>
-                    <TableCell className="font-medium">{facility.name}</TableCell>
-                    <TableCell>
-                      <Badge variant={getFacilityTypeBadge(facility.facility_type).variant as "default" | "secondary" | "destructive" | "outline"}>
-                        {getFacilityTypeBadge(facility.facility_type).label}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={getHealthFacilityStatusBadge(facility.is_active).variant as "default" | "secondary" | "destructive" | "outline"}>
-                        {getHealthFacilityStatusBadge(facility.is_active).label}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {facility.district && facility.region 
-                        ? `${facility.district}, ${facility.region}`
-                        : facility.district || facility.region || '—'
-                      }
-                    </TableCell>
-                    <TableCell>
-                      {facility.phone || '—'}
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm" className="cursor-pointer">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem asChild className="cursor-pointer">
-                            <Link href={`/health-facilities/${facility.id}`}>
-                              <Eye className="h-4 w-4 mr-2" />
-                              Voir
-                            </Link>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem asChild className="cursor-pointer">
-                            <Link href={`/health-facilities/${facility.id}/edit`}>
-                              <Edit className="h-4 w-4 mr-2" />
-                              Modifier
-                            </Link>
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem 
-                            onClick={() => handleToggleStatus(facility.id, facility.is_active)}
-                            className="cursor-pointer"
-                          >
-                            <UserCheck className="h-4 w-4 mr-2" />
-                            {facility.is_active ? 'Désactiver' : 'Activer'}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem 
-                            onClick={() => handleDeleteFacility(facility.id)}
-                            className="text-red-600 cursor-pointer"
-                          >
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Supprimer
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
+            <>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nom</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Statut</TableHead>
+                    <TableHead>Localisation</TableHead>
+                    <TableHead>Téléphone</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {facilities.map((facility) => (
+                    <TableRow key={facility.id}>
+                      <TableCell className="font-medium">{facility.name}</TableCell>
+                      <TableCell>
+                        <Badge variant={getFacilityTypeBadge(facility.facility_type).variant as "default" | "secondary" | "destructive" | "outline"}>
+                          {getFacilityTypeBadge(facility.facility_type).label}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={getHealthFacilityStatusBadge(facility.is_active).variant as "default" | "secondary" | "destructive" | "outline"}>
+                          {getHealthFacilityStatusBadge(facility.is_active).label}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {facility.district && facility.region 
+                          ? `${facility.district}, ${facility.region}`
+                          : facility.district || facility.region || '—'
+                        }
+                      </TableCell>
+                      <TableCell>
+                        {facility.phone || '—'}
+                      </TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm" className="cursor-pointer">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem asChild className="cursor-pointer">
+                              <Link href={`/health-facilities/${facility.id}`}>
+                                <Eye className="h-4 w-4 mr-2" />
+                                Voir
+                              </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild className="cursor-pointer">
+                              <Link href={`/health-facilities/${facility.id}/edit`}>
+                                <Edit className="h-4 w-4 mr-2" />
+                                Modifier
+                              </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem 
+                              onClick={() => handleToggleStatus(facility.id, facility.is_active)}
+                              className="cursor-pointer"
+                            >
+                              <UserCheck className="h-4 w-4 mr-2" />
+                              {facility.is_active ? 'Désactiver' : 'Activer'}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              onClick={() => handleDeleteFacility(facility.id)}
+                              className="text-red-600 cursor-pointer"
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Supprimer
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              
+              {/* Pagination */}
+              <div className="flex items-center justify-between space-x-2 py-4">
+                <div className="flex items-center space-x-2">
+                  <p className="text-md text-muted-foreground">
+                    Affichage de {((currentPage - 1) * itemsPerPage) + 1} à {Math.min(currentPage * itemsPerPage, total)} sur {total} résultats
+                  </p>
+                  <Select value={itemsPerPage.toString()} onValueChange={handleItemsPerPageChange}>
+                    <SelectTrigger className="h-8 w-[70px]">
+                      <SelectValue placeholder={itemsPerPage.toString()} />
+                    </SelectTrigger>
+                    <SelectContent side="top">
+                      {[10, 20, 30, 40, 50].map((size) => (
+                        <SelectItem key={size} value={size.toString()}>
+                          {size}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious 
+                          onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                          className={currentPage === 1 ? 'pointer-events-none opacity-50 cursor-pointer' : 'cursor-pointer'}
+                        />
+                      </PaginationItem>
+                      
+                      {getPaginationItems().map((item, index) => (
+                        <PaginationItem key={index}>
+                          {item === '...' ? (
+                            <PaginationEllipsis />
+                          ) : (
+                            <PaginationLink
+                              onClick={() => setCurrentPage(item as number)}
+                              isActive={currentPage === item}
+                              className="cursor-pointer"
+                            >
+                              {item}
+                            </PaginationLink>
+                          )}
+                        </PaginationItem>
+                      ))}
+                      
+                      <PaginationItem>
+                        <PaginationNext 
+                          onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                          className={currentPage === totalPages ? 'pointer-events-none opacity-50 cursor-pointer' : 'cursor-pointer'}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                </div>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>

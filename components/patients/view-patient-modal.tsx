@@ -57,19 +57,19 @@ export function ViewPatientModal({ patient }: ViewPatientModalProps) {
             <h3 className="text-lg font-semibold">Informations personnelles</h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Nom complet</p>
+                <p className="text-md font-medium text-muted-foreground">Nom complet</p>
                 <p className="text-base">{formatPatientName(patient)}</p>
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Date de naissance</p>
+                <p className="text-md font-medium text-muted-foreground">Date de naissance</p>
                 <p className="text-base">{formatBirthDate(patient.birth_date)}</p>
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Genre</p>
+                <p className="text-md font-medium text-muted-foreground">Genre</p>
                 <p className="text-base">{formatGender(patient.gender)}</p>
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Localisation</p>
+                <p className="text-md font-medium text-muted-foreground">Localisation</p>
                 <p className="text-base">{patient.location || 'Non spécifiée'}</p>
               </div>
             </div>
@@ -90,13 +90,13 @@ export function ViewPatientModal({ patient }: ViewPatientModalProps) {
             <h3 className="text-lg font-semibold">Informations système</h3>
             <div className="grid grid-cols-1 gap-4">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">ID Patient</p>
-                <p className="text-base font-mono text-sm">{patient.id_}</p>
+                <p className="text-md font-medium text-muted-foreground">ID Patient</p>
+                <p className="text-base font-mono text-md">{patient.id_}</p>
               </div>
               {patient.owner_id && (
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">ID Propriétaire</p>
-                  <p className="text-base font-mono text-sm">{patient.owner_id}</p>
+                  <p className="text-md font-medium text-muted-foreground">ID Propriétaire</p>
+                  <p className="text-base font-mono text-md">{patient.owner_id}</p>
                 </div>
               )}
             </div>
