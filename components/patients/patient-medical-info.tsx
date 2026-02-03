@@ -8,10 +8,14 @@ import { AllergiesService } from "@/features/patients/services/allergies.service
 import { formatAllergenType, formatAllergySeverity, getAllergySeverityBadge, getAllergenTypeBadge } from "@/features/patients/utils/allergies.utils";
 import { PatientLifestyle } from "@/features/patients/types/lifestyle.types";
 import { LifestyleService } from "@/features/patients/services/lifestyle.service";
+import { PatientMedicalHistory } from "@/features/patients/types/medical-history.types";
+import { MedicalHistoryService } from "@/features/patients/services/medical-history.service";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { AddAllergyModal } from "./add-allergy-modal";
 import { AddLifestyleModal } from "./add-lifestyle-modal";
+import { AddMedicalHistoryModal } from "./add-medical-history-modal";
 import { LifestyleSection } from "./lifestyle-section";
+import { MedicalHistorySection } from "./medical-history-section";
 
 interface PatientMedicalInfoProps {
   patientId: string;
@@ -24,7 +28,7 @@ interface SectionData {
   vaccinations: any[];
   lifestyle: PatientLifestyle[];
   familyHistory: any[];
-  medicalHistory: any[];
+  medicalHistory: PatientMedicalHistory[];
 }
 
 export function PatientMedicalInfo({ patientId }: PatientMedicalInfoProps) {
@@ -70,8 +74,9 @@ export function PatientMedicalInfo({ patientId }: PatientMedicalInfoProps) {
           setData(prev => ({ ...prev, familyHistory: [] }));
           break;
         case 'medicalHistory':
-          // const medicalHistoryData = await MedicalHistoryService.getPatientMedicalHistory(patientId, token);
-          setData(prev => ({ ...prev, medicalHistory: [] }));
+          const medicalHistoryData = await MedicalHistoryService.getPatientMedicalHistory({ patient_id: patientId }, token || undefined);
+          const medicalHistoryArray = (medicalHistoryData as any)?.data || [];
+          setData(prev => ({ ...prev, medicalHistory: medicalHistoryArray }));
           break;
       }
       setLoadedSections(prev => ({ ...prev, [section]: true }));
@@ -101,6 +106,12 @@ export function PatientMedicalInfo({ patientId }: PatientMedicalInfoProps) {
     // Recharger le style de vie quand on en ajoute un
     setLoadedSections(prev => ({ ...prev, lifestyle: false }));
     loadSection('lifestyle');
+  };
+
+  const handleMedicalHistoryAdded = () => {
+    // Recharger les antécédents médicaux quand on en ajoute un
+    setLoadedSections(prev => ({ ...prev, medicalHistory: false }));
+    loadSection('medicalHistory');
   };
 
   const sections = [
@@ -156,7 +167,12 @@ export function PatientMedicalInfo({ patientId }: PatientMedicalInfoProps) {
       icon: FileText,
       count: loadedSections.medicalHistory ? data.medicalHistory.length : undefined,
       component: (
-        <ComingSoonSection title="Historique médical" />
+        <MedicalHistorySection 
+          medicalHistory={data.medicalHistory} 
+          loading={loading.medicalHistory || false}
+          patientId={patientId}
+          onMedicalHistoryAdded={handleMedicalHistoryAdded}
+        />
       )
     },
   ];
