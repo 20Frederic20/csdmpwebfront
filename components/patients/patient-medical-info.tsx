@@ -6,8 +6,12 @@ import { AlertCircle, Plus, ChevronDown, ChevronUp, Syringe, Heart, FileText, Ac
 import { PatientAllergy } from "@/features/patients/types/allergies.types";
 import { AllergiesService } from "@/features/patients/services/allergies.service";
 import { formatAllergenType, formatAllergySeverity, getAllergySeverityBadge, getAllergenTypeBadge } from "@/features/patients/utils/allergies.utils";
+import { PatientLifestyle } from "@/features/patients/types/lifestyle.types";
+import { LifestyleService } from "@/features/patients/services/lifestyle.service";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { AddAllergyModal } from "./add-allergy-modal";
+import { AddLifestyleModal } from "./add-lifestyle-modal";
+import { LifestyleSection } from "./lifestyle-section";
 
 interface PatientMedicalInfoProps {
   patientId: string;
@@ -18,7 +22,7 @@ type MedicalSection = 'allergies' | 'vaccinations' | 'lifestyle' | 'familyHistor
 interface SectionData {
   allergies: PatientAllergy[];
   vaccinations: any[];
-  lifestyle: any[];
+  lifestyle: PatientLifestyle[];
   familyHistory: any[];
   medicalHistory: any[];
 }
@@ -57,8 +61,9 @@ export function PatientMedicalInfo({ patientId }: PatientMedicalInfoProps) {
           setData(prev => ({ ...prev, vaccinations: [] }));
           break;
         case 'lifestyle':
-          // const lifestyleData = await LifestyleService.getPatientLifestyle(patientId, token);
-          setData(prev => ({ ...prev, lifestyle: [] }));
+          const lifestyleData = await LifestyleService.getPatientLifestyle({ patient_id: patientId }, token || undefined);
+          const lifestyleArray = (lifestyleData as any)?.data || [];
+          setData(prev => ({ ...prev, lifestyle: lifestyleArray }));
           break;
         case 'familyHistory':
           // const familyHistoryData = await FamilyHistoryService.getPatientFamilyHistory(patientId, token);
@@ -92,6 +97,12 @@ export function PatientMedicalInfo({ patientId }: PatientMedicalInfoProps) {
     loadSection('allergies');
   };
 
+  const handleLifestyleAdded = () => {
+    // Recharger le style de vie quand on en ajoute un
+    setLoadedSections(prev => ({ ...prev, lifestyle: false }));
+    loadSection('lifestyle');
+  };
+
   const sections = [
     {
       key: 'allergies' as MedicalSection,
@@ -122,7 +133,12 @@ export function PatientMedicalInfo({ patientId }: PatientMedicalInfoProps) {
       icon: Activity,
       count: loadedSections.lifestyle ? data.lifestyle.length : undefined,
       component: (
-        <ComingSoonSection title="Style de vie" />
+        <LifestyleSection 
+          lifestyle={data.lifestyle} 
+          loading={loading.lifestyle || false}
+          patientId={patientId}
+          onLifestyleAdded={handleLifestyleAdded}
+        />
       )
     },
     {
@@ -153,24 +169,23 @@ export function PatientMedicalInfo({ patientId }: PatientMedicalInfoProps) {
         
         return (
           <Card key={section.key}>
-            <CardHeader>
+            <CardHeader 
+              className="cursor-pointer hover:bg-muted/50 transition-colors"
+              onClick={() => handleToggle(section.key)}
+            >
               <div className="flex justify-between items-center">
-                <Button
-                  variant="ghost"
-                  className="flex items-center gap-2 p-0 h-auto hover:bg-transparent flex-1 justify-start"
-                  onClick={() => handleToggle(section.key)}
-                >
+                <div className="flex items-center gap-2 flex-1">
+                  <Icon className="h-5 w-5" />
                   <CardTitle className="flex items-center gap-2">
-                    <Icon className="h-5 w-5" />
                     {section.title}
                     {section.count !== undefined && `(${section.count})`}
                   </CardTitle>
-                  {isOpen ? (
-                    <ChevronUp className="h-4 w-4 ml-auto" />
-                  ) : (
-                    <ChevronDown className="h-4 w-4 ml-auto" />
-                  )}
-                </Button>
+                </div>
+                {isOpen ? (
+                  <ChevronUp className="h-4 w-4" />
+                ) : (
+                  <ChevronDown className="h-4 w-4" />
+                )}
               </div>
             </CardHeader>
             
