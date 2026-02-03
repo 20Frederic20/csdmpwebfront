@@ -337,11 +337,11 @@ export default function AddHealthFacilityPage() {
 
         <div className="flex justify-end gap-4">
           <Link href="/health-facilities">
-            <Button variant="outline" type="button">
+            <Button variant="outline" type="button" className="cursor-pointer">
               Annuler
             </Button>
           </Link>
-          <Button type="submit" disabled={loading}>
+          <Button type="submit" disabled={loading} className="cursor-pointer">
             {loading ? "Création en cours..." : "Créer l'établissement"}
           </Button>
         </div>

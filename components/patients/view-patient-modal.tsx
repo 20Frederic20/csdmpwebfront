@@ -33,8 +33,14 @@ export function ViewPatientModal({ patient }: ViewPatientModalProps) {
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="sm">
-          <Eye className="h-4 w-4" />
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className="w-full justify-start"
+          data-patient-view={patient.id_}
+        >
+          <Eye className="h-4 w-4 mr-2" />
+          Voir
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">

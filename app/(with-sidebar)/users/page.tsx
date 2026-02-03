@@ -87,14 +87,14 @@ export default function UsersPage() {
     <div className="container mx-auto py-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Utilisateurs</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Utilisateurs</h1>
           <p className="text-muted-foreground">
-            Gérez les comptes utilisateurs et leurs permissions
+            Gérez les utilisateurs du système et leurs permissions.
           </p>
         </div>
         <Link href="/users/add">
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
+          <Button className="cursor-pointer">
+            <Plus className="mr-2 h-4 w-4" />
             Ajouter un utilisateur
           </Button>
         </Link>
@@ -105,20 +105,11 @@ export default function UsersPage() {
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <Users className="h-5 w-5" />
-              Liste des utilisateurs ({total})
+              Liste des utilisateurs
             </CardTitle>
             <div className="flex items-center gap-2">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Rechercher un utilisateur..."
-                  value={searchTerm}
-                  onChange={(e) => handleSearch(e.target.value)}
-                  className="pl-10 w-64"
-                />
-              </div>
-              <Button variant="outline" size="sm">
-                <Filter className="h-4 w-4 mr-2" />
+              <Button variant="outline" size="sm" className="cursor-pointer">
+                <Filter className="mr-2 h-4 w-4" />
                 Filtrer
               </Button>
             </div>
@@ -197,21 +188,21 @@ export default function UsersPage() {
                           {statusBadge.label}
                         </Badge>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm">
+                            <Button variant="ghost" size="sm" className="cursor-pointer">
                               <MoreHorizontal className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem asChild>
+                            <DropdownMenuItem asChild className="cursor-pointer">
                               <Link href={`/users/${user.id_}`}>
                                 <Eye className="h-4 w-4 mr-2" />
                                 Voir
                               </Link>
                             </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
+                            <DropdownMenuItem asChild className="cursor-pointer">
                               <Link href={`/users/${user.id_}/edit`}>
                                 <Edit className="h-4 w-4 mr-2" />
                                 Modifier
@@ -220,13 +211,14 @@ export default function UsersPage() {
                             <DropdownMenuSeparator />
                             <DropdownMenuItem 
                               onClick={() => handleToggleStatus(user.id_, user.is_active)}
+                              className="cursor-pointer"
                             >
                               <UserCheck className="h-4 w-4 mr-2" />
                               {user.is_active ? 'Désactiver' : 'Activer'}
                             </DropdownMenuItem>
                             <DropdownMenuItem 
                               onClick={() => handleDeleteUser(user.id_)}
-                              className="text-red-600"
+                              className="text-red-600 cursor-pointer"
                             >
                               <Trash2 className="h-4 w-4 mr-2" />
                               Supprimer

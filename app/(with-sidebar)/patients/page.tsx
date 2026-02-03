@@ -16,7 +16,7 @@ import {
   PaginationPrevious,
   PaginationEllipsis,
 } from "@/components/ui/pagination";
-import { Search, Filter, ChevronUp, ChevronDown, ChevronsUpDown, MoreHorizontal, Eye, Edit, Trash2, UserCheck } from "lucide-react";
+import { Search, Filter, ChevronUp, ChevronDown, ChevronsUpDown, MoreHorizontal, Eye, Edit, Trash2, UserCheck, Plus } from "lucide-react";
 import { PatientsService } from "@/features/patients/services/patients.service";
 import { PatientsResponse } from "@/features/patients/types/patients.types";
 import { formatPatientName, formatBirthDate, formatGender, getPatientStatusBadge } from "@/features/patients/utils/patients.utils";
@@ -167,14 +167,17 @@ export default function PatientsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Patients</h1>
           <p className="text-muted-foreground">
-            Gérez la liste de vos patients
+            Gérez les informations des patients et leurs dossiers médicaux.
           </p>
         </div>
-        <AddPatientModal onPatientAdded={loadPatients} />
+        <Button className="cursor-pointer">
+          <Plus className="mr-2 h-4 w-4" />
+          Ajouter un patient
+        </Button>
       </div>
 
       {/* Filtres et recherche */}
@@ -296,35 +299,61 @@ export default function PatientsPage() {
                         <TableCell className="text-right">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm">
+                              <Button variant="ghost" size="sm" className="cursor-pointer">
                                 <MoreHorizontal className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem asChild>
-                                <div className="w-full">
-                                  <ViewPatientModal patient={patient} />
-                                </div>
+                              <DropdownMenuItem 
+                                className="cursor-pointer"
+                                onClick={() => {
+                                  // Ouvrir le modal manuellement
+                                  const modalButton = document.querySelector(`[data-patient-view="${patient.id_}"]`) as HTMLButtonElement;
+                                  if (modalButton) modalButton.click();
+                                }}
+                              >
+                                <Eye className="h-4 w-4 mr-2" />
+                                Voir
                               </DropdownMenuItem>
-                              <DropdownMenuItem asChild>
-                                <div className="w-full">
-                                  <EditPatientModal patient={patient} onPatientUpdated={loadPatients} />
-                                </div>
+                              <DropdownMenuItem 
+                                className="cursor-pointer"
+                                onClick={() => {
+                                  // Ouvrir le modal manuellement
+                                  const modalButton = document.querySelector(`[data-patient-edit="${patient.id_}"]`) as HTMLButtonElement;
+                                  if (modalButton) modalButton.click();
+                                }}
+                              >
+                                <Edit className="h-4 w-4 mr-2" />
+                                Modifier
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem 
                                 onClick={() => handleToggleStatus(patient.id_, patient.is_active)}
+                                className="cursor-pointer"
                               >
                                 <UserCheck className="h-4 w-4 mr-2" />
                                 {patient.is_active ? 'Désactiver' : 'Activer'}
                               </DropdownMenuItem>
-                              <DropdownMenuItem asChild>
-                                <div className="w-full text-red-600">
-                                  <DeletePatientModal patient={patient} onPatientDeleted={loadPatients} />
-                                </div>
+                              <DropdownMenuItem 
+                                className="cursor-pointer text-red-600"
+                                onClick={() => {
+                                  // Ouvrir le modal manuellement
+                                  const modalButton = document.querySelector(`[data-patient-delete="${patient.id_}"]`) as HTMLButtonElement;
+                                  if (modalButton) modalButton.click();
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Supprimer
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
+                          
+                          {/* Boutons cachés pour déclencher les modals */}
+                          <div className="hidden">
+                            <ViewPatientModal patient={patient} />
+                            <EditPatientModal patient={patient} onPatientUpdated={loadPatients} />
+                            <DeletePatientModal patient={patient} onPatientDeleted={loadPatients} />
+                          </div>
                         </TableCell>
                       </TableRow>
                     );

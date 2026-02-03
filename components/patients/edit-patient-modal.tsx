@@ -83,8 +83,14 @@ export function EditPatientModal({ patient, onPatientUpdated }: EditPatientModal
     <>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
-          <Button variant="ghost" size="sm">
-            <Edit className="h-4 w-4" />
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="w-full justify-start"
+            data-patient-edit={patient.id_}
+          >
+            <Edit className="h-4 w-4 mr-2" />
+            Modifier
           </Button>
         </DialogTrigger>
         <DialogContent className="sm:max-w-[425px]">

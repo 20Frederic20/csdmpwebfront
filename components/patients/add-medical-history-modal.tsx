@@ -72,7 +72,7 @@ export function AddMedicalHistoryModal({ patientId, onMedicalHistoryAdded }: Add
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm">
+        <Button size="sm" className="cursor-pointer">
           <Plus className="h-4 w-4 mr-2" />
           Ajouter
         </Button>
@@ -197,10 +197,10 @@ export function AddMedicalHistoryModal({ patientId, onMedicalHistoryAdded }: Add
           </div>
 
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+            <Button type="button" variant="outline" onClick={() => setOpen(false)} className="cursor-pointer">
               Annuler
             </Button>
-            <Button type="submit" disabled={loading}>
+            <Button type="submit" disabled={loading} className="cursor-pointer">
               {loading ? "Ajout en cours..." : "Ajouter"}
             </Button>
           </div>

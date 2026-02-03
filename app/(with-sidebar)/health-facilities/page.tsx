@@ -87,15 +87,17 @@ export default function HealthFacilitiesPage() {
     <div className="container mx-auto py-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Établissements de santé</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Établissements de santé</h1>
           <p className="text-muted-foreground">
-            Gérez les hôpitaux, cliniques, pharmacies et autres établissements de santé
+            Gérez les établissements de santé et leurs informations.
           </p>
         </div>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          Ajouter un établissement
-        </Button>
+        <Link href="/health-facilities/add">
+          <Button className="cursor-pointer">
+            <Plus className="mr-2 h-4 w-4" />
+            Ajouter un établissement
+          </Button>
+        </Link>
       </div>
 
       <Card>
@@ -109,14 +111,15 @@ export default function HealthFacilitiesPage() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
+                  type="text"
                   placeholder="Rechercher un établissement..."
                   value={searchTerm}
                   onChange={(e) => handleSearch(e.target.value)}
                   className="pl-10 w-64"
                 />
               </div>
-              <Button variant="outline" size="sm">
-                <Filter className="h-4 w-4 mr-2" />
+              <Button variant="outline" size="sm" className="cursor-pointer">
+                <Filter className="mr-2 h-4 w-4" />
                 Filtrer
               </Button>
             </div>
@@ -179,18 +182,18 @@ export default function HealthFacilitiesPage() {
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
+                          <Button variant="ghost" size="sm" className="cursor-pointer">
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem asChild>
+                          <DropdownMenuItem asChild className="cursor-pointer">
                             <Link href={`/health-facilities/${facility.id}`}>
                               <Eye className="h-4 w-4 mr-2" />
                               Voir
                             </Link>
                           </DropdownMenuItem>
-                          <DropdownMenuItem asChild>
+                          <DropdownMenuItem asChild className="cursor-pointer">
                             <Link href={`/health-facilities/${facility.id}/edit`}>
                               <Edit className="h-4 w-4 mr-2" />
                               Modifier
@@ -199,13 +202,14 @@ export default function HealthFacilitiesPage() {
                           <DropdownMenuSeparator />
                           <DropdownMenuItem 
                             onClick={() => handleToggleStatus(facility.id, facility.is_active)}
+                            className="cursor-pointer"
                           >
                             <UserCheck className="h-4 w-4 mr-2" />
                             {facility.is_active ? 'Désactiver' : 'Activer'}
                           </DropdownMenuItem>
                           <DropdownMenuItem 
                             onClick={() => handleDeleteFacility(facility.id)}
-                            className="text-red-600"
+                            className="text-red-600 cursor-pointer"
                           >
                             <Trash2 className="h-4 w-4 mr-2" />
                             Supprimer

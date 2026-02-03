@@ -46,10 +46,12 @@ export function DeletePatientModal({ patient, onPatientDeleted }: DeletePatientM
       <Button
         variant="ghost"
         size="sm"
-        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+        className="text-destructive hover:text-destructive hover:bg-destructive/10 w-full justify-start"
         onClick={() => setOpen(true)}
+        data-patient-delete={patient.id_}
       >
-        <Trash2 className="h-4 w-4" />
+        <Trash2 className="h-4 w-4 mr-2" />
+        Supprimer
       </Button>
       
       <AlertDialogContent>
