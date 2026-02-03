@@ -13,6 +13,7 @@ import { User, ListUsersQueryParams } from "@/features/users/types/user.types";
 import { UserService } from "@/features/users/services/user.service";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { formatUserRoles, getPrimaryRole, getUserRoleBadge, getUserStatusBadge, getUserFullName, getUserInitials } from "@/features/users/utils/user.utils";
+import { AddUserModal } from "@/components/users/add-user-modal";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Pagination,
@@ -135,6 +136,10 @@ export default function UsersPage() {
     return items;
   };
 
+  const handleUserAdded = () => {
+    loadUsers();
+  };
+
   const handleToggleStatus = async (userId: string, currentStatus: boolean) => {
     try {
       await UserService.toggleUserStatus(userId, !currentStatus, token || undefined);
@@ -170,12 +175,7 @@ export default function UsersPage() {
             Gérez les utilisateurs du système et leurs permissions.
           </p>
         </div>
-        <Link href="/users/add">
-          <Button className="cursor-pointer">
-            <Plus className="mr-2 h-4 w-4" />
-            Ajouter un utilisateur
-          </Button>
-        </Link>
+        <AddUserModal onUserAdded={handleUserAdded} />
       </div>
 
       <Card>
@@ -213,6 +213,7 @@ export default function UsersPage() {
                   Ajouter le premier utilisateur
                 </Button>
               </Link>
+              <AddUserModal onUserAdded={handleUserAdded} />
             </div>
           ) : (
             <>
