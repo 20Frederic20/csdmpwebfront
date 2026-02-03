@@ -22,17 +22,18 @@ export function AddLifestyleModal({ patientId, onLifestyleAdded }: AddLifestyleM
   const [loading, setLoading] = useState(false);
   const { token } = useAuthToken();
   const [formData, setFormData] = useState({
-    smoking_status: "never" as 'never' | 'former' | 'current',
-    alcohol_consumption: "none" as 'none' | 'occasional' | 'regular' | 'heavy',
-    physical_activity: "moderate" as 'sedentary' | 'light' | 'moderate' | 'intense',
-    diet_type: "omnivore" as 'omnivore' | 'vegetarian' | 'vegan' | 'pescatarian' | 'gluten_free' | 'other',
-    sleep_hours: 8,
-    stress_level: "moderate" as 'low' | 'moderate' | 'high',
+    tobacco_status: "never" as 'never' | 'former' | 'current',
+    alcohol_consumption: "none" as 'none' | 'occasional' | 'frequent',
+    physical_activity: "moderate" as 'sedentary' | 'moderate' | 'active',
+    assessment_date: "",
+    tobacco_per_week: null as number | null,
+    alcohol_units_per_week: null as number | null,
+    dietary_regime: "",
+    occupational_risks: "",
     notes: "",
-    source: "manual" as 'manual' | 'ocr' | 'prev_cons',
   });
 
-  const handleInputChange = (field: string, value: string | number) => {
+  const handleInputChange = (field: string, value: string | number | null) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -49,14 +50,15 @@ export function AddLifestyleModal({ patientId, onLifestyleAdded }: AddLifestyleM
       }, patientId, token || undefined);
       setOpen(false);
       setFormData({
-        smoking_status: "never",
+        tobacco_status: "never",
         alcohol_consumption: "none",
         physical_activity: "moderate",
-        diet_type: "omnivore",
-        sleep_hours: 8,
-        stress_level: "moderate",
+        assessment_date: "",
+        tobacco_per_week: null,
+        alcohol_units_per_week: null,
+        dietary_regime: "",
+        occupational_risks: "",
         notes: "",
-        source: "manual",
       });
       toast.success("Style de vie ajouté avec succès");
       onLifestyleAdded();
@@ -87,8 +89,8 @@ export function AddLifestyleModal({ patientId, onLifestyleAdded }: AddLifestyleM
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="smoking_status">Tabagisme</Label>
-                <Select value={formData.smoking_status} onValueChange={(value) => handleInputChange("smoking_status", value)}>
+                <Label htmlFor="tobacco_status">Tabagisme</Label>
+                <Select value={formData.tobacco_status} onValueChange={(value) => handleInputChange("tobacco_status", value)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Sélectionner" />
                   </SelectTrigger>
@@ -108,8 +110,7 @@ export function AddLifestyleModal({ patientId, onLifestyleAdded }: AddLifestyleM
                   <SelectContent>
                     <SelectItem value="none">Aucune</SelectItem>
                     <SelectItem value="occasional">Occasionnelle</SelectItem>
-                    <SelectItem value="regular">Régulière</SelectItem>
-                    <SelectItem value="heavy">Importante</SelectItem>
+                    <SelectItem value="frequent">Fréquente</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -124,70 +125,66 @@ export function AddLifestyleModal({ patientId, onLifestyleAdded }: AddLifestyleM
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="sedentary">Sédentaire</SelectItem>
-                    <SelectItem value="light">Légère</SelectItem>
                     <SelectItem value="moderate">Modérée</SelectItem>
-                    <SelectItem value="intense">Intense</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="diet_type">Type de régime</Label>
-                <Select value={formData.diet_type} onValueChange={(value) => handleInputChange("diet_type", value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sélectionner" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="omnivore">Omnivore</SelectItem>
-                    <SelectItem value="vegetarian">Végétarien</SelectItem>
-                    <SelectItem value="vegan">Végétalien</SelectItem>
-                    <SelectItem value="pescatarian">Pescétarien</SelectItem>
-                    <SelectItem value="gluten_free">Sans gluten</SelectItem>
-                    <SelectItem value="other">Autre</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="assessment_date">Date d'évaluation</Label>
+                <Input
+                  id="assessment_date"
+                  type="date"
+                  value={formData.assessment_date}
+                  onChange={(e) => handleInputChange("assessment_date", e.target.value)}
+                />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="sleep_hours">Heures de sommeil</Label>
+                <Label htmlFor="tobacco_per_week">Cigarettes/semaine</Label>
                 <Input
-                  id="sleep_hours"
+                  id="tobacco_per_week"
                   type="number"
                   min="0"
-                  max="24"
-                  step="0.5"
-                  value={formData.sleep_hours}
-                  onChange={(e) => handleInputChange("sleep_hours", parseFloat(e.target.value))}
+                  value={formData.tobacco_per_week || ""}
+                  onChange={(e) => handleInputChange("tobacco_per_week", e.target.value ? parseInt(e.target.value) : null)}
+                  placeholder="Optionnel"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="stress_level">Niveau de stress</Label>
-                <Select value={formData.stress_level} onValueChange={(value) => handleInputChange("stress_level", value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sélectionner" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="low">Faible</SelectItem>
-                    <SelectItem value="moderate">Modéré</SelectItem>
-                    <SelectItem value="high">Élevé</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="alcohol_units_per_week">Unités alcool/semaine</Label>
+                <Input
+                  id="alcohol_units_per_week"
+                  type="number"
+                  min="0"
+                  value={formData.alcohol_units_per_week || ""}
+                  onChange={(e) => handleInputChange("alcohol_units_per_week", e.target.value ? parseInt(e.target.value) : null)}
+                  placeholder="Optionnel"
+                />
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="source">Source</Label>
-              <Select value={formData.source} onValueChange={(value) => handleInputChange("source", value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="manual">Manuelle</SelectItem>
-                  <SelectItem value="ocr">OCR</SelectItem>
-                  <SelectItem value="prev_cons">Consultation précédente</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="dietary_regime">Régime alimentaire</Label>
+                <Input
+                  id="dietary_regime"
+                  value={formData.dietary_regime}
+                  onChange={(e) => handleInputChange("dietary_regime", e.target.value)}
+                  placeholder="Ex: Végétarien, Sans gluten..."
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="occupational_risks">Risques professionnels</Label>
+                <Input
+                  id="occupational_risks"
+                  value={formData.occupational_risks}
+                  onChange={(e) => handleInputChange("occupational_risks", e.target.value)}
+                  placeholder="Ex: Exposition aux produits chimiques..."
+                />
+              </div>
             </div>
 
             <div className="space-y-2">

@@ -1,39 +1,42 @@
 export interface PatientLifestyle {
-  id_: string;
+  id: string;
   patient_id: string;
-  smoking_status: 'never' | 'former' | 'current';
-  alcohol_consumption: 'none' | 'occasional' | 'regular' | 'heavy';
-  physical_activity: 'sedentary' | 'light' | 'moderate' | 'intense';
-  diet_type: 'omnivore' | 'vegetarian' | 'vegan' | 'pescatarian' | 'gluten_free' | 'other';
-  sleep_hours: number;
-  stress_level: 'low' | 'moderate' | 'high';
-  notes?: string;
-  source: 'manual' | 'ocr' | 'prev_cons';
-  created_at?: string;
-  updated_at?: string;
+  tobacco_status: 'never' | 'former' | 'current';
+  alcohol_consumption: 'none' | 'occasional' | 'frequent';
+  physical_activity: 'sedentary' | 'moderate' | 'active';
+  assessment_date: string | null;
+  tobacco_per_week: number | null;
+  alcohol_units_per_week: number | null;
+  dietary_regime: string | null;
+  occupational_risks: string | null;
+  notes: string | null;
+  is_active: boolean;
 }
 
 export interface CreateLifestyleRequest {
-  smoking_status: 'never' | 'former' | 'current';
-  alcohol_consumption: 'none' | 'occasional' | 'regular' | 'heavy';
-  physical_activity: 'sedentary' | 'light' | 'moderate' | 'intense';
-  diet_type: 'omnivore' | 'vegetarian' | 'vegan' | 'pescatarian' | 'gluten_free' | 'other';
-  sleep_hours: number;
-  stress_level: 'low' | 'moderate' | 'high';
-  notes?: string;
-  source?: 'manual' | 'ocr' | 'prev_cons';
+  tobacco_status: string | null;
+  alcohol_consumption: string | null;
+  physical_activity: string | null;
+  assessment_date: string | null;
+  tobacco_per_week: number | null;
+  alcohol_units_per_week: number | null;
+  dietary_regime: string | null;
+  occupational_risks: string | null;
+  notes: string | null;
 }
 
 export interface UpdateLifestyleRequest {
-  patient_id?: string;
-  smoking_status?: 'never' | 'former' | 'current';
-  alcohol_consumption?: 'none' | 'occasional' | 'regular' | 'heavy';
-  physical_activity?: 'sedentary' | 'light' | 'moderate' | 'intense';
-  diet_type?: 'omnivore' | 'vegetarian' | 'vegan' | 'pescatarian' | 'gluten_free' | 'other';
-  sleep_hours?: number;
-  stress_level?: 'low' | 'moderate' | 'high';
-  notes?: string;
-  source?: 'manual' | 'ocr' | 'prev_cons';
+  patient_id: string | null;
+  tobacco_status: string | null;
+  alcohol_consumption: string | null;
+  physical_activity: string | null;
+  assessment_date: string | null;
+  tobacco_per_week: number | null;
+  alcohol_units_per_week: number | null;
+  dietary_regime: string | null;
+  occupational_risks: string | null;
+  notes: string | null;
+  is_active: boolean | null;
 }
 
 export interface PatientLifestyleResponse {

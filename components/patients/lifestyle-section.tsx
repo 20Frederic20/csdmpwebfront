@@ -1,18 +1,16 @@
 import { PatientLifestyle } from "@/features/patients/types/lifestyle.types";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Activity, Clock, Brain, Utensils, Cigarette, Wine } from "lucide-react";
+import { Activity, Calendar, Cigarette, Wine, Utensils, Briefcase } from "lucide-react";
 import { 
-  formatSmokingStatus, 
+  formatTobaccoStatus, 
   formatAlcoholConsumption, 
-  formatPhysicalActivity, 
-  formatDietType, 
-  formatStressLevel,
-  getSmokingStatusBadge,
+  formatPhysicalActivity,
+  getTobaccoStatusBadge,
   getAlcoholConsumptionBadge,
-  getPhysicalActivityBadge,
-  getStressLevelBadge
+  getPhysicalActivityBadge
 } from "@/features/patients/utils/lifestyle.utils";
+import { AddLifestyleModal } from "./add-lifestyle-modal";
 
 interface LifestyleSectionProps {
   lifestyle: PatientLifestyle[];
@@ -37,6 +35,7 @@ export function LifestyleSection({ lifestyle, loading, patientId, onLifestyleAdd
         <p className="text-muted-foreground mb-4">
           Aucune information sur le style de vie enregistrée pour ce patient.
         </p>
+        <AddLifestyleModal patientId={patientId} onLifestyleAdded={onLifestyleAdded} />
       </div>
     );
   }
@@ -46,21 +45,24 @@ export function LifestyleSection({ lifestyle, loading, patientId, onLifestyleAdd
 
   return (
     <div className="space-y-4">
+      <div className="flex justify-end">
+        <AddLifestyleModal patientId={patientId} onLifestyleAdded={onLifestyleAdded} />
+      </div>
       <div className="border rounded-lg p-6 space-y-6">
         {/* En-tête avec badges principaux */}
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1">
             <h4 className="font-semibold text-lg mb-2">Style de vie actuel</h4>
             <p className="text-sm text-muted-foreground">
-              Dernière mise à jour: {currentLifestyle.updated_at ? new Date(currentLifestyle.updated_at).toLocaleDateString('fr-FR') : 'Date inconnue'}
+              Date d'évaluation: {currentLifestyle.assessment_date ? new Date(currentLifestyle.assessment_date).toLocaleDateString('fr-FR') : 'Non spécifiée'}
             </p>
           </div>
           <div className="flex flex-col gap-2">
             <Badge variant={getPhysicalActivityBadge(currentLifestyle.physical_activity).variant as "default" | "secondary" | "destructive" | "outline"}>
               {getPhysicalActivityBadge(currentLifestyle.physical_activity).label}
             </Badge>
-            <Badge variant={getStressLevelBadge(currentLifestyle.stress_level).variant as "default" | "secondary" | "destructive" | "outline"}>
-              {getStressLevelBadge(currentLifestyle.stress_level).label}
+            <Badge variant={getAlcoholConsumptionBadge(currentLifestyle.alcohol_consumption).variant as "default" | "secondary" | "destructive" | "outline"}>
+              {getAlcoholConsumptionBadge(currentLifestyle.alcohol_consumption).label}
             </Badge>
           </div>
         </div>
@@ -75,8 +77,8 @@ export function LifestyleSection({ lifestyle, loading, patientId, onLifestyleAdd
               <Cigarette className="h-4 w-4 text-muted-foreground" />
               <div className="flex-1">
                 <p className="text-sm font-medium">Tabagisme</p>
-                <Badge variant={getSmokingStatusBadge(currentLifestyle.smoking_status).variant as "default" | "secondary" | "destructive" | "outline"} className="mt-1">
-                  {getSmokingStatusBadge(currentLifestyle.smoking_status).label}
+                <Badge variant={getTobaccoStatusBadge(currentLifestyle.tobacco_status).variant as "default" | "secondary" | "destructive" | "outline"} className="mt-1">
+                  {getTobaccoStatusBadge(currentLifestyle.tobacco_status).label}
                 </Badge>
               </div>
             </div>
@@ -90,6 +92,26 @@ export function LifestyleSection({ lifestyle, loading, patientId, onLifestyleAdd
                 </Badge>
               </div>
             </div>
+
+            {currentLifestyle.tobacco_per_week && (
+              <div className="flex items-center gap-3">
+                <Cigarette className="h-4 w-4 text-muted-foreground" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium">Cigarettes par semaine</p>
+                  <p className="text-sm text-muted-foreground">{currentLifestyle.tobacco_per_week}</p>
+                </div>
+              </div>
+            )}
+
+            {currentLifestyle.alcohol_units_per_week && (
+              <div className="flex items-center gap-3">
+                <Wine className="h-4 w-4 text-muted-foreground" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium">Unités d'alcool par semaine</p>
+                  <p className="text-sm text-muted-foreground">{currentLifestyle.alcohol_units_per_week}</p>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Mode de vie */}
@@ -107,24 +129,24 @@ export function LifestyleSection({ lifestyle, loading, patientId, onLifestyleAdd
             <div className="flex items-center gap-3">
               <Utensils className="h-4 w-4 text-muted-foreground" />
               <div className="flex-1">
-                <p className="text-sm font-medium">Type de régime</p>
-                <p className="text-sm text-muted-foreground">{formatDietType(currentLifestyle.diet_type)}</p>
+                <p className="text-sm font-medium">Régime alimentaire</p>
+                <p className="text-sm text-muted-foreground">{currentLifestyle.dietary_regime || 'Non spécifié'}</p>
               </div>
             </div>
 
             <div className="flex items-center gap-3">
-              <Clock className="h-4 w-4 text-muted-foreground" />
+              <Briefcase className="h-4 w-4 text-muted-foreground" />
               <div className="flex-1">
-                <p className="text-sm font-medium">Heures de sommeil</p>
-                <p className="text-sm text-muted-foreground">{currentLifestyle.sleep_hours} heures par nuit</p>
+                <p className="text-sm font-medium">Risques professionnels</p>
+                <p className="text-sm text-muted-foreground">{currentLifestyle.occupational_risks || 'Non spécifié'}</p>
               </div>
             </div>
 
             <div className="flex items-center gap-3">
-              <Brain className="h-4 w-4 text-muted-foreground" />
+              <Calendar className="h-4 w-4 text-muted-foreground" />
               <div className="flex-1">
-                <p className="text-sm font-medium">Niveau de stress</p>
-                <p className="text-sm text-muted-foreground">{formatStressLevel(currentLifestyle.stress_level)}</p>
+                <p className="text-sm font-medium">Date d'évaluation</p>
+                <p className="text-sm text-muted-foreground">{currentLifestyle.assessment_date ? new Date(currentLifestyle.assessment_date).toLocaleDateString('fr-FR') : 'Non spécifiée'}</p>
               </div>
             </div>
           </div>
@@ -140,8 +162,8 @@ export function LifestyleSection({ lifestyle, loading, patientId, onLifestyleAdd
 
         {/* Métadonnées */}
         <div className="flex items-center gap-4 text-xs text-muted-foreground pt-2 border-t">
-          <span>Source: {currentLifestyle.source}</span>
-          <span>ID: {(currentLifestyle as any).id_}</span>
+          <span>Actif: {currentLifestyle.is_active ? 'Oui' : 'Non'}</span>
+          <span>ID: {currentLifestyle.id}</span>
         </div>
       </div>
     </div>
