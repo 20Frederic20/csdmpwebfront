@@ -1,3 +1,5 @@
+"use client"
+
 import {
     Sidebar,
     SidebarContent,
@@ -33,8 +35,12 @@ import {
   Calendar,
   FileText,
   Settings,
+  Building,
+  Heart,
+  Stethoscope,
 } from "lucide-react"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 
 function NavMain({
   items,
@@ -51,6 +57,8 @@ function NavMain({
     }[]
   }[]
 }) {
+  const pathname = usePathname();
+  
   return (
     <SidebarGroup>
       <SidebarGroupLabel>Navigation</SidebarGroupLabel>
@@ -64,7 +72,10 @@ function NavMain({
           >
             <SidebarMenuItem>
               <CollapsibleTrigger asChild>
-                <SidebarMenuButton tooltip={item.title}>
+                <SidebarMenuButton 
+                  tooltip={item.title}
+                  className={pathname.startsWith(item.url) ? "bg-green-50 text-green-700 hover:bg-green-100" : "hover:bg-gray-100"}
+                >
                   {item.icon && <item.icon />}
                   <span>{item.title}</span>
                   <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
@@ -75,7 +86,10 @@ function NavMain({
                   {item.items?.map((subItem) => (
                     <SidebarMenuSubItem key={subItem.title}>
                       <SidebarMenuSubButton asChild>
-                        <Link href={subItem.url}>
+                        <Link 
+                          href={subItem.url}
+                          className={pathname === subItem.url ? "bg-green-100 text-green-700 hover:bg-green-200" : "hover:bg-gray-50"}
+                        >
                           {subItem.icon && <subItem.icon />}
                           <span>{subItem.title}</span>
                         </Link>
@@ -96,19 +110,53 @@ export function AppSidebar() {
   const navItems = [
     {
       title: "Patients",
-      url: "/dashboard/patients",
-      icon: Users,
+      url: "/patients",
+      icon: Heart,
       isActive: true,
       items: [
         {
           title: "Lister",
-          url: "/dashboard/patients",
+          url: "/patients",
           icon: List,
         },
         {
           title: "Importer",
-          url: "/dashboard/patients/import",
+          url: "/patients/import",
           icon: Import,
+        },
+      ],
+    },
+    {
+      title: "Établissements de santé",
+      url: "/health-facilities",
+      icon: Building,
+      items: [
+        {
+          title: "Lister",
+          url: "/health-facilities",
+          icon: List,
+        },
+        {
+          title: "Ajouter",
+          url: "/health-facilities/add",
+          icon: Plus,
+        },
+      ],
+    },
+    {
+      title: "Utilisateurs",
+      url: "/users",
+      icon: Users,
+      items: [
+        {
+          title: "Lister",
+          url: "/users",
+          icon: List,
+        },
+        {
+          title: "Ajouter",
+          url: "/users/add",
+          icon: Plus,
         },
       ],
     },
@@ -172,8 +220,9 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <SidebarMenuButton>
-                  Espace de travail
+                <SidebarMenuButton className="bg-gradient-to-r from-green-500 to-teal-600 text-white hover:from-green-600 hover:to-teal-700">
+                  <Stethoscope className="h-4 w-4 mr-2" />
+                  Espace de santé
                   <ChevronDown className="ml-auto" />
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
