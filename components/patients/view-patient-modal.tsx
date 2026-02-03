@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Eye } from "lucide-react";
 import { Patient } from "@/features/patients/types/patients.types";
 import { formatPatientName, formatBirthDate, formatGender, getPatientStatusBadge } from "@/features/patients/utils/patients.utils";
+import { PatientAllergies } from "./patient-allergies";
 
 interface ViewPatientModalProps {
   patient: Patient;
@@ -19,15 +20,24 @@ interface ViewPatientModalProps {
 
 export function ViewPatientModal({ patient }: ViewPatientModalProps) {
   const [open, setOpen] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0); // Pour forcer le rechargement
+
+  const handleOpenChange = (isOpen: boolean) => {
+    setOpen(isOpen);
+    if (isOpen) {
+      // Forcer le rechargement des allergies quand le modal s'ouvre
+      setRefreshKey(prev => prev + 1);
+    }
+  };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button variant="ghost" size="sm">
           <Eye className="h-4 w-4" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Détails du patient</DialogTitle>
           <DialogDescription>
@@ -85,6 +95,9 @@ export function ViewPatientModal({ patient }: ViewPatientModalProps) {
               )}
             </div>
           </div>
+
+          {/* Allergies */}
+          <PatientAllergies patientId={patient.id_} key={refreshKey} />
         </div>
       </DialogContent>
     </Dialog>

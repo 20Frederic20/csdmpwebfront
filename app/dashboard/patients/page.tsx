@@ -16,13 +16,7 @@ import {
   PaginationPrevious,
   PaginationEllipsis,
 } from "@/components/ui/pagination";
-import { Plus, Search, Filter, MoreHorizontal, Eye, Edit, Trash2, ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { Search, Filter, ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react";
 import { PatientsService } from "@/features/patients/services/patients.service";
 import { PatientsResponse } from "@/features/patients/types/patients.types";
 import { formatPatientName, formatBirthDate, formatGender, getPatientStatusBadge } from "@/features/patients/utils/patients.utils";
