@@ -238,13 +238,13 @@ export function AddUserModal({ onUserAdded }: AddUserModalProps) {
                     onChange={() => toggleRole(role)}
                     className="sr-only"
                   />
-                  <span className="text-sm">{roleLabels[role]}</span>
+                  <span className="text-md">{roleLabels[role]}</span>
                 </div>
               ))}
             </div>
             {selectedRoles.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-2">
-                <span className="text-sm text-muted-foreground">Rôles sélectionnés:</span>
+                <span className="text-md text-muted-foreground">Rôles sélectionnés:</span>
                 {selectedRoles.map((role) => (
                   <Badge key={role} variant="secondary" className="cursor-pointer">
                     {roleLabels[role]}
