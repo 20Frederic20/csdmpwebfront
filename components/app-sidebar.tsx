@@ -38,6 +38,7 @@ import {
   Building,
   Heart,
   Stethoscope,
+  UserCheck,
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -156,6 +157,23 @@ export function AppSidebar() {
         {
           title: "Ajouter",
           url: "/users/add",
+          icon: Plus,
+        },
+      ],
+    },
+    {
+      title: "Personnel",
+      url: "/hospital-staff",
+      icon: UserCheck,
+      items: [
+        {
+          title: "Lister",
+          url: "/hospital-staff",
+          icon: List,
+        },
+        {
+          title: "Ajouter",
+          url: "/hospital-staff/add",
           icon: Plus,
         },
       ],

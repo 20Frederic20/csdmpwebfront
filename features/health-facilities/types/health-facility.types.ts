@@ -1,5 +1,5 @@
 export interface HealthFacility {
-  id: string;
+  id_: string;
   name: string;
   code: string;
   facility_type: 'university_hospital' | 'departmental_hospital' | 'zone_hospital' | 'health_center' | 'dispensary' | 'private_clinic';
