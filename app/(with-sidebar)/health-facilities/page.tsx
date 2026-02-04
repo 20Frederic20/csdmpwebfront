@@ -9,10 +9,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Search, Plus, Filter, Building, MoreHorizontal, Eye, Edit, Trash2, UserCheck } from "lucide-react";
 import { HealthFacility } from "@/features/health-facilities/types/health-facility.types";
 import { HealthFacilityService } from "@/features/health-facilities/services/health-facility.service";
-import { formatFacilityType, getFacilityTypeBadge, formatHealthFacilityStatus, getHealthFacilityStatusBadge } from "@/features/health-facilities/utils/health-facility.utils";
+import { getFacilityTypeBadge, getHealthFacilityStatusBadge } from "@/features/health-facilities/utils/health-facility.utils";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { toast } from "sonner";
 import Link from "next/link";
+import { ViewHealthFacilityModal } from "@/components/health-facilities/view-health-facility-modal";
+import { DeleteHealthFacilityModal } from "@/components/health-facilities/delete-health-facility-modal";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Pagination,
@@ -27,8 +29,8 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 
 export default function HealthFacilitiesPage() {
@@ -39,6 +41,10 @@ export default function HealthFacilitiesPage() {
   const [itemsPerPage, setItemsPerPage] = useState(20);
   const [total, setTotal] = useState(0);
   const { token } = useAuthToken();
+
+  const handleFacilityDeleted = () => {
+    loadFacilities();
+  };
 
   const handleToggleStatus = async (facilityId: string, currentStatus: boolean) => {
     try {
@@ -210,7 +216,7 @@ export default function HealthFacilitiesPage() {
                 </TableHeader>
                 <TableBody>
                   {facilities.map((facility) => (
-                    <TableRow key={facility.id}>
+                    <TableRow key={facility.id_}>
                       <TableCell className="font-medium">{facility.name}</TableCell>
                       <TableCell>
                         <Badge variant={getFacilityTypeBadge(facility.facility_type).variant as "default" | "secondary" | "destructive" | "outline"}>
@@ -239,35 +245,48 @@ export default function HealthFacilitiesPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem asChild className="cursor-pointer">
-                              <Link href={`/health-facilities/${facility.id}`}>
-                                <Eye className="h-4 w-4 mr-2" />
-                                Voir
-                              </Link>
+                            <DropdownMenuItem 
+                              className="cursor-pointer"
+                              onClick={() => {
+                                const modalButton = document.querySelector(`[data-health-facility-view="${facility.id_}"]`) as HTMLButtonElement;
+                                if (modalButton) modalButton.click();
+                              }}
+                            >
+                              <Eye className="h-4 w-4 mr-2" />
+                              Voir
                             </DropdownMenuItem>
                             <DropdownMenuItem asChild className="cursor-pointer">
-                              <Link href={`/health-facilities/${facility.id}/edit`}>
+                              <Link href={`/health-facilities/${facility.id_}/edit`}>
                                 <Edit className="h-4 w-4 mr-2" />
                                 Modifier
                               </Link>
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem 
-                              onClick={() => handleToggleStatus(facility.id, facility.is_active)}
                               className="cursor-pointer"
+                              onClick={() => handleToggleStatus(facility.id_, facility.is_active)}
                             >
                               <UserCheck className="h-4 w-4 mr-2" />
                               {facility.is_active ? 'Désactiver' : 'Activer'}
                             </DropdownMenuItem>
                             <DropdownMenuItem 
-                              onClick={() => handleDeleteFacility(facility.id)}
                               className="text-red-600 cursor-pointer"
+                              onClick={() => {
+                                const modalButton = document.querySelector(`[data-health-facility-delete="${facility.id_}"]`) as HTMLButtonElement;
+                                if (modalButton) modalButton.click();
+                              }}
                             >
                               <Trash2 className="h-4 w-4 mr-2" />
                               Supprimer
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
+                        
+                        {/* Boutons cachés pour déclencher les modals */}
+                        <div className="hidden">
+                          <ViewHealthFacilityModal facility={facility} />
+                          <DeleteHealthFacilityModal facility={facility} onFacilityDeleted={handleFacilityDeleted} />
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
