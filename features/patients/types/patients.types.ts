@@ -10,7 +10,7 @@ export interface Patient {
 }
 
 export interface PatientsResponse {
-  patients: Patient[];
+  data: Patient[];
   total: number;
 }
 
