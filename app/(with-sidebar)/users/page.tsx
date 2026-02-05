@@ -338,7 +338,7 @@ export default function UsersPage() {
               
               {/* Pagination */}
               <div className="flex items-center justify-between space-x-2 py-4">
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-2 flex-shrink-0">
                   <p className="text-md text-muted-foreground">
                     Affichage de {((currentPage - 1) * itemsPerPage) + 1} à {Math.min(currentPage * itemsPerPage, total)} sur {total} résultats
                   </p>
@@ -355,8 +355,8 @@ export default function UsersPage() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Pagination>
+                <div className="flex-1 flex justify-end">
+                  <Pagination className="justify-end">
                     <PaginationContent>
                       <PaginationItem>
                         <PaginationPrevious 
@@ -367,7 +367,7 @@ export default function UsersPage() {
                       
                       {getPaginationItems().map((item, index) => (
                         <PaginationItem key={index}>
-                          {item === '...' ? (
+                          {item === 'ellipsis' ? (
                             <PaginationEllipsis />
                           ) : (
                             <PaginationLink

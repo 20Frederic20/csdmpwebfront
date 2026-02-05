@@ -401,7 +401,7 @@ export default function ConsultationsPage() {
               
               {/* Pagination */}
               <div className="flex items-center justify-between space-x-2 py-4">
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-2 flex-shrink-0">
                   <p className="text-md text-muted-foreground">
                     Affichage de {((currentPage - 1) * itemsPerPage) + 1} à {Math.min(currentPage * itemsPerPage, total)} sur {total} résultats
                   </p>
@@ -418,39 +418,41 @@ export default function ConsultationsPage() {
                     </SelectContent>
                   </Select>
                 </div>
-                <Pagination>
-                  <PaginationContent>
-                    <PaginationItem>
-                      <PaginationPrevious
-                        onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                        className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                      />
-                    </PaginationItem>
-                    
-                    {getPaginationItems().map((item, index) => (
-                      <PaginationItem key={index}>
-                        {item === 'ellipsis' ? (
-                          <PaginationEllipsis />
-                        ) : (
-                          <PaginationLink
-                            onClick={() => setCurrentPage(item as number)}
-                            className={currentPage === item ? "cursor-pointer" : "cursor-pointer"}
-                            isActive={currentPage === item}
-                          >
-                            {item}
-                          </PaginationLink>
-                        )}
+                <div className="flex-1 flex justify-end">
+                  <Pagination className="justify-end">
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious
+                          onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                          className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                        />
                       </PaginationItem>
-                    ))}
-                    
-                    <PaginationItem>
-                      <PaginationNext
-                        onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                        className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                      />
-                    </PaginationItem>
-                  </PaginationContent>
-                </Pagination>
+                      
+                      {getPaginationItems().map((item, index) => (
+                        <PaginationItem key={index}>
+                          {item === 'ellipsis' ? (
+                            <PaginationEllipsis />
+                          ) : (
+                            <PaginationLink
+                              onClick={() => setCurrentPage(item as number)}
+                              className={currentPage === item ? "cursor-pointer" : "cursor-pointer"}
+                              isActive={currentPage === item}
+                            >
+                              {item}
+                            </PaginationLink>
+                          )}
+                        </PaginationItem>
+                      ))}
+                      
+                      <PaginationItem>
+                        <PaginationNext
+                          onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                          className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                </div>
               </div>
             </>
           )}

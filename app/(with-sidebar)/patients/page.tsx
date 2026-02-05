@@ -365,7 +365,7 @@ export default function PatientsPage() {
               
               {/* Pagination */}
               <div className="flex items-center justify-between space-x-2 py-4">
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-2 flex-shrink-0">
                   <p className="text-md text-muted-foreground">
                     Affichage de {((currentPage - 1) * itemsPerPage) + 1} à {Math.min(currentPage * itemsPerPage, patientsData?.total || 0)} sur {patientsData?.total || 0} résultats
                   </p>
@@ -382,40 +382,41 @@ export default function PatientsPage() {
                     </SelectContent>
                   </Select>
                 </div>
-                
-                <Pagination>
-                  <PaginationContent>
-                    <PaginationItem>
-                      <PaginationPrevious 
-                        onClick={() => currentPage > 1 && setCurrentPage(currentPage - 1)}
-                        className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                      />
-                    </PaginationItem>
-                    
-                    {generatePaginationItems().map((item, index) => (
-                      <PaginationItem key={index}>
-                        {item === 'ellipsis' ? (
-                          <PaginationEllipsis />
-                        ) : (
-                          <PaginationLink
-                            onClick={() => setCurrentPage(item as number)}
-                            isActive={currentPage === item}
-                            className="cursor-pointer"
-                          >
-                            {item}
-                          </PaginationLink>
-                        )}
+                <div className="flex-1 flex justify-end">
+                  <Pagination className="justify-end">
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious 
+                          onClick={() => currentPage > 1 && setCurrentPage(currentPage - 1)}
+                          className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                        />
                       </PaginationItem>
-                    ))}
-                    
-                    <PaginationItem>
-                      <PaginationNext 
-                        onClick={() => currentPage < totalPages && setCurrentPage(currentPage + 1)}
-                        className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                      />
-                    </PaginationItem>
-                  </PaginationContent>
-                </Pagination>
+                      
+                      {generatePaginationItems().map((item, index) => (
+                        <PaginationItem key={index}>
+                          {item === 'ellipsis' ? (
+                            <PaginationEllipsis />
+                          ) : (
+                            <PaginationLink
+                              onClick={() => setCurrentPage(item as number)}
+                              isActive={currentPage === item}
+                              className="cursor-pointer"
+                            >
+                              {item}
+                            </PaginationLink>
+                          )}
+                        </PaginationItem>
+                      ))}
+                      
+                      <PaginationItem>
+                        <PaginationNext 
+                          onClick={() => currentPage < totalPages && setCurrentPage(currentPage + 1)}
+                          className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                </div>
               </div>
             </>
           )}

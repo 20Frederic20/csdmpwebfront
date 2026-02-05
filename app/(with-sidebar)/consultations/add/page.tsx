@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,10 +25,12 @@ export default function AddConsultationPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [loadingPatients, setLoadingPatients] = useState(false);
+  const [loadingUsers, setLoadingUsers] = useState(false);
   const [loadingStaff, setLoadingStaff] = useState(false);
   const [patients, setPatients] = useState<Patient[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [hospitalStaff, setHospitalStaff] = useState<HospitalStaff[]>([]);
+  const [errors, setErrors] = useState<Record<string, string | undefined>>({});
   
   const [formData, setFormData] = useState<CreateConsultationRequest>({
     patient_id: "",
@@ -108,28 +110,6 @@ export default function AddConsultationPage() {
     loadPatients();
   }, [token]);
 
-  // Charger tous les utilisateurs actifs au démarrage
-  useEffect(() => {
-    const loadUsers = async () => {
-      setLoadingUsers(true);
-      try {
-        const params: ListUsersQueryParams = {
-          limit: 50, // Plus de résultats pour la recherche
-          is_active: true,
-        };
-        const response = await UserService.getUsers(params, token || undefined);
-        setUsers(response.data || []);
-      } catch (error) {
-        console.error('Error loading users:', error);
-        toast.error('Erreur lors du chargement des utilisateurs');
-      } finally {
-        setLoadingUsers(false);
-      }
-    };
-
-    loadUsers();
-  }, [token]);
-
   // Charger tout le personnel hospitalier actif au démarrage
   useEffect(() => {
     const loadHospitalStaff = async () => {
@@ -152,15 +132,27 @@ export default function AddConsultationPage() {
     loadHospitalStaff();
   }, [token]);
 
+  const validateForm = () => {
+    const newErrors: Record<string, string | undefined> = {};
+
+    // Validation du patient
+    if (!formData.patient_id) {
+      newErrors.patient_id = "";
+    }
+
+    // Validation du motif principal
+    if (!formData.chief_complaint || formData.chief_complaint.trim() === '') {
+      newErrors.chief_complaint = "";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.patient_id) {
-      toast.error("Le patient est requis");
-      return;
-    }
-    if (!formData.chief_complaint.trim()) {
-      toast.error("Le motif principal est requis");
+    if (!validateForm()) {
       return;
     }
 
@@ -267,26 +259,39 @@ export default function AddConsultationPage() {
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="patient_id" className="text-red-500">Patient *</Label>
+                <Label htmlFor="patient_id">Patient <span className="text-red-500">*</span></Label>
                 <CustomSelect
                   options={patientOptions}
                   value={formData.patient_id || ""}
-                  onChange={(value) => handleInputChange('patient_id', value)}
+                  onChange={(value) => {
+                    handleInputChange('patient_id', value);
+                    // Effacer l'erreur quand l'utilisateur sélectionne un patient
+                    if (errors.patient_id !== undefined) {
+                      setErrors(prev => ({ ...prev, patient_id: undefined }));
+                    }
+                  }}
                   placeholder="Sélectionner un patient"
                   isLoading={loadingPatients}
-                  className="w-full h-12"
+                  className={`w-full h-12 ${errors.patient_id !== undefined ? 'border-red-500 focus:border-red-500' : ''}`}
                 />
               </div>
             </div>
             <div className="md:col-span-2 mt-6">
-              <Label htmlFor="chief_complaint" className="text-red-500">Motif principal *</Label>
+              <Label htmlFor="chief_complaint">Motif principal <span className="text-red-500">*</span></Label>
               <Textarea
                 id="chief_complaint"
                 value={formData.chief_complaint}
-                onChange={(e) => handleInputChangeTrim('chief_complaint', e.target.value)}
+                onChange={(e) => {
+                  handleInputChange('chief_complaint', e.target.value);
+                  // Effacer l'erreur quand l'utilisateur tape
+                  if (errors.chief_complaint !== undefined) {
+                    setErrors(prev => ({ ...prev, chief_complaint: undefined }));
+                  }
+                }}
                 placeholder="Décrivez le motif principal de la consultation..."
                 rows={6}
                 required
+                className={errors.chief_complaint !== undefined ? 'border-red-500 focus:border-red-500' : ''}
               />
             </div>
             <div className="md:col-span-2 mt-6">
@@ -294,7 +299,7 @@ export default function AddConsultationPage() {
               <Textarea
                 id="other_symptoms"
                 value={formData.other_symptoms || ""}
-                onChange={(e) => handleInputChangeTrim('other_symptoms', e.target.value)}
+                onChange={(e) => handleInputChange('other_symptoms', e.target.value)}
                 placeholder="Décrivez d'autres symptômes observés..."
                 rows={5}
               />
@@ -426,7 +431,7 @@ export default function AddConsultationPage() {
                 <Textarea
                   id="diagnosis"
                   value={formData.diagnosis || ""}
-                  onChange={(e) => handleInputChangeTrim('diagnosis', e.target.value)}
+                  onChange={(e) => handleInputChange('diagnosis', e.target.value)}
                   placeholder="Diagnostic médical..."
                   rows={3}
                 />
@@ -446,7 +451,7 @@ export default function AddConsultationPage() {
                 <Textarea
                   id="follow_up_notes"
                   value={formData.follow_up_notes || ""}
-                  onChange={(e) => handleInputChangeTrim('follow_up_notes', e.target.value)}
+                  onChange={(e) => handleInputChange('follow_up_notes', e.target.value)}
                   placeholder="Notes pour le suivi..."
                   rows={2}
                 />
@@ -477,7 +482,7 @@ export default function AddConsultationPage() {
                 <Input
                   id="billing_code"
                   value={formData.billing_code || ""}
-                  onChange={(e) => handleInputChangeTrim('billing_code', e.target.value)}
+                  onChange={(e) => handleInputChange('billing_code', e.target.value)}
                   placeholder="Code de facturation..."
                   className="h-12"
                 />
@@ -515,30 +520,26 @@ export default function AddConsultationPage() {
               />
             </div>
           </CardContent>
-        </Card>
-
-        {/* Actions */}
-        <Card>
-          <CardContent className="pt-6">
+          <CardFooter className=" flex justify-end pt-6">
             <div className="flex justify-end gap-3">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => router.push('/consultations')}
-                className="cursor-pointer"
+                className="cursor-pointer h-12"
               >
                 Annuler
               </Button>
               <Button
                 type="submit"
                 disabled={loading}
-                className="cursor-pointer"
+                className="cursor-pointer h-12"
               >
                 <Save className="mr-2 h-4 w-4" />
                 {loading ? "Création..." : "Créer la consultation"}
               </Button>
             </div>
-          </CardContent>
+          </CardFooter>
         </Card>
       </form>
     </div>
