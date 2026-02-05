@@ -23,7 +23,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus } from "lucide-react";
 import { Patient } from "@/features/patients/types/patients.types";
-import { PatientsService } from "@/features/patients/services/patients.service";
+import { PatientService } from "@/features/patients/services/patients.service";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { toast } from "sonner";
 
@@ -48,7 +48,7 @@ export function AddPatientModal({ onPatientAdded }: AddPatientModalProps) {
     setLoading(true);
 
     try {
-      await PatientsService.createPatient(formData as Omit<Patient, 'id_' | 'owner_id'>, token || undefined);
+      await PatientService.createPatient(formData as Omit<Patient, 'id_' | 'owner_id'>, token || undefined);
       setOpen(false);
       setFormData({
         given_name: "",

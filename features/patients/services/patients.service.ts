@@ -15,7 +15,7 @@ function getAuthToken(): string | null {
   return null;
 }
 
-export class PatientsService {
+export class PatientService {
   static async getPatients(params: PatientsQueryParams = {}, token?: string): Promise<PatientsResponse> {
     const searchParams = new URLSearchParams();
     

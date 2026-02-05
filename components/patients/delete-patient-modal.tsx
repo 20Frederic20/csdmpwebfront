@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Trash2 } from "lucide-react";
 import { Patient } from "@/features/patients/types/patients.types";
-import { PatientsService } from "@/features/patients/services/patients.service";
+import { PatientService } from "@/features/patients/services/patients.service";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { toast } from "sonner";
 
@@ -30,7 +30,7 @@ export function DeletePatientModal({ patient, onPatientDeleted }: DeletePatientM
     setLoading(true);
 
     try {
-      await PatientsService.deletePatient(patient.id_, token || undefined);
+      await PatientService.deletePatient(patient.id_, token || undefined);
       setOpen(false);
       toast.success(`Patient ${patient.given_name} ${patient.family_name} supprimé avec succès`);
       onPatientDeleted();

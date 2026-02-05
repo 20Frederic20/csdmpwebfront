@@ -17,11 +17,11 @@ import {
   PaginationEllipsis,
 } from "@/components/ui/pagination";
 import { Search, Filter, ChevronUp, ChevronDown, ChevronsUpDown, MoreHorizontal, Eye, Edit, Trash2, UserCheck, Plus } from "lucide-react";
-import { PatientsService } from "@/features/patients/services/patients.service";
+import { PatientService } from "@/features/patients/services/patients.service";
 import { PatientsResponse } from "@/features/patients/types/patients.types";
 import { formatPatientName, formatBirthDate, formatGender, getPatientStatusBadge } from "@/features/patients/utils/patients.utils";
 import { useAuthToken } from "@/hooks/use-auth-token";
-import { AddPatientModal } from "@/components/patients/add-patient-modal";
+import Link from "next/link";
 import { ViewPatientModal } from "@/components/patients/view-patient-modal";
 import { EditPatientModal } from "@/components/patients/edit-patient-modal";
 import { DeletePatientModal } from "@/components/patients/delete-patient-modal";
@@ -46,8 +46,8 @@ export default function PatientsPage() {
 
   const handleToggleStatus = async (patientId: string, currentStatus: boolean) => {
     try {
-      // TODO: Implémenter togglePatientStatus dans PatientsService
-      // await PatientsService.togglePatientStatus(patientId, !currentStatus, token);
+      // TODO: Implémenter togglePatientStatus dans PatientService
+      // await PatientService.togglePatientStatus(patientId, !currentStatus, token);
       console.log('Toggle patient status:', patientId, !currentStatus);
       loadPatients(); // Recharger la liste
     } catch (error) {
@@ -62,7 +62,7 @@ export default function PatientsPage() {
       setError(null);
       
       const offset = (currentPage - 1) * itemsPerPage;
-      const data = await PatientsService.getPatients({
+      const data = await PatientService.getPatients({
         limit: itemsPerPage,
         offset,
         sorting_field: sortingField,
@@ -125,7 +125,7 @@ export default function PatientsPage() {
 
   // Calcul des données paginées
   const totalPages = patientsData ? Math.ceil(patientsData.total / itemsPerPage) : 0;
-  const patients = patientsData?.patients || [];
+  const patients = patientsData?.data || [];
 
   // Générer les numéros de pages pour la pagination shadcn
   const generatePaginationItems = () => {
@@ -174,10 +174,12 @@ export default function PatientsPage() {
             Gérez les informations des patients et leurs dossiers médicaux.
           </p>
         </div>
-        <Button className="cursor-pointer">
-          <Plus className="mr-2 h-4 w-4" />
-          Ajouter un patient
-        </Button>
+        <Link href="/patients/add">
+          <Button className="cursor-pointer">
+            <Plus className="mr-2 h-4 w-4" />
+            Ajouter un patient
+          </Button>
+        </Link>
       </div>
 
       {/* Filtres et recherche */}

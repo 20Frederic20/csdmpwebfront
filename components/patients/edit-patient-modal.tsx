@@ -23,7 +23,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Edit } from "lucide-react";
 import { Patient } from "@/features/patients/types/patients.types";
-import { PatientsService } from "@/features/patients/services/patients.service";
+import { PatientService } from "@/features/patients/services/patients.service";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { toast } from "sonner";
 
@@ -64,7 +64,7 @@ export function EditPatientModal({ patient, onPatientUpdated }: EditPatientModal
     setLoading(true);
 
     try {
-      await PatientsService.updatePatient(patient.id_, formData, token || undefined);
+      await PatientService.updatePatient(patient.id_, formData, token || undefined);
       setOpen(false);
       toast.success("Patient modifié avec succès");
       onPatientUpdated();
