@@ -17,6 +17,7 @@ import Link from "next/link";
 
 import { loginAction } from '@/features/core/auth/services/auth.service';
 import { useLoginActions } from '@/hooks/use-login-actions';
+import { AuthClientService } from '@/features/core/auth/services/auth-client.service';
 
 export default function LoginPage() {
 
@@ -30,28 +31,15 @@ export default function LoginPage() {
         setError(null);
 
         const formData = new FormData(event.currentTarget);
+        const health_id = formData.get('health_id') as string;
+        const password = formData.get('password') as string;
 
         startTransition(async () => {
             try {
-                // Appeler le server action pour le cookie HttpOnly
-                const response = await fetch('/api/auth/login', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        health_id: formData.get('health_id'),
-                        password: formData.get('password'),
-                    }),
-                });
-
-                if (!response.ok) {
-                    throw new Error('Invalid credentials');
-                }
-
-                const data = await response.json();
+                // Utiliser le service client pour le login
+                const data = await AuthClientService.login(health_id, password);
                 
-                // Gérer le succès côté client
+                // Utiliser handleLoginSuccess pour la redirection
                 handleLoginSuccess(data.access_token);
             } catch (err: any) {
                 setError(err.message || 'Une erreur est survenue lors de la connexion.');
@@ -85,6 +73,7 @@ export default function LoginPage() {
                                 placeholder="m@example.com"
                                 required
                                 disabled={isPending}
+                                className="h-12"
                             />
                         </div>
 
@@ -104,6 +93,7 @@ export default function LoginPage() {
                                 type="password"
                                 required
                                 disabled={isPending}
+                                className="h-12"
                             />
                         </div>
 
@@ -114,14 +104,14 @@ export default function LoginPage() {
 
                     {/* Bouton submit placé ici pour être dans le <form> */}
                     <CardFooter className="flex flex-col gap-2 pt-6">
-                        <Button type="submit" className="w-full" disabled={isPending}>
+                        <Button type="submit" className="w-full h-12" disabled={isPending}>
                             {isPending ? "Connexion en cours..." : "Se connecter"}
                         </Button>
 
                         <Button
                             type="button"
                             variant="outline"
-                            className="w-full"
+                            className="w-full h-12"
                             disabled={isPending}
                         // À implémenter plus tard : Google OAuth via Server Action ou route handler
                         // onClick={() => router.push('/api/auth/google')}

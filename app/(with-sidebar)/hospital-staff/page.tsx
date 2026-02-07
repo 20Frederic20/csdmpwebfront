@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -64,7 +65,7 @@ export default function HospitalStaffPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
   const [total, setTotal] = useState(0);
-  const [sortingField, setSortingField] = useState('family_name');
+  const [sortingField, setSortingField] = useState('given_name');
   const [sortingOrder, setSortingOrder] = useState<'asc' | 'desc'>('asc');
   const { token } = useAuthToken();
 
@@ -108,6 +109,14 @@ export default function HospitalStaffPage() {
   useEffect(() => {
     loadStaff();
   }, [currentPage, itemsPerPage, searchTerm, sortingField, sortingOrder, filters, token]);
+
+  const getStaffDisplayName = (member: HospitalStaff) => {
+    // Priorité aux noms utilisateur si disponibles, sinon matricule
+    if (member.given_name && member.family_name) {
+      return `${member.given_name} ${member.family_name}`;
+    }
+    return member.matricule || 'Personnel non identifié';
+  };
 
   const handleSearch = (value: string) => {
     setSearchTerm(value);
@@ -167,14 +176,44 @@ export default function HospitalStaffPage() {
     loadStaff();
   };
 
-  const handleToggleStatus = async (staffId: string, currentStatus: boolean) => {
+  const handleToggleStatus = async (id: string) => {
     try {
-      await HospitalStaffService.toggleHospitalStaffStatus(staffId, token || undefined);
-      toast.success(`Personnel ${currentStatus ? 'désactivé' : 'activé'} avec succès`);
-      loadStaff();
+      // Trouver le membre actuel pour vérifier la version
+      const currentMember = staff.find(member => member.id_ === id);
+      if (!currentMember) {
+        toast.error('Membre du personnel non trouvé');
+        return;
+      }
+
+      // Appel API pour toggle le statut avec version
+      const updatedStaff = await HospitalStaffService.toggleHospitalStaffStatus(id, token || undefined);
+      
+      // Vérifier si la réponse contient une information de conflit
+      if (updatedStaff.version && currentMember.version && updatedStaff.version !== currentMember.version + 1) {
+        // Conflit détecté - recharger la liste pour avoir l'état frais
+        toast.warning('Le personnel a été modifié par un autre utilisateur. Actualisation...');
+        loadStaff();
+        return;
+      }
+      
+      // Mettre à jour l'état localement avec la nouvelle version
+      setStaff(prevStaff => 
+        prevStaff.map(member => 
+          member.id_ === id ? { ...member, ...updatedStaff } : member
+        )
+      );
+      
+      toast.success('Statut du personnel mis à jour avec succès');
     } catch (error) {
       console.error('Error toggling staff status:', error);
-      toast.error('Erreur lors du changement de statut');
+      
+      // Gérer les erreurs de conflit HTTP 409
+      if (error instanceof Error && error.message.includes('409')) {
+        toast.warning('Conflit de modification. Actualisation des données...');
+        loadStaff();
+      } else {
+        toast.error('Erreur lors de la mise à jour du statut');
+      }
     }
   };
 
@@ -482,23 +521,14 @@ export default function HospitalStaffPage() {
                   <TableRow>
                     <TableHead 
                       className="cursor-pointer hover:bg-muted/50 transition-colors"
-                      onClick={() => handleSort('user_id')}
+                      onClick={() => handleSort('given_name')}
                     >
                       <div className="flex items-center gap-2">
                         Personnel
-                        {getSortIcon('user_id')}
+                        {getSortIcon('given_name')}
                       </div>
                     </TableHead>
-                    <TableHead>Matricule</TableHead>
-                    <TableHead 
-                      className="cursor-pointer hover:bg-muted/50 transition-colors"
-                      onClick={() => handleSort('specialty')}
-                    >
-                      <div className="flex items-center gap-2">
-                        Spécialité
-                        {getSortIcon('specialty')}
-                      </div>
-                    </TableHead>
+                    <TableHead>Spécialité</TableHead>
                     <TableHead 
                       className="cursor-pointer hover:bg-muted/50 transition-colors"
                       onClick={() => handleSort('department')}
@@ -524,7 +554,7 @@ export default function HospitalStaffPage() {
                 <TableBody>
                   {staff.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center py-8">
+                      <TableCell colSpan={6} className="text-center py-8">
                         <div className="text-center">
                           <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                           <h3 className="text-lg font-semibold mb-2">
@@ -554,18 +584,13 @@ export default function HospitalStaffPage() {
                         <TableCell className="font-medium">
                           <div className="flex items-center gap-3">
                             <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-md font-medium">
-                              {member.user_id?.substring(0, 2).toUpperCase() || 'ST'}
+                              {getStaffDisplayName(member).substring(0, 2).toUpperCase() || 'ST'}
                             </div>
                             <div>
-                              <div className="font-medium">{member.user_id}</div>
-                              <div className="text-md text-muted-foreground">ID: {member.id_}</div>
+                              <div className="font-medium">{getStaffDisplayName(member)}</div>
+                              <div className="text-md text-muted-foreground">Matricule: {member.matricule}</div>
                             </div>
                           </div>
-                        </TableCell>
-                        <TableCell>
-                          <code className="px-2 py-1 bg-muted rounded text-md">
-                            {member.matricule}
-                          </code>
                         </TableCell>
                         <TableCell>
                           <Badge variant="secondary">
@@ -583,12 +608,11 @@ export default function HospitalStaffPage() {
                           </span>
                         </TableCell>
                         <TableCell>
-                          <Badge 
-                            variant={member.is_active ? "default" : "secondary"}
-                            className={member.is_active ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}
-                          >
-                            {member.is_active ? 'Actif' : 'Inactif'}
-                          </Badge>
+                          <Switch 
+                            checked={member.is_active}
+                            onCheckedChange={() => handleToggleStatus(member.id_)}
+                            className="data-[state=checked]:bg-green-500"
+                          />
                         </TableCell>
                         <TableCell className="text-right">
                           <DropdownMenu>
@@ -619,13 +643,6 @@ export default function HospitalStaffPage() {
                                 Modifier
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
-                              <DropdownMenuItem 
-                                className="cursor-pointer"
-                                onClick={() => handleToggleStatus(member.id_, member.is_active)}
-                              >
-                                <UserCheck className="h-4 w-4 mr-2" />
-                                {member.is_active ? 'Désactiver' : 'Activer'}
-                              </DropdownMenuItem>
                               <DropdownMenuItem 
                                 className="cursor-pointer text-red-600"
                                 onClick={() => {
