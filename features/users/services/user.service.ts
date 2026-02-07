@@ -1,4 +1,5 @@
 import { User, CreateUserRequest, UpdateUserRequest, ListUsersResponse, ListUsersQueryParams } from "../types/user.types";
+import { AuthClientService } from "@/features/core/auth/services/auth-client.service";
 
 export class UserService {
   private static readonly BASE_URL = process.env.NODE_ENV === 'development' 
@@ -27,27 +28,10 @@ export class UserService {
     const url = `${this.API_URL}/users${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
     console.log('Fetching users from:', url);
     
-    const authToken = token || this.getAuthToken();
-    console.log('Token available:', !!authToken);
-    
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-    
-    if (authToken) {
-      headers['Authorization'] = `Bearer ${authToken}`;
-    }
-    
-    console.log('Headers being sent:', headers);
-    console.log('Full Authorization header:', headers['Authorization'] ? 'Bearer ' + authToken?.substring(0, 20) + '...' : 'Not set');
-
-    const response = await fetch(url, {
+    // Utiliser AuthClientService pour la gestion automatique du refresh token
+    const response = await AuthClientService.makeAuthenticatedRequest(url, {
       method: 'GET',
-      headers,
     });
-
-    console.log('Response status:', response.status);
-    console.log('Response ok:', response.ok);
 
     if (!response.ok) {
       throw new Error(`Failed to fetch users: ${response.statusText} (${response.status})`);
@@ -57,14 +41,11 @@ export class UserService {
   }
 
   static async getUserById(id: string, token?: string): Promise<User> {
-    const authToken = token || this.getAuthToken();
+    const url = `${this.API_URL}/users/${id}`;
     
-    const response = await fetch(`${this.API_URL}/users/${id}`, {
+    // Utiliser AuthClientService pour la gestion automatique du refresh token
+    const response = await AuthClientService.makeAuthenticatedRequest(url, {
       method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(authToken && { 'Authorization': `Bearer ${authToken}` }),
-      },
     });
 
     if (!response.ok) {
@@ -75,14 +56,11 @@ export class UserService {
   }
 
   static async createUser(userData: CreateUserRequest, token?: string): Promise<User> {
-    const authToken = token || this.getAuthToken();
+    const url = `${this.API_URL}/users`;
     
-    const response = await fetch(`${this.API_URL}/users`, {
+    // Utiliser AuthClientService pour la gestion automatique du refresh token
+    const response = await AuthClientService.makeAuthenticatedRequest(url, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(authToken && { 'Authorization': `Bearer ${authToken}` }),
-      },
       body: JSON.stringify(userData),
     });
 
@@ -94,14 +72,11 @@ export class UserService {
   }
 
   static async updateUser(id: string, userData: UpdateUserRequest, token?: string): Promise<User> {
-    const authToken = token || this.getAuthToken();
+    const url = `${this.API_URL}/users/${id}`;
     
-    const response = await fetch(`${this.API_URL}/users/${id}`, {
+    // Utiliser AuthClientService pour la gestion automatique du refresh token
+    const response = await AuthClientService.makeAuthenticatedRequest(url, {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(authToken && { 'Authorization': `Bearer ${authToken}` }),
-      },
       body: JSON.stringify(userData),
     });
 
@@ -113,14 +88,11 @@ export class UserService {
   }
 
   static async deleteUser(id: string, token?: string): Promise<void> {
-    const authToken = token || this.getAuthToken();
+    const url = `${this.API_URL}/users/${id}`;
     
-    const response = await fetch(`${this.API_URL}/users/${id}`, {
+    // Utiliser AuthClientService pour la gestion automatique du refresh token
+    const response = await AuthClientService.makeAuthenticatedRequest(url, {
       method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(authToken && { 'Authorization': `Bearer ${authToken}` }),
-      },
     });
 
     if (!response.ok) {
