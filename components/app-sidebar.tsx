@@ -198,17 +198,17 @@ export function AppSidebar() {
     },
     {
       title: "Rendez-vous",
-      url: "/dashboard/appointments",
+      url: "/appointments",
       icon: Calendar,
       items: [
         {
           title: "Lister",
-          url: "/dashboard/appointments",
+          url: "/appointments",
           icon: List,
         },
         {
           title: "Ajouter",
-          url: "/dashboard/appointments/add",
+          url: "/appointments/add",
           icon: Plus,
         },
       ],

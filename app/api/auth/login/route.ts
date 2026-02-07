@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { authenticateUser } from '@/features/core/auth/services/auth-api.service';
+import { loginAction } from '@/features/core/auth/services/auth.service';
 import { cookies } from 'next/headers';
 
 export async function POST(request: NextRequest) {
@@ -7,9 +7,28 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { health_id, password } = body;
 
-    // Authentifier l'utilisateur avec l'API backend
-    const data = await authenticateUser(health_id, password);
+    // URL de l'API backend
+    const API_BASE = process.env.NODE_ENV === 'development' 
+      ? 'http://localhost:8000/api/v1'  // Direct en développement
+      : 'http://localhost:8000/api/v1';     // Direct en production
 
+    // Appeler l'API backend directement avec le bon endpoint
+    const response = await fetch(`${API_BASE}/account/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ health_id, password }),
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      return NextResponse.json(
+        { error: 'Identifiants invalides' },
+        { status: 401 }
+      );
+    }
+
+    const data = await response.json();
+    
     // Set HttpOnly cookie from Next.js (most secure & SSR-friendly)
     const cookieStore = await cookies();
     cookieStore.set('access_token', data.access_token, {
@@ -20,12 +39,12 @@ export async function POST(request: NextRequest) {
       maxAge: data.expires_in,
     });
 
-    // Retourner les données pour le stockage côté client
-    return NextResponse.json(data);
+    // Rediriger vers le dashboard
+    return NextResponse.redirect('/dashboard');
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Login failed' },
-      { status: 401 }
+      { error: 'Erreur lors de la connexion' },
+      { status: 500 }
     );
   }
 }
