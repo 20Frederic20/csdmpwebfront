@@ -7,6 +7,12 @@ export interface HospitalStaff {
   specialty: HospitalStaffSpecialty;
   department: HospitalStaffDepartment;
   is_active: boolean;
+  // Données utilisateur enrichies (directement dans l'objet)
+  given_name?: string;
+  family_name?: string;
+  // Pour la gestion de concurrence
+  updated_at?: string;
+  version?: number;
 }
 
 export interface CreateHospitalStaffRequest {

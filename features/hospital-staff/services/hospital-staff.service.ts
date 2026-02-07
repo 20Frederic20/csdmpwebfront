@@ -35,10 +35,8 @@ export class HospitalStaffService {
     if (params?.sort_order) queryParams.append('sort_order', params.sort_order);
 
     const url = `${this.API_URL}/hospital-staff${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
-    console.log('Fetching hospital staff from:', url);
     
     const authToken = token || this.getAuthToken();
-    console.log('Token available:', !!authToken);
     
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
@@ -48,16 +46,12 @@ export class HospitalStaffService {
       headers['Authorization'] = `Bearer ${authToken}`;
     }
     
-    console.log('Headers being sent:', headers);
-    console.log('Full Authorization header:', headers['Authorization'] ? 'Bearer ' + authToken?.substring(0, 20) + '...' : 'Not set');
 
     const response = await fetch(url, {
       method: 'GET',
       headers,
     });
 
-    console.log('Response status:', response.status);
-    console.log('Response ok:', response.ok);
 
     if (!response.ok) {
       throw new Error(`Failed to fetch hospital staff: ${response.statusText} (${response.status})`);
