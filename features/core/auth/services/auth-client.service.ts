@@ -203,7 +203,7 @@ export class AuthClientService {
     }); // Debug
 
     // Stocker les tokens et les expirations
-    this.setTokens(data);
+    this.setTokens(data.access_token, data.refresh_token, data.expires_in, data.refresh_expires_in);
 
     console.log('Tokens stored in localStorage:', {
       accessToken: !!localStorage.getItem('access_token'),
