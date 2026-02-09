@@ -40,6 +40,8 @@ import {
   Stethoscope,
   UserCheck,
   Activity, // Added
+  Beaker, // Added for lab results
+  Shield, // Added for insurance companies
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -192,6 +194,40 @@ export function AppSidebar() {
         {
           title: "Ajouter",
           url: "/consultations/add",
+          icon: Plus,
+        },
+      ],
+    },
+    {
+      title: "Résultats de laboratoire",
+      url: "/lab-results",
+      icon: Beaker,
+      items: [
+        {
+          title: "Lister",
+          url: "/lab-results",
+          icon: List,
+        },
+        {
+          title: "Ajouter",
+          url: "/lab-results/add",
+          icon: Plus,
+        },
+      ],
+    },
+    {
+      title: "Compagnies d'assurance",
+      url: "/insurance-companies",
+      icon: Shield,
+      items: [
+        {
+          title: "Lister",
+          url: "/insurance-companies",
+          icon: List,
+        },
+        {
+          title: "Ajouter",
+          url: "/insurance-companies/add",
           icon: Plus,
         },
       ],
