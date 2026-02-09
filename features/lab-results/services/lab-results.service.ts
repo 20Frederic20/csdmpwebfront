@@ -89,15 +89,8 @@ export class LabResultsService {
   }
 
   static async deleteLabResult(id: string): Promise<void> {
-    const url = `${this.API_URL}/lab-results/${id}`;
-    
-    const response = await AuthClientService.makeAuthenticatedRequest(url, {
-      method: 'DELETE',
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to delete lab result: ${response.statusText}`);
-    }
+    console.log('Soft deleting lab result:', id);
+    return FetchService.delete<void>(`lab-results/${id}/soft-delete`, 'Lab result');
   }
 
   static async toggleLabResultStatus(id: string, isActive: boolean): Promise<LabResult> {
