@@ -199,7 +199,7 @@ export function AppSidebar() {
       icon: UserCog,
       isActive: pathname.startsWith("/hospital-staff"),
       requiredPermission: {
-        resource: "hospital_staff",
+        resource: "hospital_staffs",
         action: "list"
       },
       items: [
@@ -208,7 +208,7 @@ export function AppSidebar() {
           url: "/hospital-staff",
           icon: Users,
           requiredPermission: {
-            resource: "hospital_staff",
+            resource: "hospital_staffs",
             action: "list"
           }
         },
@@ -217,7 +217,7 @@ export function AppSidebar() {
           url: "/hospital-staff/add",
           icon: UserPlus,
           requiredPermission: {
-            resource: "hospital_staff",
+            resource: "hospital_staffs",
             action: "create"
           }
         }
