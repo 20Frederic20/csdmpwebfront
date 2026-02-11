@@ -17,10 +17,12 @@ import {
   PaginationEllipsis,
 } from "@/components/ui/pagination";
 import { Search, Filter, ChevronUp, ChevronDown, ChevronsUpDown, MoreHorizontal, Eye, Edit, Trash2, UserCheck, Plus } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { PatientService } from "@/features/patients/services/patients.service";
 import { PatientsResponse } from "@/features/patients/types/patients.types";
 import { formatPatientName, formatBirthDate, formatGender, getPatientStatusBadge } from "@/features/patients/utils/patients.utils";
 import { useAuthToken } from "@/hooks/use-auth-token";
+import { toast } from "sonner";
 import Link from "next/link";
 import { ViewPatientModal } from "@/components/patients/view-patient-modal";
 import { EditPatientModal } from "@/components/patients/edit-patient-modal";
@@ -44,14 +46,25 @@ export default function PatientsPage() {
   const [sortingOrder, setSortingOrder] = useState<'ASC' | 'DESC'>('ASC');
   const { token } = useAuthToken();
 
-  const handleToggleStatus = async (patientId: string, currentStatus: boolean) => {
+  const handleToggleStatus = async (patientId: string) => {
     try {
-      // TODO: Implémenter togglePatientStatus dans PatientService
-      // await PatientService.togglePatientStatus(patientId, !currentStatus, token);
-      console.log('Toggle patient status:', patientId, !currentStatus);
-      loadPatients(); // Recharger la liste
-    } catch (error) {
-      console.error('Error toggling patient status:', error);
+      // Appel API pour toggle l'activation du patient
+      const updatedPatient = await PatientService.togglePatientActivation(patientId, token || undefined);
+      
+      // Mettre à jour le patient dans la liste
+      if (patientsData) {
+        setPatientsData({
+          ...patientsData,
+          data: patientsData.data.map(patient => 
+            patient.id_ === patientId ? updatedPatient : patient
+          )
+        });
+      }
+      
+      toast.success(`Patient ${updatedPatient.is_active ? 'activé' : 'désactivé'} avec succès`);
+    } catch (error: any) {
+      console.error('Error toggling patient activation:', error);
+      toast.error(error.message || "Erreur lors du changement de statut");
     }
   };
 
@@ -78,7 +91,7 @@ export default function PatientsPage() {
     }
   };
 
-  // Charger les données au montage et quand les paramètres changent
+  // Charger les données au montage
   useEffect(() => {
     if (token) {
       loadPatients();
@@ -86,7 +99,14 @@ export default function PatientsPage() {
       setLoading(false);
       setError('Token d\'authentification manquant');
     }
-  }, [currentPage, itemsPerPage, searchTerm, sortingField, sortingOrder, token]);
+  }, [token]);
+
+  // Recharger seulement quand les paramètres de pagination/recherche/tri changent
+  useEffect(() => {
+    if (token) {
+      loadPatients();
+    }
+  }, [currentPage, itemsPerPage, searchTerm, sortingField, sortingOrder]);
 
   // Gestion du tri
   const handleSort = (field: string) => {
@@ -276,7 +296,7 @@ export default function PatientsPage() {
                       className="cursor-pointer hover:bg-muted/50"
                       onClick={() => handleSort('is_active')}
                     >
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center space-x-1">
                         Statut
                         {getSortIcon('is_active')}
                       </div>
@@ -294,9 +314,11 @@ export default function PatientsPage() {
                         <TableCell>{formatGender(patient.gender)}</TableCell>
                         <TableCell>{patient.location}</TableCell>
                         <TableCell>
-                          <Badge variant={statusBadge.variant as "default" | "secondary" | "destructive" | "outline"}>
-                            {statusBadge.label}
-                          </Badge>
+                            <Switch 
+                              checked={patient.is_active}
+                              onCheckedChange={() => handleToggleStatus(patient.id_)}
+                              className="data-[state=checked]:bg-green-500"
+                            />
                         </TableCell>
                         <TableCell className="text-right">
                           <DropdownMenu>
@@ -330,7 +352,7 @@ export default function PatientsPage() {
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem 
-                                onClick={() => handleToggleStatus(patient.id_, patient.is_active)}
+                                onClick={() => handleToggleStatus(patient.id_)}
                                 className="cursor-pointer"
                               >
                                 <UserCheck className="h-4 w-4 mr-2" />
