@@ -33,7 +33,7 @@ interface User {
 export function UserAvatarDropdown() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const { token, setToken, clearToken } = useAuthToken();
+  const { clearToken } = useAuthToken();
   const router = useRouter();
 
   useEffect(() => {
@@ -61,7 +61,7 @@ export function UserAvatarDropdown() {
   }, []);
 
   const handleLogout = () => {
-    // Supprimer le token
+    // Supprimer le token du localStorage uniquement
     clearToken();
     
     // Rediriger vers la page de login
