@@ -28,7 +28,7 @@ export interface CreateLabResultRequest {
 }
 
 export interface LabResult {
-  id: string;
+  id_: string;
   patient_id: string;
   performer_id: string; // ID du personnel qui a réalisé le test
   test_type: TestType;

@@ -230,7 +230,7 @@ export default function LabResultsPage() {
             <div className="space-y-4">
               {labResults.map((labResult) => (
                 <div
-                  key={labResult.id}
+                  key={labResult.id_}
                   className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50"
                 >
                   <div className="flex-1">
