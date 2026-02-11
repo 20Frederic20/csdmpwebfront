@@ -25,5 +25,5 @@ export function useAuthToken() {
     }
   };
 
-  return { token, saveToken, clearToken };
+  return { token, setToken: saveToken, clearToken };
 }
