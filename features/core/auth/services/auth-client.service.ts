@@ -65,10 +65,12 @@ export class AuthClientService {
 
   private static setTokens(access_token: string, refresh_token: string, expiresIn?: number, refreshExpiresIn?: number): void {
     if (typeof window !== 'undefined') {
+      // Garder uniquement dans localStorage (pas de cookies)
       localStorage.setItem('access_token', access_token);
       localStorage.setItem('refresh_token', refresh_token);
+      
       // Stocker les dates d'expiration
-      this.setExpirationTime(expiresIn || 15 * 60, refreshExpiresIn); // 15 minutes par défaut pour access token
+      this.setExpirationTime(expiresIn || 15 * 60, refreshExpiresIn);
     }
   }
 
@@ -81,6 +83,7 @@ export class AuthClientService {
   }
 
   static async refreshToken(): Promise<string | null> {
+    // Utiliser le refresh_token depuis localStorage
     const refreshToken = this.getRefreshToken();
     const refreshExpiration = this.getRefreshTokenExpiration();
     
@@ -88,7 +91,7 @@ export class AuthClientService {
       console.warn('No refresh token available');
       return null;
     }
-
+    
     // Vérifier si le refresh token est expiré
     if (refreshExpiration && Date.now() > refreshExpiration) {
       console.warn('Refresh token expired');
@@ -98,6 +101,7 @@ export class AuthClientService {
     }
     
     try {
+      // Appeler directement le backend pour rafraîchir
       const response = await fetch(`${this.API_URL}/token/refresh`, {
         method: 'POST',
         headers: {
@@ -120,8 +124,11 @@ export class AuthClientService {
 
       const data: RefreshTokenResponse = await response.json();
       
-      // Mettre à jour les tokens ET les dates d'expiration
-      this.setTokens(data.access_token, data.refresh_token, data.expires_in, data.expires_in);
+      // Mettre à jour les tokens dans localStorage uniquement
+      if (data.access_token) {
+        localStorage.setItem('access_token', data.access_token);
+        this.setExpirationTime(data.expires_in, data.expires_in);
+      }
       
       return data.access_token;
     } catch (error) {
@@ -179,7 +186,6 @@ export class AuthClientService {
   }
 
   static async login(health_id: string, password: string): Promise<AuthResponse> {
-    console.log('Starting login process...'); // Debug
 
     const response = await fetch(`${this.API_URL}/account/login`, {
       method: 'POST',
@@ -197,20 +203,8 @@ export class AuthClientService {
     }
 
     const data: AuthResponse = await response.json();
-    console.log('Login success, tokens received:', { 
-      hasAccessToken: !!data.access_token, 
-      hasRefreshToken: !!data.refresh_token 
-    }); // Debug
-
-    // Stocker les tokens et les expirations
+    
     this.setTokens(data.access_token, data.refresh_token, data.expires_in, data.refresh_expires_in);
-
-    console.log('Tokens stored in localStorage:', {
-      accessToken: !!localStorage.getItem('access_token'),
-      refreshToken: !!localStorage.getItem('refresh_token'),
-      accessExpiresAt: data.expires_in ? new Date(Date.now() + data.expires_in * 1000).toISOString() : null,
-      refreshExpiresAt: data.refresh_expires_in ? new Date(Date.now() + data.refresh_expires_in * 1000).toISOString() : null
-    }); // Debug
 
     return data;
   }
