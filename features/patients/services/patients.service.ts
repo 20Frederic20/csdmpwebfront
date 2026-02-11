@@ -28,6 +28,8 @@ export class PatientService {
     if (params.sorting_field) searchParams.append('sorting_field', params.sorting_field);
     if (params.sorting_order) searchParams.append('sorting_order', params.sorting_order);
     if (params.search) searchParams.append('search', params.search);
+    if (params.birth_date_from) searchParams.append('birth_date_from', params.birth_date_from);
+    if (params.genders) searchParams.append('genders', params.genders);
 
     const url = `${API_BASE}/patients${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
     

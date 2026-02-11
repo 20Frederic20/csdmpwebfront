@@ -5,8 +5,6 @@ import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DataPagination } from "@/components/ui/data-pagination";
 import { Search, Filter, ChevronUp, ChevronDown, ChevronsUpDown, MoreHorizontal, Eye, Edit, Trash2, UserCheck, Plus } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
@@ -19,6 +17,7 @@ import Link from "next/link";
 import { ViewPatientModal } from "@/components/patients/view-patient-modal";
 import { EditPatientModal } from "@/components/patients/edit-patient-modal";
 import { DeletePatientModal } from "@/components/patients/delete-patient-modal";
+import { PatientFilters } from "@/components/patients/patient-filters";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,6 +35,12 @@ export default function PatientsPage() {
   const [error, setError] = useState<string | null>(null);
   const [sortingField, setSortingField] = useState('id');
   const [sortingOrder, setSortingOrder] = useState<'ASC' | 'DESC'>('ASC');
+  const [filters, setFilters] = useState({
+    search: "",
+    birth_date_from: "",
+    genders: "all" as 'male' | 'female' | 'other' | 'unknown' | 'all',
+  });
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const { token } = useAuthToken();
 
   const handleToggleStatus = async (patientId: string) => {
@@ -67,13 +72,21 @@ export default function PatientsPage() {
       setError(null);
       
       const offset = (currentPage - 1) * itemsPerPage;
-      const data = await PatientService.getPatients({
+      
+      // Construire les paramètres de requête avec les filtres
+      const params: any = {
         limit: itemsPerPage,
         offset,
         sorting_field: sortingField,
         sorting_order: sortingOrder,
-        search: searchTerm || undefined,
-      }, token || undefined);
+      };
+
+      // Ajouter les filtres de recherche
+      if (filters.search) params.search = filters.search;
+      if (filters.birth_date_from) params.birth_date_from = filters.birth_date_from;
+      if (filters.genders && filters.genders !== 'all') params.genders = filters.genders;
+      
+      const data = await PatientService.getPatients(params, token || undefined);
       
       setPatientsData(data);
     } catch (err) {
@@ -98,7 +111,7 @@ export default function PatientsPage() {
     if (token) {
       loadPatients();
     }
-  }, [currentPage, itemsPerPage, searchTerm, sortingField, sortingOrder]);
+  }, [currentPage, itemsPerPage, filters, token]);
 
   // Gestion du tri
   const handleSort = (field: string) => {
@@ -127,6 +140,25 @@ export default function PatientsPage() {
   const handleSearchChange = (value: string) => {
     setSearchTerm(value);
     setCurrentPage(1);
+  };
+
+  // Handlers pour les filtres avancés
+  const handleFiltersChange = (newFilters: typeof filters) => {
+    setFilters(newFilters);
+    setCurrentPage(1);
+  };
+
+  const handleFiltersReset = () => {
+    setFilters({
+      search: "",
+      birth_date: "",
+      genders: "all",
+    });
+    setCurrentPage(1);
+  };
+
+  const toggleAdvancedFilters = () => {
+    setShowAdvancedFilters(!showAdvancedFilters);
   };
 
   // Reset page 1 quand le nombre d'éléments par page change
@@ -158,30 +190,13 @@ export default function PatientsPage() {
       </div>
 
       {/* Filtres et recherche */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Filtres</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                <Input
-                  placeholder="Rechercher un patient..."
-                  value={searchTerm}
-                  onChange={(e) => handleSearchChange(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-            <Button variant="outline">
-              <Filter className="mr-2 h-4 w-4" />
-              Filtres avancés
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <PatientFilters
+        filters={filters}
+        onFiltersChange={handleFiltersChange}
+        onReset={handleFiltersReset}
+        isOpen={showAdvancedFilters}
+        onToggle={toggleAdvancedFilters}
+      />
 
       {/* Tableau des patients */}
       <Card>
