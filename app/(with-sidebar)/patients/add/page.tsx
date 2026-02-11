@@ -14,6 +14,8 @@ import { User, ListUsersQueryParams } from "@/features/users";
 import { UserService } from "@/features/users";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import CustomSelect from '@/components/ui/custom-select';
+import { CreatePatientRequest } from "@/features/patients";
+import { CreateUserRequest } from "@/features/users";
 
 export default function AddPatientPage() {
   const router = useRouter();
@@ -26,7 +28,14 @@ export default function AddPatientPage() {
     birth_date: "",
     gender: "male" as "male" | "female" | "other" | "unknown",
     location: "",
-    owner_id: "",
+    owner_id: null as string | null, // ← Permettre null pour owner_id
+    is_main: false,
+    main_user: {} as CreateUserRequest,
+    create_user: false, // Ajouté : checkbox pour créer un utilisateur
+  });
+  const [newUserData, setNewUserData] = useState({
+    health_id: "",
+    password: "",
   });
   // Convertir les utilisateurs en options pour CustomSelect
   const userOptions = [
@@ -94,7 +103,40 @@ export default function AddPatientPage() {
 
     setLoading(true);
     try {
-      await PatientService.createPatient(formData, token || undefined);
+      let patientData: CreatePatientRequest = {
+        ...formData,
+      };
+
+      // Si owner_id est "none" OU si create_user est coché, créer d'abord l'utilisateur puis le patient
+      if ((!formData.owner_id || formData.owner_id === "none") || formData.create_user) {
+        if (!newUserData.health_id.trim()) {
+          toast.error("L'ID Santé de l'utilisateur est requis");
+          setLoading(false);
+          return;
+        }
+        if (!newUserData.password.trim()) {
+          toast.error("Le mot de passe de l'utilisateur est requis");
+          setLoading(false);
+          return;
+        }
+
+        // Mettre à jour owner_id avec le nouvel utilisateur
+        patientData = {
+          ...formData,
+          main_user: {
+            given_name: newUserData.health_id,
+            family_name: newUserData.health_id,
+            health_id: newUserData.health_id,
+            password: newUserData.password,
+            roles: ["user"],
+          }
+        };
+
+        delete patientData.create_user;
+
+      }
+
+      await PatientService.createPatient(patientData, token || undefined);
       toast.success("Patient créé avec succès");
       router.push('/patients');
     } catch (error: any) {
@@ -105,11 +147,30 @@ export default function AddPatientPage() {
     }
   };
 
-  const handleInputChange = (field: string, value: string | string[] | null) => {
-    // Convertir "none" en null/undefined pour owner_id
+  const handleInputChange = (field: string, value: string | string[] | null | boolean) => {
     const actualValue = field === 'owner_id' && (value === 'none' || value === null) ? null : 
                        field === 'gender' ? value as "male" | "female" | "other" | "unknown" : 
+                       field === 'is_main' ? value as boolean :
+                       field === 'create_user' ? value as boolean :
                        value;
+    
+    if (field === 'create_user' && value === true) {
+      setFormData(prev => ({
+        ...prev,
+        create_user: true,
+        is_main: true,
+        owner_id: null,
+      }));
+      return;
+    }
+    
+    if (field === 'create_user' && value === false) {
+      setNewUserData({
+        health_id: "",
+        password: "",
+      });
+    }
+    
     setFormData(prev => ({
       ...prev,
       [field]: actualValue
@@ -143,9 +204,9 @@ export default function AddPatientPage() {
             <CardTitle>Informations personnelles</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="given_name">Prénom *</Label>
+                <Label htmlFor="given_name">Prénom <span className="text-red-500">*</span></Label>
                 <Input
                   id="given_name"
                   value={formData.given_name}
@@ -156,7 +217,7 @@ export default function AddPatientPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="family_name">Nom de famille *</Label>
+                <Label htmlFor="family_name">Nom de famille <span className="text-red-500">*</span></Label>
                 <Input
                   id="family_name"
                   value={formData.family_name}
@@ -167,7 +228,7 @@ export default function AddPatientPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="birth_date">Date de naissance *</Label>
+                <Label htmlFor="birth_date">Date de naissance <span className="text-red-500">*</span></Label>
                 <Input
                   id="birth_date"
                   type="date"
@@ -178,7 +239,7 @@ export default function AddPatientPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="gender">Genre *</Label>
+                <Label htmlFor="gender">Genre <span className="text-red-500">*</span></Label>
                 <CustomSelect
                   options={genderOptions}
                   value={formData.gender}
@@ -188,7 +249,7 @@ export default function AddPatientPage() {
                 />
               </div>
               <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="location">Localisation *</Label>
+                <Label htmlFor="location">Localisation <span className="text-red-500">*</span></Label>
                 <Input
                   id="location"
                   value={formData.location}
@@ -198,18 +259,83 @@ export default function AddPatientPage() {
                   className="h-12"
                 />
               </div>
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="owner_id">ID du propriétaire</Label>
-                <CustomSelect
-                  options={userOptions}
-                  value={formData.owner_id || "none"}
-                  onChange={(value) => handleInputChange('owner_id', value)}
-                  placeholder="Sélectionner un propriétaire (optionnel)"
-                  isLoading={loadingUsers}
-                  className="h-12"
-                />
-              </div>
             </div>
+            <div className="py-4">
+                {!formData.create_user ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="owner_id">ID du propriétaire</Label>
+                      <div className="flex items-center space-x-4 h-12">
+                        <CustomSelect
+                          options={userOptions}
+                          value={formData.owner_id || "none"}
+                          onChange={(value) => handleInputChange('owner_id', value)}
+                          placeholder="Sélectionner un propriétaire (optionnel)"
+                          isLoading={loadingUsers}
+                          className="h-12 flex-1"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="new_user_health_id">ID Santé de l'utilisateur <span className="text-red-500">*</span></Label>
+                      <Input
+                        id="new_user_health_id"
+                        value={newUserData.health_id}
+                        onChange={(e) => setNewUserData(prev => ({ ...prev, health_id: e.target.value }))}
+                        placeholder="ID Santé de l'utilisateur"
+                        required
+                        className="h-12"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="new_user_password">Mot de passe de l'utilisateur <span className="text-red-500">*</span></Label>
+                      <Input
+                        id="new_user_password"
+                        type="password"
+                        value={newUserData.password}
+                        onChange={(e) => setNewUserData(prev => ({ ...prev, password: e.target.value }))}
+                        placeholder="Mot de passe de l'utilisateur"
+                        required
+                        className="h-12"
+                      />
+                    </div>
+                  </div>
+                )}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2 h-12">
+                      <input
+                        id="create_user"
+                        type="checkbox"
+                        checked={formData.create_user}
+                        onChange={(e) => handleInputChange('create_user', e.target.checked)}
+                        className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <Label htmlFor="create_user" className="text-sm text-gray-600 whitespace-nowrap">
+                        Créer un compte utilisateur
+                      </Label>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2 h-12">
+                      <input
+                        id="is_main"
+                        type="checkbox"
+                        checked={formData.is_main}
+                        onChange={(e) => handleInputChange('is_main', e.target.checked)}
+                        className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <span className="text-sm text-gray-600">
+                        Cocher si c'est le patient principal du compte
+                      </span>
+                    </div>
+                  </div>
+                </div>
+            </div>
+            
           </CardContent>
           <CardFooter className="pt-6 flex justify-end">
             <div className="flex justify-end gap-3">
