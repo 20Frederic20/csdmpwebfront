@@ -7,15 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-  PaginationEllipsis,
-} from "@/components/ui/pagination";
+import { DataPagination } from "@/components/ui/data-pagination";
 import { Search, Filter, ChevronUp, ChevronDown, ChevronsUpDown, MoreHorizontal, Eye, Edit, Trash2, UserCheck, Plus } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { PatientService } from "@/features/patients/services/patients.service";
@@ -138,51 +130,14 @@ export default function PatientsPage() {
   };
 
   // Reset page 1 quand le nombre d'éléments par page change
-  const handleItemsPerPageChange = (value: string) => {
-    setItemsPerPage(Number(value));
+  const handleItemsPerPageChange = (value: number) => {
+    setItemsPerPage(value);
     setCurrentPage(1);
   };
 
   // Calcul des données paginées
   const totalPages = patientsData ? Math.ceil(patientsData.total / itemsPerPage) : 0;
   const patients = patientsData?.data || [];
-
-  // Générer les numéros de pages pour la pagination shadcn
-  const generatePaginationItems = () => {
-    const items = [];
-    
-    if (totalPages <= 7) {
-      // Si 7 pages ou moins, afficher toutes
-      for (let i = 1; i <= totalPages; i++) {
-        items.push(i);
-      }
-    } else {
-      // Sinon, afficher avec ellipsis
-      if (currentPage <= 4) {
-        for (let i = 1; i <= 5; i++) {
-          items.push(i);
-        }
-        items.push('ellipsis');
-        items.push(totalPages);
-      } else if (currentPage >= totalPages - 3) {
-        items.push(1);
-        items.push('ellipsis');
-        for (let i = totalPages - 4; i <= totalPages; i++) {
-          items.push(i);
-        }
-      } else {
-        items.push(1);
-        items.push('ellipsis');
-        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
-          items.push(i);
-        }
-        items.push('ellipsis');
-        items.push(totalPages);
-      }
-    }
-    
-    return items;
-  };
 
   return (
     <div className="space-y-6">
@@ -386,60 +341,14 @@ export default function PatientsPage() {
               </Table>
               
               {/* Pagination */}
-              <div className="flex items-center justify-between space-x-2 py-4">
-                <div className="flex items-center space-x-2 flex-shrink-0">
-                  <p className="text-md text-muted-foreground">
-                    Affichage de {((currentPage - 1) * itemsPerPage) + 1} à {Math.min(currentPage * itemsPerPage, patientsData?.total || 0)} sur {patientsData?.total || 0} résultats
-                  </p>
-                  <Select value={itemsPerPage.toString()} onValueChange={handleItemsPerPageChange}>
-                    <SelectTrigger className="h-8 w-[70px]">
-                      <SelectValue placeholder={itemsPerPage.toString()} />
-                    </SelectTrigger>
-                    <SelectContent side="top">
-                      {[10, 20, 30, 40, 50].map((size) => (
-                        <SelectItem key={size} value={size.toString()}>
-                          {size}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex-1 flex justify-end">
-                  <Pagination className="justify-end">
-                    <PaginationContent>
-                      <PaginationItem>
-                        <PaginationPrevious 
-                          onClick={() => currentPage > 1 && setCurrentPage(currentPage - 1)}
-                          className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                        />
-                      </PaginationItem>
-                      
-                      {generatePaginationItems().map((item, index) => (
-                        <PaginationItem key={index}>
-                          {item === 'ellipsis' ? (
-                            <PaginationEllipsis />
-                          ) : (
-                            <PaginationLink
-                              onClick={() => setCurrentPage(item as number)}
-                              isActive={currentPage === item}
-                              className="cursor-pointer"
-                            >
-                              {item}
-                            </PaginationLink>
-                          )}
-                        </PaginationItem>
-                      ))}
-                      
-                      <PaginationItem>
-                        <PaginationNext 
-                          onClick={() => currentPage < totalPages && setCurrentPage(currentPage + 1)}
-                          className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                        />
-                      </PaginationItem>
-                    </PaginationContent>
-                  </Pagination>
-                </div>
-              </div>
+              <DataPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={patientsData?.total || 0}
+                itemsPerPage={itemsPerPage}
+                onPageChange={setCurrentPage}
+                onItemsPerPageChange={handleItemsPerPageChange}
+              />
             </>
           )}
         </CardContent>
