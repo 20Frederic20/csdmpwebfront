@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import CustomSelect from "@/components/ui/custom-select";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Save, X, User, Building2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -329,60 +329,32 @@ export default function AddHospitalStaffPage() {
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="health_facility_id">Établissement de santé *</Label>
-                <Select 
-                  value={formData.health_facility_id || ""} 
-                  onValueChange={(value) => {
-                    console.log('Selected facility:', value);
-                    handleInputChange('health_facility_id', value);
-                  }}
-                  disabled={loadingFacilities}
-                >
-                  <SelectTrigger>
-                    {loadingFacilities ? (
-                      <div className="flex items-center gap-2">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        <span>Chargement...</span>
-                      </div>
-                    ) : (
-                      <SelectValue placeholder="Sélectionner un établissement" />
-                    )}
-                  </SelectTrigger>
-                  <SelectContent>
-                    {healthFacilities.length === 0 ? (
-                      <SelectItem value="" disabled>
-                        Aucun établissement disponible
-                      </SelectItem>
-                    ) : (
-                      healthFacilities.map((facility) => (
-                        <SelectItem key={facility.id_} value={facility.id_}>
-                          {facility.name} ({facility.id_})
-                        </SelectItem>
-                      ))
-                    )}
-                  </SelectContent>
-                </Select>
-                {healthFacilities.length > 0 && (
-                  <p className="text-xs text-muted-foreground">
-                    {healthFacilities.length} établissements chargés
-                  </p>
-                )}
-                <p className="text-xs text-muted-foreground">
-                  Valeur actuelle: {formData.health_facility_id || 'vide'}
-                </p>
+                <Label htmlFor="health_facility_id">Établissement de santé <span className="text-red-500">*</span></Label>
+                <CustomSelect
+                  options={healthFacilities.map(facility => ({
+                    value: facility.id_,
+                    label: `${facility.name} (${facility.id_})`
+                  }))}
+                  value={formData.health_facility_id}
+                  onChange={(value) => handleInputChange('health_facility_id', value as string)}
+                  placeholder="Sélectionner un établissement"
+                  isDisabled={loadingFacilities}
+                  isLoading={loadingFacilities}
+                />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="matricule">Matricule *</Label>
+                <Label htmlFor="matricule">Matricule <span className="text-red-500">*</span></Label>
                 <Input
                   id="matricule"
                   value={formData.matricule}
                   onChange={(e) => handleInputChange('matricule', e.target.value)}
                   placeholder="Entrez le matricule"
                   required
+                  className="h-12"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="year_of_exp">Années d'expérience *</Label>
+                <Label htmlFor="year_of_exp">Années d'expérience <span className="text-red-500">*</span></Label>
                 <Input
                   id="year_of_exp"
                   type="number"
@@ -392,43 +364,26 @@ export default function AddHospitalStaffPage() {
                   onChange={(e) => handleInputChange('year_of_exp', parseInt(e.target.value) || 0)}
                   placeholder="0"
                   required
+                  className="h-12"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="specialty">Spécialité *</Label>
-                <Select 
-                  value={formData.specialty} 
-                  onValueChange={(value) => handleInputChange('specialty', value as HospitalStaffSpecialty)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sélectionner une spécialité" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {getSpecialtyOptions().map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="specialty">Spécialité <span className="text-red-500">*</span></Label>
+                <CustomSelect
+                  options={getSpecialtyOptions()}
+                  value={formData.specialty}
+                  onChange={(value) => handleInputChange('specialty', value as HospitalStaffSpecialty)}
+                  placeholder="Sélectionner une spécialité"
+                />
               </div>
               <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="department">Département *</Label>
-                <Select 
-                  value={formData.department} 
-                  onValueChange={(value) => handleInputChange('department', value as HospitalStaffDepartment)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sélectionner un département" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {getDepartmentOptions().map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="department">Département <span className="text-red-500">*</span></Label>
+                <CustomSelect
+                  options={getDepartmentOptions()}
+                  value={formData.department}
+                  onChange={(value) => handleInputChange('department', value as HospitalStaffDepartment)}
+                  placeholder="Sélectionner un département"
+                />
               </div>
             </div>
           </CardContent>
@@ -442,44 +397,21 @@ export default function AddHospitalStaffPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                <Label htmlFor="user_id">Utilisateur *</Label>
-                <Select 
-                  value={formData.user_id || ""} 
-                  onValueChange={(value) => {
+                <Label htmlFor="user_id">Utilisateur <span className="text-red-500">*</span></Label>
+                <CustomSelect
+                  options={users.map(user => ({
+                    value: user.id_,
+                    label: `${user.given_name} ${user.family_name} (${user.id_})`
+                  }))}
+                  value={formData.user_id || ""}
+                  onChange={(value) => {
                     console.log('Selected user:', value);
-                    handleInputChange('user_id', value);
+                    handleInputChange('user_id', value as string);
                   }}
-                  disabled={loadingUsers}
-                >
-                  <SelectTrigger>
-                    {loadingUsers ? (
-                      <div className="flex items-center gap-2">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        <span>Chargement...</span>
-                      </div>
-                    ) : (
-                      <SelectValue placeholder="Sélectionner un utilisateur" />
-                    )}
-                  </SelectTrigger>
-                  <SelectContent>
-                    {users.length === 0 ? (
-                      <SelectItem value="" disabled>
-                        Aucun utilisateur disponible
-                      </SelectItem>
-                    ) : (
-                      users.map((user) => (
-                        <SelectItem key={user.id_} value={user.id_}>
-                          {user.given_name} {user.family_name} ({user.id_})
-                        </SelectItem>
-                      ))
-                    )}
-                  </SelectContent>
-                </Select>
-                {users.length > 0 && (
-                  <p className="text-xs text-muted-foreground">
-                    {users.length} utilisateurs chargés
-                  </p>
-                )}
+                  placeholder="Sélectionner un utilisateur"
+                  isDisabled={loadingUsers}
+                  isLoading={loadingUsers}
+                />
               </div>
             </CardContent>
           </Card>
@@ -494,37 +426,40 @@ export default function AddHospitalStaffPage() {
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="given_name">Prénom *</Label>
+                  <Label htmlFor="given_name">Prénom <span className="text-red-500">*</span></Label>
                   <Input
                     id="given_name"
                     value={formData.user_data?.given_name || ""}
                     onChange={(e) => handleUserDataChange('given_name', e.target.value)}
                     placeholder="Entrez le prénom"
                     required
+                    className="h-12"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="family_name">Nom de famille *</Label>
+                  <Label htmlFor="family_name">Nom de famille <span className="text-red-500">*</span></Label>
                   <Input
                     id="family_name"
                     value={formData.user_data?.family_name || ""}
                     onChange={(e) => handleUserDataChange('family_name', e.target.value)}
                     placeholder="Entrez le nom de famille"
                     required
+                    className="h-12"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="health_id">ID Santé *</Label>
+                  <Label htmlFor="health_id">ID Santé <span className="text-red-500">*</span></Label>
                   <Input
                     id="health_id"
                     value={formData.user_data?.health_id || ""}
                     onChange={(e) => handleUserDataChange('health_id', e.target.value)}
                     placeholder="Entrez l'ID santé"
                     required
+                    className="h-12"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="password">Mot de passe *</Label>
+                  <Label htmlFor="password">Mot de passe <span className="text-red-500">*</span></Label>
                   <Input
                     id="password"
                     type="password"
@@ -533,13 +468,14 @@ export default function AddHospitalStaffPage() {
                     placeholder="Entrez le mot de passe"
                     required
                     minLength={6}
+                    className="h-12"
                   />
                 </div>
               </div>
 
               {/* Rôles */}
               <div className="space-y-4">
-                <Label className="text-base font-semibold">Rôles *</Label>
+                <Label className="text-base font-semibold">Rôles <span className="text-red-500">*</span></Label>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   {userRoles.map((role) => (
                     <div
