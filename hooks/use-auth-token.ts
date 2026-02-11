@@ -3,13 +3,15 @@ import { useState, useEffect } from 'react';
 export function useAuthToken() {
   const [token, setToken] = useState<string | null>(null);
 
+  // Synchroniser avec localStorage à chaque render
   useEffect(() => {
-    // Récupérer le token au montage
     if (typeof window !== 'undefined') {
       const storedToken = localStorage.getItem('access_token');
-      setToken(storedToken);
+      if (storedToken !== token) {
+        setToken(storedToken);
+      }
     }
-  }, []);
+  });
 
   const saveToken = (newToken: string) => {
     if (typeof window !== 'undefined') {
@@ -21,9 +23,12 @@ export function useAuthToken() {
   const clearToken = () => {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+      localStorage.removeItem('token_expires_at');
+      localStorage.removeItem('refresh_token_expires_at');
       setToken(null);
     }
   };
 
-  return { token, setToken: saveToken, clearToken };
+  return { token, saveToken, clearToken };
 }

@@ -7,9 +7,11 @@ export function useLoginActions() {
   const router = useRouter();
   const { saveToken } = useAuthToken();
 
-  const handleLoginSuccess = (token: string) => {
-    // Sauvegarder le token dans localStorage pour les appels API côté client
-    saveToken(token);
+  const handleLoginSuccess = (token: string, refreshToken: string, expiresIn: number, refreshExpiresIn?: number) => {
+    // Sauvegarder les tokens via le hook (localStorage uniquement)
+    if (token) {
+      saveToken(token);
+    }
     
     // Rediriger vers le dashboard
     router.push('/dashboard');

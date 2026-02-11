@@ -15,8 +15,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Link from "next/link";
 
-import { loginAction } from '@/features/core/auth/services/auth.service';
-import { useLoginActions } from '@/hooks/use-login-actions';
 import { AuthClientService } from '@/features/core/auth/services/auth-client.service';
 
 export default function LoginPage() {
@@ -24,7 +22,6 @@ export default function LoginPage() {
     const router = useRouter();
     const [error, setError] = useState<string | null>(null);
     const [isPending, startTransition] = useTransition();
-    const { handleLoginSuccess } = useLoginActions();
     
     async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -36,11 +33,10 @@ export default function LoginPage() {
 
         startTransition(async () => {
             try {
-                // Utiliser le service client pour le login
                 const data = await AuthClientService.login(health_id, password);
                 
-                // Utiliser handleLoginSuccess pour la redirection
-                handleLoginSuccess(data.access_token);
+                router.push('/dashboard');
+                router.refresh();
             } catch (err: any) {
                 setError(err.message || 'Une erreur est survenue lors de la connexion.');
             }
