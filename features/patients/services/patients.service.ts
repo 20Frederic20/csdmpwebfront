@@ -1,4 +1,5 @@
 import { PatientsResponse, PatientsQueryParams, Patient } from '../types/patients.types';
+import { handleFetchError, createServiceErrorHandler } from '@/lib/error-handler';
 
 const API_BASE = process.env.NODE_ENV === 'development' 
   ? '/api/v1'  // Utilise le proxy Next.js en développement
@@ -16,6 +17,8 @@ function getAuthToken(): string | null {
 }
 
 export class PatientService {
+  private static errorHandler = createServiceErrorHandler('patients');
+
   static async getPatients(params: PatientsQueryParams = {}, token?: string): Promise<PatientsResponse> {
     const searchParams = new URLSearchParams();
     
@@ -47,7 +50,7 @@ export class PatientService {
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch patients: ${response.statusText}`);
+      await this.errorHandler(response, 'accéder');
     }
 
     return response.json();
@@ -71,7 +74,7 @@ export class PatientService {
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch patient: ${response.statusText}`);
+      await this.errorHandler(response, 'accéder à ce patient');
     }
 
     return response.json();
@@ -95,7 +98,7 @@ export class PatientService {
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to create patient: ${response.statusText}`);
+      await this.errorHandler(response, 'créer');
     }
 
     return response.json();
@@ -119,7 +122,7 @@ export class PatientService {
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to update patient: ${response.statusText}`);
+      await this.errorHandler(response, 'modifier');
     }
 
     return response.json();
@@ -140,7 +143,30 @@ export class PatientService {
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to delete patient: ${response.statusText}`);
+      await this.errorHandler(response, 'supprimer');
     }
+  }
+
+  static async togglePatientActivation(id: string, token?: string): Promise<Patient> {
+    const authToken = token || getAuthToken();
+    
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    
+    if (authToken) {
+      headers['Authorization'] = `Bearer ${authToken}`;
+    }
+    
+    const response = await fetch(`${API_BASE}/patients/${id}/toggle-activation`, {
+      method: 'PATCH',
+      headers,
+    });
+
+    if (!response.ok) {
+      await this.errorHandler(response, 'modifier l\'activation');
+    }
+
+    return response.json();
   }
 }
