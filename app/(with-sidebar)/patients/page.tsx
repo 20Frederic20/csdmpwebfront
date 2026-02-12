@@ -45,27 +45,29 @@ export default function PatientsPage() {
 
   const handleToggleStatus = async (patientId: string) => {
     try {
-      // Appel API pour toggle l'activation du patient
       const updatedPatient = await PatientService.togglePatientActivation(patientId, token || undefined);
       
-      // Mettre à jour le patient dans la liste
-      if (patientsData) {
-        setPatientsData({
-          ...patientsData,
-          data: patientsData.data.map(patient => 
-            patient.id_ === patientId ? updatedPatient : patient
-          )
-        });
+      if (updatedPatient && typeof updatedPatient.is_active === 'boolean') {
+        if (patientsData) {
+          setPatientsData({
+            ...patientsData,
+            data: patientsData.data.map(patient => 
+              patient.id_ === patientId ? updatedPatient : patient
+            )
+          });
+        }
+        
+
+        toast.success(`Patient ${updatedPatient.is_active ? 'activé' : 'désactivé'} avec succès`);
+      } else {
+        throw new Error('Réponse invalide du serveur');
       }
-      
-      toast.success(`Patient ${updatedPatient.is_active ? 'activé' : 'désactivé'} avec succès`);
     } catch (error: any) {
       console.error('Error toggling patient activation:', error);
       toast.error(error.message || "Erreur lors du changement de statut");
     }
   };
 
-  // Charger les données depuis l'API
   const loadPatients = async () => {
     try {
       setLoading(true);
@@ -96,7 +98,6 @@ export default function PatientsPage() {
     }
   };
 
-  // Charger les données au montage
   useEffect(() => {
     if (token) {
       loadPatients();
@@ -106,7 +107,6 @@ export default function PatientsPage() {
     }
   }, [token]);
 
-  // Recharger seulement quand les paramètres de pagination/recherche/tri changent
   useEffect(() => {
     if (token) {
       loadPatients();
@@ -151,7 +151,7 @@ export default function PatientsPage() {
   const handleFiltersReset = () => {
     setFilters({
       search: "",
-      birth_date: "",
+      birth_date_from: "",
       genders: "all",
     });
     setCurrentPage(1);

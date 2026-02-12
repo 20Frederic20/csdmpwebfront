@@ -49,12 +49,12 @@ export function EditPatientModal({ patient, onPatientUpdated }: EditPatientModal
   useEffect(() => {
     if (patient) {
       setFormData({
-        given_name: patient.given_name,
-        family_name: patient.family_name,
-        birth_date: patient.birth_date,
-        gender: patient.gender,
+        given_name: patient.given_name || "",
+        family_name: patient.family_name || "",
+        birth_date: patient.birth_date || "",
+        gender: patient.gender || "male",
         location: patient.location || "",
-        is_active: patient.is_active,
+        is_active: patient.is_active ?? true,
       });
     }
   }, [patient]);
@@ -161,7 +161,7 @@ export function EditPatientModal({ patient, onPatientUpdated }: EditPatientModal
 
               <div className="space-y-2">
                 <Label htmlFor="edit_is_active">Statut</Label>
-                <Select value={formData.is_active.toString()} onValueChange={(value) => handleInputChange("is_active", value === "true")}>
+                <Select value={(formData.is_active ?? true).toString()} onValueChange={(value) => handleInputChange("is_active", value === "true")}>
                   <SelectTrigger>
                     <SelectValue placeholder="Sélectionner" />
                   </SelectTrigger>

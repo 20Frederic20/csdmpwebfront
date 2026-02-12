@@ -1,15 +1,9 @@
 import { PatientsResponse, PatientsQueryParams, Patient } from '../types/patients.types';
 import { handleFetchError, createServiceErrorHandler } from '@/lib/error-handler';
 
-const API_BASE = process.env.NODE_ENV === 'development' 
-  ? '/api/v1'  // Utilise le proxy Next.js en développement
-  : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1');
+const API_BASE = process.env.NEXT_PUBLIC_API_URL;
 
-// Helper pour obtenir le token d'authentification côté client
 function getAuthToken(): string | null {
-  // Note: Les cookies HttpOnly ne sont pas accessibles côté client
-  // Nous devons soit passer le token en paramètre, soit utiliser un autre moyen
-  // Pour l'instant, nous allons chercher dans localStorage (moins sécurisé)
   if (typeof window !== 'undefined') {
     return localStorage.getItem('access_token') || null;
   }
