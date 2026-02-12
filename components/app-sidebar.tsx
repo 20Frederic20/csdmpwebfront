@@ -284,6 +284,66 @@ export function AppSidebar() {
       ]
     },
     {
+      title: "Consultations",
+      url: "/consultations",
+      icon: Calendar,
+      isActive: pathname.startsWith("/consultations"),
+      requiredPermission: {
+        resource: "consultations",
+        action: "list"
+      },
+      items: [
+        {
+          title: "Liste des consultations",
+          url: "/consultations",
+          icon: Calendar,
+          requiredPermission: {
+            resource: "consultations",
+            action: "list"
+          }
+        },
+        {
+          title: "Ajouter une consultation",
+          url: "/consultations/add",
+          icon: Plus,
+          requiredPermission: {
+            resource: "consultations",
+            action: "create"
+          }
+        }
+      ]
+    },
+    {
+      title: "Rendez-vous",
+      url: "/appointments",
+      icon: Calendar,
+      isActive: pathname.startsWith("/appointments"),
+      requiredPermission: {
+        resource: "appointments",
+        action: "list"
+      },
+      items: [
+        {
+          title: "Liste des rendez-vous",
+          url: "/appointments",
+          icon: Calendar,
+          requiredPermission: {
+            resource: "appointments",
+            action: "list"
+          }
+        },
+        {
+          title: "Ajouter un rendez-vous",
+          url: "/appointments/add",
+          icon: Plus,
+          requiredPermission: {
+            resource: "appointments",
+            action: "create"
+          }
+        }
+      ]
+    },
+    {
       title: "Rapports",
       url: "/reports",
       icon: BarChart3,
