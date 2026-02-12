@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -57,6 +57,7 @@ import Link from "next/link";
 import { ViewHospitalStaffModal } from "@/components/hospital-staff/view-hospital-staff-modal";
 import { EditHospitalStaffModal } from "@/components/hospital-staff/edit-hospital-staff-modal";
 import { DeleteHospitalStaffModal } from "@/components/hospital-staff/delete-hospital-staff-modal";
+import { HospitalStaffFilters } from "@/components/hospital-staff/hospital-staff-filters";
 
 export default function HospitalStaffPage() {
   const [staff, setStaff] = useState<HospitalStaff[]>([]);
@@ -71,29 +72,18 @@ export default function HospitalStaffPage() {
 
   // États pour les filtres
   const [filters, setFilters] = useState({
-    health_facility_id: "",
-    specialty: "",
-    department: "",
-    is_active: "",
+    search: "",
+    specialty: "" as HospitalStaffSpecialty | "",
+    department: "" as HospitalStaffDepartment | "",
   });
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
   const loadStaff = async () => {
+    console.log('loadStaff appelé');
     setLoading(true);
     try {
       const offset = (currentPage - 1) * itemsPerPage;
-      const params: ListHospitalStaffQueryParams = {
-        search: searchTerm || undefined,
-        limit: itemsPerPage,
-        offset,
-        sort_by: sortingField,
-        sort_order: sortingOrder,
-        health_facility_id: filters.health_facility_id || undefined,
-        specialty: filters.specialty as HospitalStaffSpecialty || undefined,
-        department: filters.department as HospitalStaffDepartment || undefined,
-        is_active: filters.is_active ? filters.is_active === 'true' : undefined,
-      };
-
+      
       const response = await HospitalStaffService.getHospitalStaff(params, token || undefined);
       setStaff(response.data || []);
       setTotal(response.total || 0);
@@ -106,12 +96,27 @@ export default function HospitalStaffPage() {
     }
   };
 
+  // Mémoriser les paramètres pour éviter les rechargements multiples
+  const params = useMemo((): ListHospitalStaffQueryParams => {
+    const offset = (currentPage - 1) * itemsPerPage;
+    return {
+      search: searchTerm || filters.search || undefined,
+      limit: itemsPerPage,
+      offset,
+      sort_by: sortingField,
+      sort_order: sortingOrder,
+      specialty: filters.specialty as HospitalStaffSpecialty || undefined,
+      department: filters.department as HospitalStaffDepartment || undefined,
+    };
+  }, [currentPage, itemsPerPage, searchTerm, sortingField, sortingOrder, filters.search, filters.specialty, filters.department]);
+
   useEffect(() => {
-    loadStaff();
-  }, [currentPage, itemsPerPage, searchTerm, sortingField, sortingOrder, filters, token]);
+    if (token) {
+      loadStaff();
+    }
+  }, [params, token]);
 
   const getStaffDisplayName = (member: HospitalStaff) => {
-    // Priorité aux noms utilisateur si disponibles, sinon matricule
     if (member.given_name && member.family_name) {
       return `${member.given_name} ${member.family_name}`;
     }
@@ -128,21 +133,17 @@ export default function HospitalStaffPage() {
     setCurrentPage(1);
   };
 
-  // Gérer les changements de filtres
-  const handleFilterChange = (field: string, value: string) => {
-    setFilters(prev => ({
-      ...prev,
-      [field]: value
-    }));
+  // Handlers pour les filtres avancés (comme dans patients)
+  const handleFiltersChange = (newFilters: typeof filters) => {
+    setFilters(newFilters);
     setCurrentPage(1);
   };
 
-  const handleClearFilters = () => {
+  const handleFiltersReset = () => {
     setFilters({
-      health_facility_id: "",
-      specialty: "",
-      department: "",
-      is_active: "",
+      search: "",
+      specialty: "" as HospitalStaffSpecialty | "",
+      department: "" as HospitalStaffDepartment | "",
     });
     setCurrentPage(1);
   };
@@ -178,42 +179,33 @@ export default function HospitalStaffPage() {
 
   const handleToggleStatus = async (id: string) => {
     try {
-      // Trouver le membre actuel pour vérifier la version
-      const currentMember = staff.find(member => member.id_ === id);
-      if (!currentMember) {
-        toast.error('Membre du personnel non trouvé');
-        return;
-      }
-
-      // Appel API pour toggle le statut avec version
       const updatedStaff = await HospitalStaffService.toggleHospitalStaffStatus(id, token || undefined);
       
-      // Vérifier si la réponse contient une information de conflit
-      if (updatedStaff.version && currentMember.version && updatedStaff.version !== currentMember.version + 1) {
-        // Conflit détecté - recharger la liste pour avoir l'état frais
-        toast.warning('Le personnel a été modifié par un autre utilisateur. Actualisation...');
-        loadStaff();
-        return;
-      }
+      // Debug: voir ce que le serveur retourne
+      console.log('Réponse du serveur pour staff:', updatedStaff);
+      console.log('Type de is_active:', typeof updatedStaff?.is_active);
+      console.log('Valeur de is_active:', updatedStaff?.is_active);
       
-      // Mettre à jour l'état localement avec la nouvelle version
-      setStaff(prevStaff => 
-        prevStaff.map(member => 
-          member.id_ === id ? { ...member, ...updatedStaff } : member
-        )
-      );
-      
-      toast.success('Statut du personnel mis à jour avec succès');
-    } catch (error) {
-      console.error('Error toggling staff status:', error);
-      
-      // Gérer les erreurs de conflit HTTP 409
-      if (error instanceof Error && error.message.includes('409')) {
-        toast.warning('Conflit de modification. Actualisation des données...');
-        loadStaff();
+      if (updatedStaff && typeof updatedStaff.is_active === 'boolean') {
+        // Mettre à jour l'état localement sans recharger toute la liste
+        setStaff(prevStaff => 
+          prevStaff.map(member => 
+            member.id_ === id ? updatedStaff : member
+          )
+        );
+        
+        toast.success(`Personnel ${updatedStaff.is_active ? 'activé' : 'désactivé'} avec succès`);
       } else {
-        toast.error('Erreur lors de la mise à jour du statut');
+        console.error('updatedStaff invalide:', {
+          updatedStaff,
+          hasIsActive: updatedStaff && 'is_active' in updatedStaff,
+          isActiveType: typeof updatedStaff?.is_active
+        });
+        throw new Error('Réponse invalide du serveur');
       }
+    } catch (error: any) {
+      console.error('Error toggling staff status:', error);
+      toast.error(error.message || "Erreur lors du changement de statut");
     }
   };
 
@@ -393,106 +385,13 @@ export default function HospitalStaffPage() {
       </div>
 
       {/* Filtres et recherche */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Filtres</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {/* Recherche principale */}
-            <div className="flex gap-4">
-              <div className="flex-1">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                  <Input
-                    placeholder="Rechercher un membre du personnel..."
-                    value={searchTerm}
-                    onChange={(e) => handleSearch(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-              </div>
-              <Button 
-                variant="outline" 
-                onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-                className="cursor-pointer"
-              >
-                <Filter className="mr-2 h-4 w-4" />
-                {showAdvancedFilters ? 'Masquer' : 'Filtres avancés'}
-              </Button>
-            </div>
-
-            {/* Filtres avancés */}
-            {showAdvancedFilters && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 border rounded-lg bg-muted/50">
-                <div className="space-y-2">
-                  <label className="text-md font-medium">ID Établissement</label>
-                  <Input
-                    placeholder="ID de l'établissement..."
-                    value={filters.health_facility_id}
-                    onChange={(e) => handleFilterChange('health_facility_id', e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-md font-medium">Spécialité</label>
-                  <Select value={filters.specialty} onValueChange={(value) => handleFilterChange('specialty', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Sélectionner" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="">Toutes</SelectItem>
-                      {getSpecialtyOptions().map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-md font-medium">Département</label>
-                  <Select value={filters.department} onValueChange={(value) => handleFilterChange('department', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Sélectionner" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="">Tous</SelectItem>
-                      {getDepartmentOptions().map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-md font-medium">Statut</label>
-                  <Select value={filters.is_active} onValueChange={(value) => handleFilterChange('is_active', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Sélectionner" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="">Tous</SelectItem>
-                      <SelectItem value="true">Actif</SelectItem>
-                      <SelectItem value="false">Inactif</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-md font-medium">&nbsp;</label>
-                  <Button 
-                    variant="outline" 
-                    onClick={handleClearFilters}
-                    className="w-full cursor-pointer"
-                  >
-                    Effacer les filtres
-                  </Button>
-                </div>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+      <HospitalStaffFilters
+        filters={filters}
+        onFiltersChange={handleFiltersChange}
+        onReset={handleFiltersReset}
+        isOpen={showAdvancedFilters}
+        onToggle={() => setShowAdvancedFilters(!showAdvancedFilters)}
+      />
 
       {/* Tableau du personnel */}
       <Card>
@@ -538,6 +437,15 @@ export default function HospitalStaffPage() {
                         {getSortIcon('department')}
                       </div>
                     </TableHead>
+                    <TableHead 
+                      className="cursor-pointer hover:bg-muted/50 transition-colors"
+                      onClick={() => handleSort('health_facility_id')}
+                    >
+                      <div className="flex items-center gap-2">
+                        Établissement
+                        {getSortIcon('health_facility_id')}
+                      </div>
+                    </TableHead>
                     <TableHead>Expérience</TableHead>
                     <TableHead 
                       className="cursor-pointer hover:bg-muted/50 transition-colors"
@@ -558,13 +466,13 @@ export default function HospitalStaffPage() {
                         <div className="text-center">
                           <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                           <h3 className="text-lg font-semibold mb-2">
-                            {searchTerm || filters.specialty || filters.department || filters.health_facility_id
+                            {searchTerm || filters.search || filters.specialty || filters.department
                               ? 'Aucun membre du personnel trouvé pour cette recherche.' 
                               : 'Aucun membre du personnel enregistré.'
                             }
                           </h3>
                           <p className="text-muted-foreground mb-4">
-                            {searchTerm || filters.specialty || filters.department || filters.health_facility_id
+                            {searchTerm || filters.search || filters.specialty || filters.department
                               ? 'Essayez de modifier vos critères de recherche.'
                               : 'Commencez par ajouter le premier membre du personnel.'
                             }

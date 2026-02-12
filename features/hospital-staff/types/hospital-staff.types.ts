@@ -7,10 +7,8 @@ export interface HospitalStaff {
   specialty: HospitalStaffSpecialty;
   department: HospitalStaffDepartment;
   is_active: boolean;
-  // Données utilisateur enrichies (directement dans l'objet)
   given_name?: string;
   family_name?: string;
-  // Pour la gestion de concurrence
   updated_at?: string;
   version?: number;
 }
@@ -32,17 +30,6 @@ export interface CreateUserRequest {
   password: string;
   roles?: string[] | null;
   is_active?: boolean;
-}
-
-export interface HospitalStaffQueryModel {
-  id_: string;
-  user_id: string;
-  health_facility_id: string;
-  matricule: string;
-  year_of_exp: number;
-  specialty: string;
-  department: string;
-  is_active: boolean;
 }
 
 export interface ListHospitalStaffResponse {
