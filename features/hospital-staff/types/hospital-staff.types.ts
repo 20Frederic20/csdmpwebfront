@@ -2,13 +2,14 @@ export interface HospitalStaff {
   id_: string;
   user_id: string;
   health_facility_id: string;
+  health_facility_name: string;
   matricule: string;
   year_of_exp: number;
   specialty: HospitalStaffSpecialty;
   department: HospitalStaffDepartment;
   is_active: boolean;
-  given_name?: string;
-  family_name?: string;
+  user_given_name?: string;
+  user_family_name?: string;
   updated_at?: string;
   version?: number;
 }

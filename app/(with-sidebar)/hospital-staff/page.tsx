@@ -8,15 +8,6 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { 
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-  PaginationEllipsis,
-} from "@/components/ui/pagination";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -58,6 +49,7 @@ import { ViewHospitalStaffModal } from "@/components/hospital-staff/view-hospita
 import { EditHospitalStaffModal } from "@/components/hospital-staff/edit-hospital-staff-modal";
 import { DeleteHospitalStaffModal } from "@/components/hospital-staff/delete-hospital-staff-modal";
 import { HospitalStaffFilters } from "@/components/hospital-staff/hospital-staff-filters";
+import { DataPagination } from "@/components/ui/data-pagination";
 
 export default function HospitalStaffPage() {
   const [staff, setStaff] = useState<HospitalStaff[]>([]);
@@ -66,7 +58,7 @@ export default function HospitalStaffPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
   const [total, setTotal] = useState(0);
-  const [sortingField, setSortingField] = useState('given_name');
+  const [sortingField, setSortingField] = useState('matricule');
   const [sortingOrder, setSortingOrder] = useState<'asc' | 'desc'>('asc');
   const { token } = useAuthToken();
 
@@ -117,21 +109,29 @@ export default function HospitalStaffPage() {
   }, [params, token]);
 
   const getStaffDisplayName = (member: HospitalStaff) => {
-    if (member.given_name && member.family_name) {
-      return `${member.given_name} ${member.family_name}`;
+    if (member.user_given_name && member.user_family_name) {
+      return `${member.user_given_name} ${member.user_family_name}`;
     }
     return member.matricule || 'Personnel non identifié';
-  };
-
-  const handleSearch = (value: string) => {
-    setSearchTerm(value);
-    setCurrentPage(1);
   };
 
   const handleItemsPerPageChange = (value: string) => {
     setItemsPerPage(parseInt(value));
     setCurrentPage(1);
   };
+
+  // Handlers pour DataPagination
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handleDataItemsPerPageChange = (newItemsPerPage: number) => {
+    setItemsPerPage(newItemsPerPage);
+    setCurrentPage(1);
+  };
+
+  // Calculer le nombre total de pages
+  const totalPages = Math.ceil(total / itemsPerPage);
 
   // Handlers pour les filtres avancés (comme dans patients)
   const handleFiltersChange = (newFilters: typeof filters) => {
@@ -209,8 +209,6 @@ export default function HospitalStaffPage() {
     }
   };
 
-  const totalPages = Math.ceil(total / itemsPerPage);
-
   const getPaginationItems = () => {
     const items = [];
     const maxVisible = 5;
@@ -240,127 +238,6 @@ export default function HospitalStaffPage() {
         }
         items.push('...');
         items.push(totalPages);
-      }
-    }
-    
-    return items;
-  };
-
-  const generatePaginationItems = () => {
-    const items = [];
-    const maxVisible = 5;
-    
-    if (totalPages <= maxVisible) {
-      for (let i = 1; i <= totalPages; i++) {
-        items.push(
-          <PaginationItem key={i}>
-            <PaginationLink
-              onClick={() => setCurrentPage(i)}
-              className={currentPage === i ? "cursor-pointer" : "cursor-pointer"}
-              isActive={currentPage === i}
-            >
-              {i}
-            </PaginationLink>
-          </PaginationItem>
-        );
-      }
-    } else {
-      items.push(
-        <PaginationItem key={1}>
-          <PaginationLink
-            onClick={() => setCurrentPage(1)}
-            className={currentPage === 1 ? "cursor-pointer" : "cursor-pointer"}
-            isActive={currentPage === 1}
-          >
-            1
-          </PaginationLink>
-        </PaginationItem>
-      );
-      
-      if (currentPage <= 3) {
-        for (let i = 2; i <= 4; i++) {
-          items.push(
-            <PaginationItem key={i}>
-              <PaginationLink
-                onClick={() => setCurrentPage(i)}
-                className={currentPage === i ? "cursor-pointer" : "cursor-pointer"}
-                isActive={currentPage === i}
-              >
-                {i}
-              </PaginationLink>
-            </PaginationItem>
-          );
-        }
-        items.push(
-          <PaginationItem key="ellipsis-start">
-            <PaginationEllipsis />
-          </PaginationItem>
-        );
-        items.push(
-          <PaginationItem key={totalPages}>
-            <PaginationLink
-              onClick={() => setCurrentPage(totalPages)}
-              className={currentPage === totalPages ? "cursor-pointer" : "cursor-pointer"}
-              isActive={currentPage === totalPages}
-            >
-              {totalPages}
-            </PaginationLink>
-          </PaginationItem>
-        );
-      } else if (currentPage >= totalPages - 2) {
-        items.push(
-          <PaginationItem key="ellipsis-end">
-            <PaginationEllipsis />
-          </PaginationItem>
-        );
-        for (let i = totalPages - 3; i <= totalPages; i++) {
-          items.push(
-            <PaginationItem key={i}>
-              <PaginationLink
-                onClick={() => setCurrentPage(i)}
-                className={currentPage === i ? "cursor-pointer" : "cursor-pointer"}
-                isActive={currentPage === i}
-              >
-                {i}
-              </PaginationLink>
-            </PaginationItem>
-          );
-        }
-      } else {
-        items.push(
-          <PaginationItem key="ellipsis-start">
-            <PaginationEllipsis />
-          </PaginationItem>
-        );
-        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
-          items.push(
-            <PaginationItem key={i}>
-              <PaginationLink
-                onClick={() => setCurrentPage(i)}
-                className={currentPage === i ? "cursor-pointer" : "cursor-pointer"}
-                isActive={currentPage === i}
-              >
-                {i}
-              </PaginationLink>
-            </PaginationItem>
-          );
-        }
-        items.push(
-          <PaginationItem key="ellipsis-end">
-            <PaginationEllipsis />
-          </PaginationItem>
-        );
-        items.push(
-          <PaginationItem key={totalPages}>
-            <PaginationLink
-              onClick={() => setCurrentPage(totalPages)}
-              className={currentPage === totalPages ? "cursor-pointer" : "cursor-pointer"}
-              isActive={currentPage === totalPages}
-            >
-              {totalPages}
-            </PaginationLink>
-          </PaginationItem>
-        );
       }
     }
     
@@ -420,11 +297,11 @@ export default function HospitalStaffPage() {
                   <TableRow>
                     <TableHead 
                       className="cursor-pointer hover:bg-muted/50 transition-colors"
-                      onClick={() => handleSort('given_name')}
+                      onClick={() => handleSort('user_given_name')}
                     >
                       <div className="flex items-center gap-2">
                         Personnel
-                        {getSortIcon('given_name')}
+                        {getSortIcon('user_given_name')}
                       </div>
                     </TableHead>
                     <TableHead>Spécialité</TableHead>
@@ -512,6 +389,11 @@ export default function HospitalStaffPage() {
                         </TableCell>
                         <TableCell>
                           <span className="text-md">
+                            {member.health_facility_name}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <span className="text-md">
                             {member.year_of_exp} an{member.year_of_exp > 1 ? 's' : ''}
                           </span>
                         </TableCell>
@@ -576,52 +458,20 @@ export default function HospitalStaffPage() {
                   )}
                 </TableBody>
               </Table>
-              
-              {/* Pagination */}
-              <div className="flex items-center justify-between space-x-2 py-4">
-                <div className="flex items-center space-x-2 flex-shrink-0">
-                  <p className="text-md text-muted-foreground">
-                    Affichage de {((currentPage - 1) * itemsPerPage) + 1} à {Math.min(currentPage * itemsPerPage, total)} sur {total} résultats
-                  </p>
-                  <Select value={itemsPerPage.toString()} onValueChange={handleItemsPerPageChange}>
-                    <SelectTrigger className="h-8 w-[70px]">
-                      <SelectValue placeholder={itemsPerPage.toString()} />
-                    </SelectTrigger>
-                    <SelectContent side="top">
-                      {[10, 20, 30, 40, 50].map((size) => (
-                        <SelectItem key={size} value={size.toString()}>
-                          {size}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex-1 flex justify-end">
-                  <Pagination className="justify-end">
-                    <PaginationContent>
-                      <PaginationItem>
-                        <PaginationPrevious 
-                          onClick={() => currentPage > 1 && setCurrentPage(currentPage - 1)}
-                          className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                        />
-                      </PaginationItem>
-                      
-                      {generatePaginationItems()}
-                      
-                      <PaginationItem>
-                        <PaginationNext 
-                          onClick={() => currentPage < totalPages && setCurrentPage(currentPage + 1)}
-                          className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                        />
-                      </PaginationItem>
-                    </PaginationContent>
-                  </Pagination>
-                </div>
-              </div>
             </>
           )}
         </CardContent>
       </Card>
+
+      {/* Pagination */}
+      <DataPagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={total}
+        itemsPerPage={itemsPerPage}
+        onPageChange={handlePageChange}
+        onItemsPerPageChange={handleDataItemsPerPageChange}
+      />
     </div>
   );
 }
