@@ -9,7 +9,7 @@ import {
 export class ConsultationService {
   private static readonly BASE_URL = process.env.NODE_ENV === 'development'
     ? ''
-    : (process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000');
+    : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000');
   private static readonly API_URL = `${this.BASE_URL}/api/v1`;
 
   private static getAuthToken(): string | null {
