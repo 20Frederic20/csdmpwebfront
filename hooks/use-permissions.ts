@@ -4,14 +4,42 @@ import { useState, useEffect, useRef } from 'react';
 import { PermissionsService } from '@/features/auth/services/permissions.service';
 import { UserWithRoles, UserRole, Permission } from '@/features/auth/types/roles.types';
 
-// Cache global pour éviter les appels multiples
-let cachedPermissions: UserWithRoles | null = null;
-let cachePromise: Promise<UserWithRoles> | null = null;
-let isFetching = false;
+// Clé pour le stockage session
+const PERMISSIONS_CACHE_KEY = 'user_permissions';
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+// Cache en mémoire avec timestamp
+let memoryCache: { data: UserWithRoles | null; timestamp: number } | null = null;
 
 export function usePermissions() {
-  const [user, setUser] = useState<UserWithRoles | null>(cachedPermissions);
-  const [loading, setLoading] = useState(!cachedPermissions);
+  const [user, setUser] = useState<UserWithRoles | null>(() => {
+    // Initialiser depuis le cache session au montage
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = sessionStorage.getItem(PERMISSIONS_CACHE_KEY);
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          const now = Date.now();
+          
+          // Vérifier si le cache est encore valide
+          if (parsed.timestamp && (now - parsed.timestamp) < CACHE_DURATION) {
+            console.log('usePermissions: Using valid session cache');
+            memoryCache = parsed;
+            return parsed.data;
+          } else {
+            // Cache expiré, le nettoyer
+            sessionStorage.removeItem(PERMISSIONS_CACHE_KEY);
+          }
+        }
+      } catch (error) {
+        console.warn('Failed to parse permissions cache:', error);
+        sessionStorage.removeItem(PERMISSIONS_CACHE_KEY);
+      }
+    }
+    return null;
+  });
+
+  const [loading, setLoading] = useState(!user);
   const hasInitialized = useRef(false);
 
   useEffect(() => {
@@ -22,69 +50,93 @@ export function usePermissions() {
     const fetchPermissions = async () => {
       try {
         setLoading(true);
-        console.log('usePermissions: Starting fetch...');
         
-        // Si déjà en cache, utiliser le cache
-        if (cachedPermissions) {
-          console.log('usePermissions: Using cached permissions');
-          setUser(cachedPermissions);
-          setLoading(false);
-          return;
+        // Vérifier le cache en mémoire d'abord
+        if (memoryCache && memoryCache.data) {
+          const now = Date.now();
+          if ((now - memoryCache.timestamp) < CACHE_DURATION) {
+            console.log('usePermissions: Using valid memory cache');
+            setUser(memoryCache.data);
+            setLoading(false);
+            return;
+          }
         }
 
-        // Si une requête est déjà en cours, attendre le résultat
-        if (cachePromise) {
-          console.log('usePermissions: Waiting for existing fetch...');
-          const userData = await cachePromise;
-          setUser(userData);
-          setLoading(false);
-          return;
-        }
-
-        // Démarrer une nouvelle requête
-        isFetching = true;
-        cachePromise = PermissionsService.getUserPermissions();
-        const userData = await cachePromise;
+        console.log('usePermissions: Fetching fresh permissions...');
         
-        // Mettre en cache
-        cachedPermissions = userData;
-        console.log('usePermissions: Got user data:', userData);
+        // Récupérer les permissions fraîches
+        const userData = await PermissionsService.getUserPermissions();
+        
+        // Mettre à jour les deux caches
+        const cacheData = {
+          data: userData,
+          timestamp: Date.now()
+        };
+        
+        memoryCache = cacheData;
+        
+        if (typeof window !== 'undefined') {
+          try {
+            sessionStorage.setItem(PERMISSIONS_CACHE_KEY, JSON.stringify(cacheData));
+          } catch (error) {
+            console.warn('Failed to cache permissions in sessionStorage:', error);
+          }
+        }
+        
         setUser(userData);
       } catch (error) {
         console.error('usePermissions: Failed to fetch permissions:', error);
         setUser(null);
       } finally {
         setLoading(false);
-        isFetching = false;
-        cachePromise = null;
       }
     };
 
-    fetchPermissions();
-  }, []);
+    if (!user) {
+      fetchPermissions();
+    }
+  }, [user]);
 
   const hasRole = (role: UserRole) => {
-    console.log('hasRole called with:', role, 'user:', user);
     return user ? PermissionsService.hasRole(user, role) : false;
   };
 
   const hasPermission = (resource: string, action: string) => {
-    console.log('hasPermission called with:', resource, action, 'user:', user);
     return user ? PermissionsService.hasPermission(user, resource, action) : false;
   };
 
   const canAccess = (resource: string, action: string = 'read') => {
-    console.log('canAccess called with:', resource, action, 'user:', user);
     return user ? PermissionsService.canAccess(user, resource, action) : false;
   };
 
   const refreshPermissions = async () => {
     try {
       setLoading(true);
-      // Forcer le rafraîchissement en vidant le cache
-      cachedPermissions = null;
+      
+      // Forcer le rafraîchissement en vidant les caches
+      memoryCache = null;
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem(PERMISSIONS_CACHE_KEY);
+      }
+      
       const userData = await PermissionsService.getUserPermissions();
-      cachedPermissions = userData;
+      
+      // Remettre en cache
+      const cacheData = {
+        data: userData,
+        timestamp: Date.now()
+      };
+      
+      memoryCache = cacheData;
+      
+      if (typeof window !== 'undefined') {
+        try {
+          sessionStorage.setItem(PERMISSIONS_CACHE_KEY, JSON.stringify(cacheData));
+        } catch (error) {
+          console.warn('Failed to cache permissions in sessionStorage:', error);
+        }
+      }
+      
       setUser(userData);
     } catch (error) {
       console.error('Failed to refresh permissions:', error);

@@ -4,10 +4,8 @@ import { UserWithRoles, PermissionsResponse, UserRole } from '../types/roles.typ
 export class PermissionsService {
   
   static async getUserPermissions(): Promise<UserWithRoles> {
-    console.log('Fetching user permissions from /me/permissions');
     try {
       const result = await FetchService.get<UserWithRoles>('me/permissions', 'User permissions');
-      console.log('User permissions result:', result);
       return result;
     } catch (error) {
       console.error('Failed to fetch user permissions:', error);
@@ -24,7 +22,6 @@ export class PermissionsService {
   }
 
   static async getAllPermissions(): Promise<PermissionsResponse> {
-    console.log('Fetching all permissions');
     return FetchService.get<PermissionsResponse>('permissions', 'All permissions');
   }
 
