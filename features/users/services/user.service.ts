@@ -4,7 +4,7 @@ import { AuthClientService } from "@/features/core/auth/services/auth-client.ser
 export class UserService {
   private static readonly BASE_URL = process.env.NODE_ENV === 'development' 
     ? ''  // Utilise le proxy Next.js en développement
-    : (process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000');
+    : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000');
   private static readonly API_URL = `${this.BASE_URL}/api/v1`;
 
   private static getAuthToken(): string | null {

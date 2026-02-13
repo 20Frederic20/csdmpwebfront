@@ -9,8 +9,8 @@ import { AuthClientService } from '@/features/core/auth/services/auth-client.ser
 
 export class LabResultsService {
   private static readonly BASE_URL = process.env.NODE_ENV === 'development' 
-    ? (process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000/api/v1')
-    : (process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000/api/v1');
+    ? (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1')
+    : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1');
   private static readonly API_URL = `${this.BASE_URL}`;
 
   static async getLabResults(params?: ListLabResultQueryParams): Promise<ListLabResultQM> {
