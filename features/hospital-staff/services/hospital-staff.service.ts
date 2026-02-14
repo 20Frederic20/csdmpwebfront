@@ -26,6 +26,7 @@ export class HospitalStaffService {
     if (params?.specialty) queryParams.append('specialty', params.specialty);
     if (params?.department) queryParams.append('department', params.department);
     if (params?.is_active !== undefined) queryParams.append('is_active', params.is_active.toString());
+    if (params?.deleted_at !== undefined) queryParams.append('deleted_at', params.deleted_at || '');
     if (params?.limit) queryParams.append('limit', params.limit.toString());
     if (params?.offset) queryParams.append('offset', params.offset.toString());
     if (params?.sort_by) queryParams.append('sort_by', params.sort_by);
@@ -108,7 +109,7 @@ export class HospitalStaffService {
   ): Promise<void> {
     const authToken = token || this.getAuthToken();
     
-    const response = await fetch(`${this.BASE_URL}/hospital-staff/${id}`, {
+    const response = await fetch(`${this.BASE_URL}/hospital-staff/${id}/soft-delete`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
@@ -119,6 +120,46 @@ export class HospitalStaffService {
     if (!response.ok) {
       throw new Error(`Failed to delete hospital staff: ${response.statusText}`);
     }
+  }
+
+  static async permanentlyDeleteHospitalStaff(
+    id: string, 
+    token?: string
+  ): Promise<void> {
+    const authToken = token || this.getAuthToken();
+    
+    const response = await fetch(`${this.BASE_URL}/hospital-staff/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(authToken && { 'Authorization': `Bearer ${authToken}` }),
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to permanently delete hospital staff: ${response.statusText}`);
+    }
+  }
+
+  static async restoreHospitalStaff(
+    id: string, 
+    token?: string
+  ): Promise<HospitalStaff> {
+    const authToken = token || this.getAuthToken();
+    
+    const response = await fetch(`${this.BASE_URL}/hospital-staff/${id}/restore`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(authToken && { 'Authorization': `Bearer ${authToken}` }),
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to restore hospital staff: ${response.statusText}`);
+    }
+
+    return response.json();
   }
 
   static async toggleHospitalStaffStatus(

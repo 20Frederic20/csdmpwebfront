@@ -10,6 +10,7 @@ export interface HospitalStaff {
   is_active: boolean;
   user_given_name?: string;
   user_family_name?: string;
+  deleted_at?: string | null;
   updated_at?: string;
   version?: number;
 }
@@ -44,6 +45,7 @@ export interface ListHospitalStaffQueryParams {
   specialty?: HospitalStaffSpecialty;
   department?: HospitalStaffDepartment;
   is_active?: boolean;
+  deleted_at?: string | null;
   limit?: number;
   offset?: number;
   sort_by?: string;

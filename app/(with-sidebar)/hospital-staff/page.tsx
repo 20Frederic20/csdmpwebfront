@@ -25,7 +25,9 @@ import {
   UserCheck,
   ChevronUp, 
   ChevronDown, 
-  ChevronsUpDown 
+  ChevronsUpDown,
+  RotateCcw,
+  AlertTriangle
 } from "lucide-react";
 import { toast } from "sonner";
 import { 
@@ -71,7 +73,6 @@ export default function HospitalStaffPage() {
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
   const loadStaff = async () => {
-    console.log('loadStaff appelé');
     setLoading(true);
     try {
       const offset = (currentPage - 1) * itemsPerPage;
@@ -177,30 +178,71 @@ export default function HospitalStaffPage() {
     loadStaff();
   };
 
+  const handleStaffSoftDeleted = async (id: string) => {
+    try {
+      await HospitalStaffService.deleteHospitalStaff(id, token || undefined);
+      
+      // Mettre à jour l'état localement
+      setStaff(prevStaff => 
+        prevStaff.map(member => 
+          member.id_ === id ? { ...member, deleted_at: new Date().toISOString() } : member
+        )
+      );
+      
+      toast.success('Personnel supprimé avec succès');
+    } catch (error: any) {
+      console.error('Error deleting staff:', error);
+      toast.error(error.message || "Erreur lors de la suppression");
+    }
+  };
+
+  const handleStaffPermanentlyDeleted = async (id: string) => {
+    try {
+      await HospitalStaffService.permanentlyDeleteHospitalStaff(id, token || undefined);
+      
+      // Retirer de la liste
+      setStaff(prevStaff => prevStaff.filter(member => member.id_ !== id));
+      setTotal(prevTotal => prevTotal - 1);
+      
+      toast.success('Personnel supprimé définitivement');
+    } catch (error: any) {
+      console.error('Error permanently deleting staff:', error);
+      toast.error(error.message || "Erreur lors de la suppression définitive");
+    }
+  };
+
+  const handleStaffRestored = async (id: string) => {
+    try {
+      const restoredStaff = await HospitalStaffService.restoreHospitalStaff(id, token || undefined);
+      
+      // Mettre à jour l'état localement
+      setStaff(prevStaff => 
+        prevStaff.map(member => 
+          member.id_ === id ? restoredStaff : member
+        )
+      );
+      
+      toast.success('Personnel restauré avec succès');
+    } catch (error: any) {
+      console.error('Error restoring staff:', error);
+      toast.error(error.message || "Erreur lors de la restauration");
+    }
+  };
+
   const handleToggleStatus = async (id: string) => {
     try {
       const updatedStaff = await HospitalStaffService.toggleHospitalStaffStatus(id, token || undefined);
-      
-      // Debug: voir ce que le serveur retourne
-      console.log('Réponse du serveur pour staff:', updatedStaff);
-      console.log('Type de is_active:', typeof updatedStaff?.is_active);
-      console.log('Valeur de is_active:', updatedStaff?.is_active);
       
       if (updatedStaff && typeof updatedStaff.is_active === 'boolean') {
         // Mettre à jour l'état localement sans recharger toute la liste
         setStaff(prevStaff => 
           prevStaff.map(member => 
-            member.id_ === id ? updatedStaff : member
+            member.id_ === id ? { ...updatedStaff, id_: member.id_ } : member
           )
         );
         
         toast.success(`Personnel ${updatedStaff.is_active ? 'activé' : 'désactivé'} avec succès`);
       } else {
-        console.error('updatedStaff invalide:', {
-          updatedStaff,
-          hasIsActive: updatedStaff && 'is_active' in updatedStaff,
-          isActiveType: typeof updatedStaff?.is_active
-        });
         throw new Error('Réponse invalide du serveur');
       }
     } catch (error: any) {
@@ -279,10 +321,6 @@ export default function HospitalStaffPage() {
             <Users className="h-5 w-5" />
             Liste du personnel ({total})
           </CardTitle>
-          {/* Debug info */}
-          <div className="text-xs text-muted-foreground mt-2">
-            Debug: Loading: {loading ? 'true' : 'false'}, Staff count: {staff.length}, Total: {total}
-          </div>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -369,12 +407,23 @@ export default function HospitalStaffPage() {
                     staff.map((member) => (
                       <TableRow key={member.id_}>
                         <TableCell className="font-medium">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-md font-medium">
+                          <div className={`flex items-center gap-3 ${member.deleted_at ? 'opacity-60' : ''}`}>
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-md font-medium ${
+                              member.deleted_at 
+                                ? 'bg-gray-100 text-gray-500' 
+                                : 'bg-blue-100 text-blue-700'
+                            }`}>
                               {getStaffDisplayName(member).substring(0, 2).toUpperCase() || 'ST'}
                             </div>
                             <div>
-                              <div className="font-medium">{getStaffDisplayName(member)}</div>
+                              <div className="font-medium flex items-center gap-2">
+                                {getStaffDisplayName(member)}
+                                {member.deleted_at && (
+                                  <Badge variant="secondary" className="text-xs">
+                                    Supprimé
+                                  </Badge>
+                                )}
+                              </div>
                               <div className="text-md text-muted-foreground">Matricule: {member.matricule}</div>
                             </div>
                           </div>
@@ -442,18 +491,34 @@ export default function HospitalStaffPage() {
                                   Modifier
                                 </DropdownMenuItem>
                               )}
-                              {canAccess('hospital_staffs', 'delete') && (
+                              {canAccess('hospital_staffs', 'soft_delete') && !member.deleted_at && (
                                 <>
                                   <DropdownMenuSeparator />
                                   <DropdownMenuItem 
                                     className="cursor-pointer text-red-600"
-                                    onClick={() => {
-                                      const modalButton = document.querySelector(`[data-hospital-staff-delete="${member.id_}"]`) as HTMLButtonElement;
-                                      if (modalButton) modalButton.click();
-                                    }}
+                                    onClick={() => handleStaffSoftDeleted(member.id_)}
                                   >
                                     <Trash2 className="h-4 w-4 mr-2" />
                                     Supprimer
+                                  </DropdownMenuItem>
+                                </>
+                              )}
+                              {member.deleted_at && canAccess('hospital_staffs', 'delete') && (
+                                <>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem 
+                                    className="cursor-pointer text-green-600"
+                                    onClick={() => handleStaffRestored(member.id_)}
+                                  >
+                                    <RotateCcw className="h-4 w-4 mr-2" />
+                                    Restaurer
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem 
+                                    className="cursor-pointer text-red-600"
+                                    onClick={() => handleStaffPermanentlyDeleted(member.id_)}
+                                  >
+                                    <AlertTriangle className="h-4 w-4 mr-2" />
+                                    Supprimer définitivement
                                   </DropdownMenuItem>
                                 </>
                               )}
