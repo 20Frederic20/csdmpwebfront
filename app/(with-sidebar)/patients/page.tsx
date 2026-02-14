@@ -1,23 +1,33 @@
 'use client';
 
 import { useState, useEffect } from "react";
-import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { DataPagination } from "@/components/ui/data-pagination";
-import { Search, Filter, ChevronUp, ChevronDown, ChevronsUpDown, MoreHorizontal, Eye, Edit, Trash2, UserCheck, Plus } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
-import { PatientService } from "@/features/patients/services/patients.service";
-import { PatientsResponse } from "@/features/patients/types/patients.types";
-import { formatPatientName, formatBirthDate, formatGender, getPatientStatusBadge } from "@/features/patients/utils/patients.utils";
-import { useAuthToken } from "@/hooks/use-auth-token";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { 
+  ChevronUp, 
+  ChevronDown, 
+  ChevronsUpDown,
+  Plus,
+  MoreHorizontal,
+  Eye,
+  UserCheck,
+  Trash2,
+  Edit,
+} from "lucide-react";
 import { toast } from "sonner";
+import { PatientsResponse } from "@/features/patients";
+import { PatientService } from "@/features/patients";
+import { useAuthToken } from "@/hooks/use-auth-token";
+import { usePermissions } from "@/hooks/use-permissions";
 import Link from "next/link";
+import { DataPagination } from "@/components/ui/data-pagination";
+import { PatientFilters } from "@/components/patients/patient-filters";
+import { formatPatientName, formatBirthDate, formatGender, getPatientStatusBadge } from "@/features/patients/utils/patients.utils";
 import { ViewPatientModal } from "@/components/patients/view-patient-modal";
 import { EditPatientModal } from "@/components/patients/edit-patient-modal";
 import { DeletePatientModal } from "@/components/patients/delete-patient-modal";
-import { PatientFilters } from "@/components/patients/patient-filters";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -42,6 +52,7 @@ export default function PatientsPage() {
   });
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const { token } = useAuthToken();
+  const { canAccess } = usePermissions();
 
   const handleToggleStatus = async (patientId: string) => {
     try {
@@ -181,12 +192,14 @@ export default function PatientsPage() {
             Gérez les informations des patients et leurs dossiers médicaux.
           </p>
         </div>
-        <Link href="/patients/add">
-          <Button className="cursor-pointer">
-            <Plus className="mr-2 h-4 w-4" />
-            Ajouter un patient
-          </Button>
-        </Link>
+        {canAccess('patients', 'create') && (
+          <Link href="/patients/add">
+            <Button className="cursor-pointer">
+              <Plus className="mr-2 h-4 w-4" />
+              Ajouter un patient
+            </Button>
+          </Link>
+        )}
       </div>
 
       {/* Filtres et recherche */}
@@ -302,43 +315,54 @@ export default function PatientsPage() {
                                 className="cursor-pointer"
                                 onClick={() => {
                                   // Ouvrir le modal manuellement
-                                  const modalButton = document.querySelector(`[data-patient-view="${patient.id_}"]`) as HTMLButtonElement;
-                                  if (modalButton) modalButton.click();
+                                  const modal = document.querySelector(`[data-modal="view-patient-${patient.id_}"]`) as HTMLDialogElement;
+                                  if (modal) modal.showModal();
                                 }}
                               >
                                 <Eye className="h-4 w-4 mr-2" />
                                 Voir
                               </DropdownMenuItem>
-                              <DropdownMenuItem 
-                                className="cursor-pointer"
-                                onClick={() => {
-                                  // Ouvrir le modal manuellement
-                                  const modalButton = document.querySelector(`[data-patient-edit="${patient.id_}"]`) as HTMLButtonElement;
-                                  if (modalButton) modalButton.click();
-                                }}
-                              >
-                                <Edit className="h-4 w-4 mr-2" />
-                                Modifier
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem 
-                                onClick={() => handleToggleStatus(patient.id_)}
-                                className="cursor-pointer"
-                              >
-                                <UserCheck className="h-4 w-4 mr-2" />
-                                {patient.is_active ? 'Désactiver' : 'Activer'}
-                              </DropdownMenuItem>
-                              <DropdownMenuItem 
-                                className="cursor-pointer text-red-600"
-                                onClick={() => {
-                                  // Ouvrir le modal manuellement
-                                  const modalButton = document.querySelector(`[data-patient-delete="${patient.id_}"]`) as HTMLButtonElement;
-                                  if (modalButton) modalButton.click();
-                                }}
-                              >
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Supprimer
-                              </DropdownMenuItem>
+                              {canAccess('patients', 'update') && (
+                                <DropdownMenuItem 
+                                  className="cursor-pointer"
+                                  onClick={() => {
+                                    // Ouvrir le modal manuellement
+                                    const modal = document.querySelector(`[data-modal="edit-patient-${patient.id_}"]`) as HTMLDialogElement;
+                                    if (modal) modal.showModal();
+                                  }}
+                                >
+                                  <Edit className="h-4 w-4 mr-2" />
+                                  Modifier
+                                </DropdownMenuItem>
+                              )}
+                              {canAccess('patients', 'update') && (
+                                <>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem 
+                                    onClick={() => handleToggleStatus(patient.id_)}
+                                    className="cursor-pointer"
+                                  >
+                                    <UserCheck className="h-4 w-4 mr-2" />
+                                    {patient.is_active ? 'Désactiver' : 'Activer'}
+                                  </DropdownMenuItem>
+                                </>
+                              )}
+                              {canAccess('patients', 'delete') && (
+                                <>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem 
+                                    className="cursor-pointer text-red-600"
+                                    onClick={() => {
+                                      // Ouvrir le modal manuellement
+                                      const modal = document.querySelector(`[data-modal="delete-patient-${patient.id_}"]`) as HTMLDialogElement;
+                                      if (modal) modal.showModal();
+                                    }}
+                                  >
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    Supprimer
+                                  </DropdownMenuItem>
+                                </>
+                              )}
                             </DropdownMenuContent>
                           </DropdownMenu>
                           

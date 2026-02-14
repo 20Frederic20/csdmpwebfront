@@ -53,7 +53,6 @@ import { usePermissions } from "@/hooks/use-permissions"
 
 function NavMain({
   items,
-  canAccess,
   loading
 }: {
   items: {
@@ -75,9 +74,9 @@ function NavMain({
       action: string
     }
   }[]
-  canAccess: (resource: string, action?: string) => boolean
-  loading: boolean
+  loading?: boolean
 }) {
+  const { canAccess } = usePermissions()
   const pathname = usePathname();
   
   if (loading) {
@@ -160,7 +159,7 @@ function NavMain({
 
 export function AppSidebar() {
   const pathname = usePathname()
-  const { canAccess, loading } = usePermissions()
+  const { loading } = usePermissions()
 
   const menuItems = [
     {
@@ -451,7 +450,7 @@ export function AppSidebar() {
             <div className="text-sm text-gray-500">Chargement...</div>
           </div>
         ) : (
-          <NavMain items={menuItems} canAccess={canAccess} loading={loading} />
+          <NavMain items={menuItems} loading={loading} />
         )}
       </SidebarContent>
       <SidebarFooter />

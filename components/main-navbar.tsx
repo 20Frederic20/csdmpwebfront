@@ -16,16 +16,23 @@ import {
   Building
 } from "lucide-react";
 import { AuthClientService } from "@/features/core/auth/services/auth-client.service";
+import { useAuthToken } from "@/hooks/use-auth-token";
+import { usePermissions } from "@/hooks/use-permissions";
 import { useAuthRefresh } from "@/hooks/use-auth-refresh";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 export function MainNavbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { isLoading } = useAuthRefresh();
   const pathname = usePathname();
+  const { clearPermissionsCache } = usePermissions();
+  const { isLoading } = useAuthRefresh();
 
   const handleLogout = () => {
+    // Nettoyer le cache des permissions avant la déconnexion
+    clearPermissionsCache();
+    
+    // Utiliser le service de déconnexion existant
     AuthClientService.logout();
   };
 

@@ -145,12 +145,23 @@ export function usePermissions() {
     }
   };
 
+  const clearPermissionsCache = () => {
+    // Vider tous les caches de permissions
+    memoryCache = null;
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem(PERMISSIONS_CACHE_KEY);
+    }
+    setUser(null);
+    setLoading(false);
+  };
+
   return {
     user,
     loading,
     hasRole,
     hasPermission,
     canAccess,
-    refreshPermissions
+    refreshPermissions,
+    clearPermissionsCache
   };
 }

@@ -3,11 +3,9 @@
 import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -38,6 +36,7 @@ import {
 } from "@/features/hospital-staff";
 import { HospitalStaffService } from "@/features/hospital-staff";
 import { useAuthToken } from "@/hooks/use-auth-token";
+import { usePermissions } from "@/hooks/use-permissions";
 import { 
   getSpecialtyLabel, 
   getDepartmentLabel, 
@@ -61,6 +60,7 @@ export default function HospitalStaffPage() {
   const [sortingField, setSortingField] = useState('matricule');
   const [sortingOrder, setSortingOrder] = useState<'asc' | 'desc'>('asc');
   const { token } = useAuthToken();
+  const { canAccess } = usePermissions();
 
   // États pour les filtres
   const [filters, setFilters] = useState({
@@ -253,12 +253,14 @@ export default function HospitalStaffPage() {
             Gérez le personnel médical et administratif des établissements de santé.
           </p>
         </div>
-        <Link href="/hospital-staff/add">
-          <Button className="cursor-pointer">
-            <Plus className="mr-2 h-4 w-4" />
-            Ajouter un membre
-          </Button>
-        </Link>
+        {canAccess('hospital_staffs', 'create') && (
+          <Link href="/hospital-staff/add">
+            <Button className="cursor-pointer">
+              <Plus className="mr-2 h-4 w-4" />
+              Ajouter un membre
+            </Button>
+          </Link>
+        )}
       </div>
 
       {/* Filtres et recherche */}
@@ -398,11 +400,17 @@ export default function HospitalStaffPage() {
                           </span>
                         </TableCell>
                         <TableCell>
-                          <Switch 
-                            checked={member.is_active}
-                            onCheckedChange={() => handleToggleStatus(member.id_)}
-                            className="data-[state=checked]:bg-green-500"
-                          />
+                          {canAccess('hospital_staffs', 'toggle') ? (
+                            <Switch 
+                              checked={member.is_active}
+                              onCheckedChange={() => handleToggleStatus(member.id_)}
+                              className="data-[state=checked]:bg-green-500"
+                            />
+                          ) : (
+                            <Badge variant={member.is_active ? "default" : "secondary"}>
+                              {member.is_active ? 'Actif' : 'Inactif'}
+                            </Badge>
+                          )}
                         </TableCell>
                         <TableCell className="text-right">
                           <DropdownMenu>
@@ -422,27 +430,33 @@ export default function HospitalStaffPage() {
                                 <Eye className="h-4 w-4 mr-2" />
                                 Voir
                               </DropdownMenuItem>
-                              <DropdownMenuItem 
-                                className="cursor-pointer"
-                                onClick={() => {
-                                  const modalButton = document.querySelector(`[data-hospital-staff-edit="${member.id_}"]`) as HTMLButtonElement;
-                                  if (modalButton) modalButton.click();
-                                }}
-                              >
-                                <Edit className="h-4 w-4 mr-2" />
-                                Modifier
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem 
-                                className="cursor-pointer text-red-600"
-                                onClick={() => {
-                                  const modalButton = document.querySelector(`[data-hospital-staff-delete="${member.id_}"]`) as HTMLButtonElement;
-                                  if (modalButton) modalButton.click();
-                                }}
-                              >
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Supprimer
-                              </DropdownMenuItem>
+                              {canAccess('hospital_staffs', 'update') && (
+                                <DropdownMenuItem 
+                                  className="cursor-pointer"
+                                  onClick={() => {
+                                    const modalButton = document.querySelector(`[data-hospital-staff-edit="${member.id_}"]`) as HTMLButtonElement;
+                                    if (modalButton) modalButton.click();
+                                  }}
+                                >
+                                  <Edit className="h-4 w-4 mr-2" />
+                                  Modifier
+                                </DropdownMenuItem>
+                              )}
+                              {canAccess('hospital_staffs', 'delete') && (
+                                <>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem 
+                                    className="cursor-pointer text-red-600"
+                                    onClick={() => {
+                                      const modalButton = document.querySelector(`[data-hospital-staff-delete="${member.id_}"]`) as HTMLButtonElement;
+                                      if (modalButton) modalButton.click();
+                                    }}
+                                  >
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    Supprimer
+                                  </DropdownMenuItem>
+                                </>
+                              )}
                             </DropdownMenuContent>
                           </DropdownMenu>
                           

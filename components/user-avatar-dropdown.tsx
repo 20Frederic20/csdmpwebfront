@@ -20,6 +20,7 @@ import {
 import { useRouter } from "next/navigation";
 import { PermissionsService } from "@/features/auth/services/permissions.service";
 import { useAuthToken } from "@/hooks/use-auth-token";
+import { usePermissions } from "@/hooks/use-permissions";
 
 interface User {
   id: string;
@@ -31,9 +32,10 @@ interface User {
 }
 
 export function UserAvatarDropdown() {
+  const { clearToken } = useAuthToken();
+  const { clearPermissionsCache } = usePermissions();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const { clearToken } = useAuthToken();
   const router = useRouter();
 
   useEffect(() => {
@@ -61,8 +63,11 @@ export function UserAvatarDropdown() {
   }, []);
 
   const handleLogout = () => {
-    // Supprimer le token du localStorage uniquement
+    // Supprimer le token du localStorage
     clearToken();
+    
+    // Nettoyer le cache des permissions du sessionStorage
+    clearPermissionsCache();
     
     // Rediriger vers la page de login
     router.push('/login');
