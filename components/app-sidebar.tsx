@@ -46,6 +46,7 @@ import {
   Building,
   Heart,
   UserCheck,
+  Link as LinkIcon,
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -190,6 +191,7 @@ function NavMain({
 export function AppSidebar() {
   const pathname = usePathname()
   const { loading } = usePermissions()
+  const { canAccess } = usePermissions()
 
   const menuItems = [
     {
@@ -307,6 +309,36 @@ export function AppSidebar() {
           icon: Plus,
           requiredPermission: {
             resource: "insurance_companies",
+            action: "create"
+          }
+        }
+      ]
+    },
+    {
+      title: "Assurances Patients",
+      url: "/patient-insurance",
+      icon: LinkIcon,
+      isActive: pathname.startsWith("/patient-insurance"),
+      requiredPermission: {
+        resource: "patient_insurances",
+        action: "list"
+      },
+      items: [
+        {
+          title: "Liste des assurances patients",
+          url: "/patient-insurance",
+          icon: LinkIcon,
+          requiredPermission: {
+            resource: "patient_insurances",
+            action: "list"
+          }
+        },
+        {
+          title: "Ajouter une assurance patient",
+          url: "/patient-insurance/add",
+          icon: Plus,
+          requiredPermission: {
+            resource: "patient_insurances",
             action: "create"
           }
         }
