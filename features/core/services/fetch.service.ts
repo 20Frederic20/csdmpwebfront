@@ -11,9 +11,6 @@ export class FetchService {
     ? (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1')
     : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1');
 
-  /**
-   * Fonction générique pour récupérer des données avec authentification
-   */
   static async fetchData<T>(
     endpoint: string,
     setState: React.Dispatch<React.SetStateAction<T[]>>,
@@ -40,20 +37,22 @@ export class FetchService {
         throw new Error(`Failed to fetch ${dataKey || 'data'}: ${response.statusText}`);
       }
       
+      if (response.status === 204) {
+        setState([]);
+        return;
+      }
+      
       const data = await response.json();
-      console.log(`${dataKey || 'Data'}:`, data); // Debug
+      console.log(`${dataKey || 'Data'}:`, data);
       setState(Array.isArray(data) ? data : (data.data || []));
     } catch (err) {
       console.error(`Failed to fetch ${dataKey || 'data'}:`, err);
-      setState([]); // S'assurer que c'est un tableau vide en cas d'erreur
+      setState([]);
     } finally {
       setLoading(false);
     }
   }
 
-  /**
-   * Fonction générique pour les requêtes API (POST, PUT, DELETE, etc.)
-   */
   static async makeRequest<T>(
     endpoint: string,
     options: FetchOptions & { method: 'POST' | 'PUT' | 'DELETE' | 'PATCH' },
@@ -76,8 +75,12 @@ export class FetchService {
         throw new Error(`Failed to ${options.method} ${dataKey || 'data'}: ${response.statusText}`);
       }
       
+      if (response.status === 204) {
+        return undefined as T;
+      }
+      
       const data = await response.json();
-      console.log(`${options.method} ${dataKey || 'Data'}:`, data); // Debug
+      console.log(`${options.method} ${dataKey || 'Data'}:`, data);
       return data;
     } catch (err) {
       console.error(`Failed to ${options.method} ${dataKey || 'data'}:`, err);
@@ -85,9 +88,6 @@ export class FetchService {
     }
   }
 
-  /**
-   * Raccourci pour les requêtes GET
-   */
   static async get<T>(
     endpoint: string,
     dataKey?: string,
@@ -96,9 +96,6 @@ export class FetchService {
     return this.makeRequest<T>(endpoint, { ...options, method: 'GET' }, dataKey);
   }
 
-  /**
-   * Raccourci pour les requêtes POST
-   */
   static async post<T>(
     endpoint: string,
     body: any,
@@ -108,9 +105,6 @@ export class FetchService {
     return this.makeRequest<T>(endpoint, { ...options, method: 'POST', body }, dataKey);
   }
 
-  /**
-   * Raccourci pour les requêtes PUT
-   */
   static async put<T>(
     endpoint: string,
     body: any,
@@ -120,9 +114,6 @@ export class FetchService {
     return this.makeRequest<T>(endpoint, { ...options, method: 'PUT', body }, dataKey);
   }
 
-  /**
-   * Raccourci pour les requêtes DELETE
-   */
   static async delete<T>(
     endpoint: string,
     dataKey?: string,
@@ -131,9 +122,6 @@ export class FetchService {
     return this.makeRequest<T>(endpoint, { ...options, method: 'DELETE' }, dataKey);
   }
 
-  /**
-   * Raccourci pour les requêtes PATCH
-   */
   static async patch<T>(
     endpoint: string,
     body: any,

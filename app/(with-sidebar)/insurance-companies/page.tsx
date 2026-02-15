@@ -7,6 +7,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { 
   Plus, 
   Search, 
@@ -17,19 +26,27 @@ import {
   Trash2, 
   ToggleLeft, 
   ToggleRight,
-  Filter
+  Filter,
+  RotateCcw,
+  AlertTriangle,
+  MoreHorizontal
 } from "lucide-react";
 import { InsuranceCompaniesService } from "@/features/insurance-companies/services/insurance-companies.service";
 import { InsuranceCompany, ListInsuranceCompanyQueryParams } from "@/features/insurance-companies/types/insurance-companies.types";
 import { useAuthRefresh } from "@/hooks/use-auth-refresh";
+import { usePermissions } from "@/hooks/use-permissions";
+import { useAuthToken } from "@/hooks/use-auth-token";
 import Link from "next/link";
 import { ViewInsuranceCompanyModal } from "@/features/insurance-companies/components/view-insurance-company-modal";
 import { EditInsuranceCompanyModal } from "@/features/insurance-companies/components/edit-insurance-company-modal";
 import { ConfirmModal } from "@/components/ui/modal";
+import { toast } from "sonner";
 
 export default function InsuranceCompaniesPage() {
   const router = useRouter();
   const { isLoading: authLoading } = useAuthRefresh();
+  const { canAccess } = usePermissions();
+  const { token } = useAuthToken();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
@@ -98,8 +115,13 @@ export default function InsuranceCompaniesPage() {
 
   const handleToggleStatus = async (company: InsuranceCompany) => {
     try {
-      await InsuranceCompaniesService.toggleInsuranceCompanyStatus(company.id_, !company.is_active);
-      await fetchInsuranceCompanies(currentPage);
+      const updatedCompany = await InsuranceCompaniesService.toggleInsuranceCompanyStatus(company.id_, !company.is_active);
+      
+      setInsuranceCompanies(prevCompanies => 
+        prevCompanies.map(c => 
+          c.id_ === company.id_ ? updatedCompany : c
+        )
+      );
     } catch (err) {
       console.error('Failed to toggle status:', err);
       setError('Erreur lors du changement de statut');
@@ -109,6 +131,48 @@ export default function InsuranceCompaniesPage() {
   const handleDelete = async (company: InsuranceCompany) => {
     setSelectedCompany(company);
     setDeleteModalOpen(true);
+  };
+
+  const handleSoftDelete = async (id: string) => {
+    try {
+      await InsuranceCompaniesService.deleteInsuranceCompany(id);
+      setInsuranceCompanies(prevCompanies => 
+        prevCompanies.map(company => 
+          company.id_ === id ? { ...company, deleted_at: new Date().toISOString() } : company
+        )
+      );
+      toast.success('Compagnie supprimée avec succès');
+    } catch (error: any) {
+      console.error('Error soft deleting company:', error);
+      toast.error(error.message || "Erreur lors de la suppression");
+    }
+  };
+
+  const handlePermanentlyDelete = async (id: string) => {
+    try {
+      await InsuranceCompaniesService.permanentlyDeleteInsuranceCompany(id);
+      setInsuranceCompanies(prevCompanies => prevCompanies.filter(company => company.id_ !== id));
+      setTotal(prevTotal => prevTotal - 1);
+      toast.success('Compagnie supprimée définitivement');
+    } catch (error: any) {
+      console.error('Error permanently deleting company:', error);
+      toast.error(error.message || "Erreur lors de la suppression définitive");
+    }
+  };
+
+  const handleRestore = async (id: string) => {
+    try {
+      const restoredCompany = await InsuranceCompaniesService.restoreInsuranceCompany(id);
+      setInsuranceCompanies(prevCompanies => 
+        prevCompanies.map(company => 
+          company.id_ === id ? restoredCompany : company
+        )
+      );
+      toast.success('Compagnie restaurée avec succès');
+    } catch (error: any) {
+      console.error('Error restoring company:', error);
+      toast.error(error.message || "Erreur lors de la restauration");
+    }
   };
 
   const confirmDelete = async () => {
@@ -141,13 +205,14 @@ export default function InsuranceCompaniesPage() {
   };
 
   const handleUpdate = (updatedCompany: InsuranceCompany) => {
-    // Update the company in the list
-    setInsuranceCompanies(prev => 
-      prev.map(company => 
+    
+    setInsuranceCompanies(prev => {
+      const updatedList = prev.map(company => 
         company.id_ === updatedCompany.id_ ? updatedCompany : company
-      )
-    );
-    // Update the selected company too
+      );
+      return updatedList;
+    });
+    
     setSelectedCompany(updatedCompany);
   };
 
@@ -171,12 +236,14 @@ export default function InsuranceCompaniesPage() {
           <h1 className="text-3xl font-bold text-gray-900">Compagnies d'Assurance</h1>
           <p className="text-gray-600 mt-2">Gérer les compagnies d'assurance</p>
         </div>
-        <Link href="/insurance-companies/add">
-          <Button className="bg-green-600 hover:bg-green-700">
-            <Plus className="h-4 w-4 mr-2" />
-            Ajouter une compagnie
-          </Button>
-        </Link>
+        {canAccess('insurance_companies', 'create') && (
+          <Link href="/insurance-companies/add">
+            <Button className="bg-green-600 hover:bg-green-700">
+              <Plus className="h-4 w-4 mr-2" />
+              Ajouter une compagnie
+            </Button>
+          </Link>
+        )}
       </div>
 
       {/* Error */}
@@ -253,84 +320,159 @@ export default function InsuranceCompaniesPage() {
               Aucune compagnie d'assurance trouvée
             </div>
           ) : (
-            <div className="space-y-4">
-              {insuranceCompanies.map((company) => (
-                <div key={company.id_} className="border rounded-lg p-4 hover:bg-gray-50">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="font-semibold text-lg">{company.name}</h3>
-                        <Badge variant={company.is_active ? "default" : "secondary"}>
-                          {company.is_active ? 'Actif' : 'Inactif'}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center gap-4 text-sm text-gray-600">
-                        <div className="flex items-center gap-1">
-                          <Building2 className="h-4 w-4" />
-                          <span>Code: {company.insurer_code}</span>
+            <>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[200px]">Nom</TableHead>
+                    <TableHead className="w-[150px]">Code assureur</TableHead>
+                    <TableHead className="w-[150px]">Téléphone</TableHead>
+                    <TableHead className="w-[100px]">Statut</TableHead>
+                    <TableHead className="w-[100px]">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {insuranceCompanies.map((company) => (
+                    <TableRow key={company.id_} className={company.deleted_at ? 'opacity-60' : ''}>
+                      <TableCell className="font-medium">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-md font-medium ${
+                            company.deleted_at 
+                              ? 'bg-gray-100 text-gray-500' 
+                              : !company.is_active 
+                                ? 'bg-gray-100 text-gray-500' 
+                                : 'bg-blue-100 text-blue-700'
+                          }`}>
+                            {company.name.charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <div className="font-medium flex items-center gap-2">
+                              {company.name}
+                              {company.deleted_at && (
+                                <Badge variant="secondary" className="text-xs">
+                                  Supprimé
+                                </Badge>
+                              )}
+                            </div>
+                            <div className="text-sm text-gray-600">{company.insurer_code}</div>
+                          </div>
                         </div>
-                        {company.contact_phone && (
+                      </TableCell>
+                      <TableCell>{company.insurer_code}</TableCell>
+                      <TableCell>
+                        {company.contact_phone ? (
                           <div className="flex items-center gap-1">
                             <Phone className="h-4 w-4" />
                             <span>{company.contact_phone}</span>
                           </div>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button variant="outline" size="sm" onClick={() => handleView(company)}>
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button variant="outline" size="sm" onClick={() => handleEdit(company)}>
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleToggleStatus(company)}
-                      >
-                        {company.is_active ? (
-                          <ToggleRight className="h-4 w-4 text-green-600" />
                         ) : (
-                          <ToggleLeft className="h-4 w-4 text-gray-400" />
+                          <span className="text-gray-400">-</span>
                         )}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDelete(company)}
-                        className="text-red-600 hover:text-red-700"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+                      </TableCell>
+                      <TableCell>
+                        <Switch
+                          checked={company.is_active && !company.deleted_at}
+                          onCheckedChange={() => handleToggleStatus(company)}
+                          disabled={!!company.deleted_at || !canAccess('insurance_companies', 'update')}
+                          className="data-[state=checked]:bg-green-500"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            {canAccess('insurance_companies', 'read') && (
+                              <DropdownMenuItem 
+                                className="cursor-pointer"
+                                onClick={() => handleView(company)}
+                              >
+                                <Eye className="h-4 w-4 mr-2" />
+                                Voir
+                              </DropdownMenuItem>
+                            )}
+                            {canAccess('insurance_companies', 'update') && !company.deleted_at && (
+                              <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem 
+                                  className="cursor-pointer"
+                                  onClick={() => handleEdit(company)}
+                                >
+                                  <Edit className="h-4 w-4 mr-2" />
+                                  Modifier
+                                </DropdownMenuItem>
+                              </>
+                            )}
+                            {canAccess('insurance_companies', 'soft_delete') && !company.deleted_at && (
+                              <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem 
+                                  className="cursor-pointer text-red-600"
+                                  onClick={() => handleSoftDelete(company.id_)}
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Supprimer
+                                </DropdownMenuItem>
+                              </>
+                            )}
+                            {company.deleted_at && canAccess('insurance_companies', 'delete') && (
+                              <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem 
+                                  className="cursor-pointer text-green-600"
+                                  onClick={() => handleRestore(company.id_)}
+                                >
+                                  <RotateCcw className="h-4 w-4 mr-2" />
+                                  Restaurer
+                                </DropdownMenuItem>
+                              </>
+                            )}
+                            {company.deleted_at && canAccess('insurance_companies', 'delete') && (
+                              <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem 
+                                  className="cursor-pointer text-red-600"
+                                  onClick={() => handlePermanentlyDelete(company.id_)}
+                                >
+                                  <AlertTriangle className="h-4 w-4 mr-2" />
+                                  Supprimer définitivement
+                                </DropdownMenuItem>
+                              </>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
 
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-2 mt-6">
-              <Button
-                variant="outline"
-                onClick={() => fetchInsuranceCompanies(currentPage - 1)}
-                disabled={currentPage === 1}
-              >
-                Précédent
-              </Button>
-              <span className="text-sm text-gray-600">
-                Page {currentPage} sur {totalPages}
-              </span>
-              <Button
-                variant="outline"
-                onClick={() => fetchInsuranceCompanies(currentPage + 1)}
-                disabled={currentPage === totalPages}
-              >
-                Suivant
-              </Button>
-            </div>
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-2 mt-6">
+                  <Button
+                    variant="outline"
+                    onClick={() => fetchInsuranceCompanies(currentPage - 1)}
+                    disabled={currentPage === 1}
+                  >
+                    Précédent
+                  </Button>
+                  <span className="text-sm text-gray-600">
+                    Page {currentPage} sur {totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    onClick={() => fetchInsuranceCompanies(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                  >
+                    Suivant
+                  </Button>
+                </div>
+              )}
+            </>
           )}
         </CardContent>
       </Card>

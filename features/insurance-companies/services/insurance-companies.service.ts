@@ -14,6 +14,7 @@ export class InsuranceCompaniesService {
     if (params?.name) queryParams.append('name', params.name);
     if (params?.insurer_code) queryParams.append('insurer_code', params.insurer_code);
     if (params?.is_active !== undefined) queryParams.append('is_active', params.is_active.toString());
+    if (params?.deleted_at) queryParams.append('deleted_at', params.deleted_at);
     if (params?.limit) queryParams.append('limit', params.limit.toString());
     if (params?.offset) queryParams.append('offset', params.offset.toString());
     if (params?.sort_by) queryParams.append('sort_by', params.sort_by);
@@ -43,6 +44,16 @@ export class InsuranceCompaniesService {
   static async deleteInsuranceCompany(id: string): Promise<void> {
     console.log('Soft deleting insurance company:', id);
     return FetchService.delete<void>(`insurance-companies/${id}/soft-delete`, 'Insurance company');
+  }
+
+  static async permanentlyDeleteInsuranceCompany(id: string): Promise<void> {
+    console.log('Permanently deleting insurance company:', id);
+    return FetchService.delete<void>(`insurance-companies/${id}`, 'Insurance company');
+  }
+
+  static async restoreInsuranceCompany(id: string): Promise<InsuranceCompany> {
+    console.log('Restoring insurance company:', id);
+    return FetchService.patch<InsuranceCompany>(`insurance-companies/${id}/restore`, {}, 'Insurance company');
   }
 
   static async toggleInsuranceCompanyStatus(id: string, isActive: boolean): Promise<InsuranceCompany> {
