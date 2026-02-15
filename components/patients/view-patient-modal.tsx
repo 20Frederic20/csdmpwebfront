@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -16,33 +15,21 @@ import { PatientMedicalInfo } from "./patient-medical-info";
 
 interface ViewPatientModalProps {
   patient: Patient;
+  isOpen: boolean;
+  onClose: () => void;
 }
 
-export function ViewPatientModal({ patient }: ViewPatientModalProps) {
-  const [open, setOpen] = useState(false);
+export function ViewPatientModal({ patient, isOpen, onClose }: ViewPatientModalProps) {
   const [refreshKey, setRefreshKey] = useState(0); // Pour forcer le rechargement
 
-  const handleOpenChange = (isOpen: boolean) => {
-    setOpen(isOpen);
+  useEffect(() => {
     if (isOpen) {
-      // Forcer le rechargement des allergies quand le modal s'ouvre
       setRefreshKey(prev => prev + 1);
     }
-  };
+  }, [isOpen]);
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          className="w-full justify-start"
-          data-patient-view={patient.id_}
-        >
-          <Eye className="h-4 w-4 mr-2" />
-          Voir
-        </Button>
-      </DialogTrigger>
+    <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Détails du patient</DialogTitle>
@@ -50,7 +37,7 @@ export function ViewPatientModal({ patient }: ViewPatientModalProps) {
             Informations complètes du patient
           </DialogDescription>
         </DialogHeader>
-        
+
         <div className="space-y-6">
           {/* Informations principales */}
           <div className="space-y-4">
@@ -103,7 +90,7 @@ export function ViewPatientModal({ patient }: ViewPatientModalProps) {
           </div>
 
           {/* Informations médicales */}
-          <PatientMedicalInfo patientId={patient.id_} />
+          <PatientMedicalInfo key={refreshKey} patientId={patient.id_} />
         </div>
       </DialogContent>
     </Dialog>

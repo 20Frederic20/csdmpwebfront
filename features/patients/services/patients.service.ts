@@ -143,6 +143,67 @@ export class PatientService {
     }
   }
 
+  static async softDeletePatient(id: string, token?: string): Promise<void> {
+    const authToken = token || getAuthToken();
+    
+    const headers: Record<string, string> = {};
+    
+    if (authToken) {
+      headers['Authorization'] = `Bearer ${authToken}`;
+    }
+    
+    const response = await fetch(`${API_BASE}/patients/${id}/soft-delete`, {
+      method: 'DELETE',
+      headers,
+    });
+
+    if (!response.ok) {
+      await this.errorHandler(response, 'supprimer');
+    }
+  }
+
+  static async permanentlyDeletePatient(id: string, token?: string): Promise<void> {
+    const authToken = token || getAuthToken();
+    
+    const headers: Record<string, string> = {};
+    
+    if (authToken) {
+      headers['Authorization'] = `Bearer ${authToken}`;
+    }
+    
+    const response = await fetch(`${API_BASE}/patients/${id}/permanently-delete`, {
+      method: 'DELETE',
+      headers,
+    });
+
+    if (!response.ok) {
+      await this.errorHandler(response, 'supprimer définitivement');
+    }
+  }
+
+  static async restorePatient(id: string, token?: string): Promise<Patient> {
+    const authToken = token || getAuthToken();
+    
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    
+    if (authToken) {
+      headers['Authorization'] = `Bearer ${authToken}`;
+    }
+    
+    const response = await fetch(`${API_BASE}/patients/${id}/restore`, {
+      method: 'PATCH',
+      headers,
+    });
+
+    if (!response.ok) {
+      await this.errorHandler(response, 'restaurer');
+    }
+
+    return response.json();
+  }
+
   static async togglePatientActivation(id: string, token?: string): Promise<Patient> {
     const authToken = token || getAuthToken();
     

@@ -19,10 +19,11 @@ import { toast } from "sonner";
 interface DeletePatientModalProps {
   patient: Patient;
   onPatientDeleted: () => void;
+  isOpen: boolean;
+  onClose: () => void;
 }
 
-export function DeletePatientModal({ patient, onPatientDeleted }: DeletePatientModalProps) {
-  const [open, setOpen] = useState(false);
+export function DeletePatientModal({ patient, onPatientDeleted, isOpen, onClose }: DeletePatientModalProps) {
   const [loading, setLoading] = useState(false);
   const { token } = useAuthToken();
 
@@ -30,10 +31,10 @@ export function DeletePatientModal({ patient, onPatientDeleted }: DeletePatientM
     setLoading(true);
 
     try {
-      await PatientService.deletePatient(patient.id_, token || undefined);
-      setOpen(false);
+      await PatientService.softDeletePatient(patient.id_, token || undefined);
       toast.success(`Patient ${patient.given_name} ${patient.family_name} supprimé avec succès`);
       onPatientDeleted();
+      onClose();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Une erreur est survenue lors de la suppression du patient');
     } finally {
@@ -42,29 +43,17 @@ export function DeletePatientModal({ patient, onPatientDeleted }: DeletePatientM
   };
 
   return (
-    <AlertDialog open={open} onOpenChange={setOpen}>
-      <Button
-        variant="ghost"
-        size="sm"
-        className="text-destructive hover:text-destructive hover:bg-destructive/10 w-full justify-start"
-        onClick={() => setOpen(true)}
-        data-patient-delete={patient.id_}
-      >
-        <Trash2 className="h-4 w-4 mr-2" />
-        Supprimer
-      </Button>
-      
+    <AlertDialog open={isOpen} onOpenChange={onClose}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
           <AlertDialogDescription>
-            Êtes-vous sûr de vouloir supprimer le patient <strong>{patient.given_name} {patient.family_name}</strong> ? 
-            Cette action est irréversible et toutes les données associées seront perdues.
+            Êtes-vous sûr de vouloir supprimer le patient <strong>{patient.given_name} {patient.family_name}</strong> ?
           </AlertDialogDescription>
         </AlertDialogHeader>
-        
+
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={loading}>Annuler</AlertDialogCancel>
+          <AlertDialogCancel disabled={loading} onClick={onClose}>Annuler</AlertDialogCancel>
           <AlertDialogAction
             onClick={handleDelete}
             disabled={loading}

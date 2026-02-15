@@ -7,10 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Building, User, Phone, MapPin, Users, Save } from "lucide-react";
+import { ArrowLeft, Building, User, Phone, MapPin, Users, Save, Trash2, RotateCcw, AlertTriangle } from "lucide-react";
 import { HealthFacility, UpdateHealthFacilityRequest } from "@/features/health-facilities/types/health-facility.types";
 import { HealthFacilityService } from "@/features/health-facilities/services/health-facility.service";
 import { useAuthToken } from "@/hooks/use-auth-token";
+import { usePermissions } from "@/hooks/use-permissions";
 import { toast } from "sonner";
 import Link from "next/link";
 import { getFacilityTypeOptions } from "@/features/health-facilities/utils/health-facility.utils";
@@ -39,6 +40,7 @@ export default function EditHealthFacilityPage() {
     is_active: true,
   });
   const { token } = useAuthToken();
+  const { canAccess } = usePermissions();
   const facilityId = params.id as string;
 
   useEffect(() => {
@@ -101,6 +103,46 @@ export default function EditHealthFacilityPage() {
     }));
   };
 
+  const handleSoftDelete = async () => {
+    if (!facility) return;
+    
+    if (window.confirm('Êtes-vous sûr de vouloir supprimer cet établissement ?')) {
+      try {
+        await HealthFacilityService.deleteHealthFacility(facility.id_, token || undefined);
+        toast.success('Établissement supprimé avec succès');
+        router.push('/health-facilities');
+      } catch (error: any) {
+        toast.error(error.message || "Erreur lors de la suppression");
+      }
+    }
+  };
+
+  const handlePermanentlyDelete = async () => {
+    if (!facility) return;
+    
+    if (window.confirm('Êtes-vous sûr de vouloir supprimer définitivement cet établissement ? Cette action est irréversible.')) {
+      try {
+        await HealthFacilityService.permanentlyDeleteHealthFacility(facility.id_, token || undefined);
+        toast.success('Établissement supprimé définitivement');
+        router.push('/health-facilities');
+      } catch (error: any) {
+        toast.error(error.message || "Erreur lors de la suppression définitive");
+      }
+    }
+  };
+
+  const handleRestore = async () => {
+    if (!facility) return;
+    
+    try {
+      const restoredFacility = await HealthFacilityService.restoreHealthFacility(facility.id_, token || undefined);
+      setFacility(restoredFacility);
+      toast.success('Établissement restauré avec succès');
+    } catch (error: any) {
+      toast.error(error.message || "Erreur lors de la restauration");
+    }
+  };
+
   if (fetchLoading) {
     return (
       <div className="container mx-auto py-6">
@@ -142,15 +184,65 @@ export default function EditHealthFacilityPage() {
           <ArrowLeft className="mr-2 h-4 w-4" />
           Retour
         </Button>
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Modifier l'établissement</h1>
-          <p className="text-muted-foreground">
-            Modifier les informations de l'établissement de santé
-          </p>
+        <div className="flex-1">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">Modifier l'établissement</h1>
+              <p className="text-muted-foreground">
+                Modifier les informations de l'établissement de santé
+              </p>
+            </div>
+            <div className="flex gap-2">
+              {facility && facility.deleted_at && canAccess('health_facilities', 'restore') && (
+                <Button 
+                  variant="outline" 
+                  onClick={handleRestore}
+                  className="cursor-pointer"
+                >
+                  <RotateCcw className="mr-2 h-4 w-4" />
+                  Restaurer
+                </Button>
+              )}
+              {facility && !facility.deleted_at && canAccess('health_facilities', 'soft_delete') && (
+                <Button 
+                  variant="outline" 
+                  onClick={handleSoftDelete}
+                  className="cursor-pointer text-red-600 border-red-600 hover:bg-red-50"
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Supprimer
+                </Button>
+              )}
+              {facility && facility.deleted_at && canAccess('health_facilities', 'delete') && (
+                <Button 
+                  variant="destructive" 
+                  onClick={handlePermanentlyDelete}
+                  className="cursor-pointer"
+                >
+                  <AlertTriangle className="mr-2 h-4 w-4" />
+                  Supprimer définitivement
+                </Button>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      {facility && facility.deleted_at && (
+        <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5 text-yellow-600" />
+            <div>
+              <h3 className="font-semibold text-yellow-800">Établissement supprimé</h3>
+              <p className="text-sm text-yellow-700">
+                Cet établissement a été supprimé. Vous pouvez le restaurer ou le supprimer définitivement.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className={`space-y-6 ${facility && facility.deleted_at ? 'opacity-50 pointer-events-none' : ''}`}>
         {/* Informations principales */}
         <Card>
           <CardHeader>
@@ -246,7 +338,7 @@ export default function EditHealthFacilityPage() {
               </Button>
               <Button
                 type="submit"
-                disabled={loading}
+                disabled={loading || (facility && facility.deleted_at)}
                 className="cursor-pointer"
               >
                 <Save className="mr-2 h-4 w-4" />

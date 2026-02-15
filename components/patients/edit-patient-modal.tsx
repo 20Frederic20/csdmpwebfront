@@ -29,11 +29,12 @@ import { toast } from "sonner";
 
 interface EditPatientModalProps {
   patient: Patient;
-  onPatientUpdated: () => void;
+  onPatientUpdated: (updatedPatient: Patient) => void;
+  isOpen: boolean;
+  onClose: () => void;
 }
 
-export function EditPatientModal({ patient, onPatientUpdated }: EditPatientModalProps) {
-  const [open, setOpen] = useState(false);
+export function EditPatientModal({ patient, onPatientUpdated, isOpen, onClose }: EditPatientModalProps) {
   const [loading, setLoading] = useState(false);
   const { token } = useAuthToken();
   const [formData, setFormData] = useState({
@@ -47,7 +48,7 @@ export function EditPatientModal({ patient, onPatientUpdated }: EditPatientModal
 
   // Initialiser le formulaire avec les données du patient
   useEffect(() => {
-    if (patient) {
+    if (patient && isOpen) {
       setFormData({
         given_name: patient.given_name || "",
         family_name: patient.family_name || "",
@@ -57,17 +58,17 @@ export function EditPatientModal({ patient, onPatientUpdated }: EditPatientModal
         is_active: patient.is_active ?? true,
       });
     }
-  }, [patient]);
+  }, [patient, isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      await PatientService.updatePatient(patient.id_, formData, token || undefined);
-      setOpen(false);
+      const updatedPatient = await PatientService.updatePatient(patient.id_, formData, token || undefined);
       toast.success("Patient modifié avec succès");
-      onPatientUpdated();
+      onPatientUpdated(updatedPatient);
+      onClose();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Une erreur est survenue lors de la modification du patient');
     } finally {
@@ -81,18 +82,7 @@ export function EditPatientModal({ patient, onPatientUpdated }: EditPatientModal
 
   return (
     <>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogTrigger asChild>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="w-full justify-start"
-            data-patient-edit={patient.id_}
-          >
-            <Edit className="h-4 w-4 mr-2" />
-            Modifier
-          </Button>
-        </DialogTrigger>
+      <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="sm:max-w-[425px]">
           <form onSubmit={handleSubmit}>
             <DialogHeader>
@@ -122,7 +112,7 @@ export function EditPatientModal({ patient, onPatientUpdated }: EditPatientModal
                   />
                 </div>
               </div>
-              
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="edit_birth_date">Date de naissance</Label>
@@ -173,7 +163,7 @@ export function EditPatientModal({ patient, onPatientUpdated }: EditPatientModal
               </div>
             </div>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+              <Button type="button" variant="outline" onClick={onClose}>
                 Annuler
               </Button>
               <Button type="submit" disabled={loading}>

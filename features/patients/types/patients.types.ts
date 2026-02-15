@@ -7,6 +7,8 @@ export interface Patient {
   location: string;
   owner_id: string;
   is_active: boolean;
+  deleted_at?: string | null;
+  version?: number | null;
 }
 
 export interface PatientsResponse {
