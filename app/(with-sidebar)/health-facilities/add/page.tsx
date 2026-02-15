@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import CustomSelect from "@/components/ui/custom-select";
 import { ArrowLeft, Building, User, Phone, MapPin, Users } from "lucide-react";
 import { CreateHealthFacilityRequest, AdminUser } from "@/features/health-facilities/types/health-facility.types";
 import { HealthFacilityService } from "@/features/health-facilities/services/health-facility.service";
@@ -21,6 +21,22 @@ export default function AddHealthFacilityPage() {
   const [loading, setLoading] = useState(false);
   const [adminMode, setAdminMode] = useState<'create' | 'select'>('select');
   const [availableUsers, setAvailableUsers] = useState<any[]>([]);
+
+  // Options pour le type d'établissement
+  const facilityTypeOptions = [
+    { value: "university_hospital", label: "Hôpital universitaire" },
+    { value: "departmental_hospital", label: "Hôpital départemental" },
+    { value: "zone_hospital", label: "Hôpital de zone" },
+    { value: "health_center", label: "Centre de santé" },
+    { value: "dispensary", label: "Dispensaire" },
+    { value: "private_clinic", label: "Clinique privée" },
+  ];
+
+  // Options pour les utilisateurs disponibles
+  const userOptions = availableUsers.map((user) => ({
+    value: user.id_,
+    label: `${user.given_name} ${user.family_name} (${user.health_id})`
+  }));
 
   const [formData, setFormData] = useState<CreateHealthFacilityRequest>({
     name: "",
@@ -162,19 +178,14 @@ export default function AddHealthFacilityPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="facility_type">Type d'établissement <span className="text-red-500">*</span></Label>
-                <Select value={formData.facility_type} onValueChange={(value) => handleInputChange("facility_type", value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sélectionner" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="university_hospital">Hôpital universitaire</SelectItem>
-                    <SelectItem value="departmental_hospital">Hôpital départemental</SelectItem>
-                    <SelectItem value="zone_hospital">Hôpital de zone</SelectItem>
-                    <SelectItem value="health_center">Centre de santé</SelectItem>
-                    <SelectItem value="dispensary">Dispensaire</SelectItem>
-                    <SelectItem value="private_clinic">Clinique privée</SelectItem>
-                  </SelectContent>
-                </Select>
+                <CustomSelect
+                  options={facilityTypeOptions}
+                  value={formData.facility_type}
+                  onChange={(value) => handleInputChange("facility_type", value as string)}
+                  placeholder="Sélectionner un type d'établissement"
+                  height="h-12"
+                  className="w-full"
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="phone">Téléphone</Label>
@@ -263,21 +274,14 @@ export default function AddHealthFacilityPage() {
               <div className="space-y-4 border-t pt-4">
                 <div className="space-y-2">
                   <Label htmlFor="admin_user_id">Utilisateur existant <span className="text-red-500">*</span></Label>
-                  <Select 
-                    value={formData.admin_user_id || ""} 
-                    onValueChange={(value) => handleInputChange("admin_user_id", value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Sélectionner un utilisateur" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableUsers.map((user) => (
-                        <SelectItem key={user.id_} value={user.id_}>
-                          {user.given_name} {user.family_name} ({user.health_id})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <CustomSelect
+                    options={userOptions}
+                    value={formData.admin_user_id}
+                    onChange={(value) => handleInputChange("admin_user_id", value as string | null)}
+                    placeholder="Sélectionner un utilisateur"
+                    height="h-12"
+                    className="w-full"
+                  />
                 </div>
               </div>
             )}

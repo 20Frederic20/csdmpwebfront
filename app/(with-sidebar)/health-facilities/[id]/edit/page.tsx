@@ -1,18 +1,20 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Save, Loader2 } from "lucide-react";
-import { toast } from "sonner";
-import { HealthFacility } from "@/features/health-facilities";
-import { HealthFacilityService } from "@/features/health-facilities";
+import { Badge } from "@/components/ui/badge";
+import { ArrowLeft, Building, User, Phone, MapPin, Users, Save } from "lucide-react";
+import { HealthFacility, UpdateHealthFacilityRequest } from "@/features/health-facilities/types/health-facility.types";
+import { HealthFacilityService } from "@/features/health-facilities/services/health-facility.service";
 import { useAuthToken } from "@/hooks/use-auth-token";
+import { toast } from "sonner";
+import Link from "next/link";
 import { getFacilityTypeOptions } from "@/features/health-facilities/utils/health-facility.utils";
+import CustomSelect from "@/components/ui/custom-select";
 
 interface EditHealthFacilityPageProps {
   params: {
@@ -20,26 +22,29 @@ interface EditHealthFacilityPageProps {
   };
 }
 
-export default function EditHealthFacilityPage({ params }: EditHealthFacilityPageProps) {
+export default function EditHealthFacilityPage() {
+  const params = useParams();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [fetchLoading, setFetchLoading] = useState(true);
   const [facility, setFacility] = useState<HealthFacility | null>(null);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<UpdateHealthFacilityRequest>({
     name: "",
     code: "",
-    facility_type: "" as HealthFacility['facility_type'],
+    facility_type: null,
     district: "",
     region: "",
     phone: "",
+    admin_user_id: null,
     is_active: true,
   });
   const { token } = useAuthToken();
+  const facilityId = params.id as string;
 
   useEffect(() => {
     const loadFacility = async () => {
       try {
-        const facilityData = await HealthFacilityService.getHealthFacilityById(params.id, token || undefined);
+        const facilityData = await HealthFacilityService.getHealthFacilityById(facilityId, token || undefined);
         setFacility(facilityData);
         setFormData({
           name: facilityData.name,
@@ -48,10 +53,10 @@ export default function EditHealthFacilityPage({ params }: EditHealthFacilityPag
           district: facilityData.district || "",
           region: facilityData.region || "",
           phone: facilityData.phone || "",
+          admin_user_id: facilityData.admin_user_id || null,
           is_active: facilityData.is_active,
         });
       } catch (error: any) {
-        console.error('Error loading facility:', error);
         toast.error('Erreur lors du chargement de l\'établissement');
         router.push('/health-facilities');
       } finally {
@@ -60,7 +65,7 @@ export default function EditHealthFacilityPage({ params }: EditHealthFacilityPag
     };
 
     loadFacility();
-  }, [params.id, token, router]);
+  }, [facilityId, token, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -80,11 +85,9 @@ export default function EditHealthFacilityPage({ params }: EditHealthFacilityPag
 
     setLoading(true);
     try {
-      await HealthFacilityService.updateHealthFacility(params.id, formData, token || undefined);
-      toast.success("Établissement mis à jour avec succès");
+      await HealthFacilityService.updateHealthFacility(facilityId, formData, token || undefined);
       router.push('/health-facilities');
     } catch (error: any) {
-      console.error('Error updating facility:', error);
       toast.error(error.message || "Erreur lors de la mise à jour");
     } finally {
       setLoading(false);
@@ -101,12 +104,18 @@ export default function EditHealthFacilityPage({ params }: EditHealthFacilityPag
   if (fetchLoading) {
     return (
       <div className="container mx-auto py-6">
-        <div className="flex items-center justify-center py-8">
-          <div className="text-center">
-            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2" />
-            <p className="text-muted-foreground">Chargement de l'établissement...</p>
+        {fetchLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="text-center">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-blue-600 mx-auto mb-2"></div>
+              <p className="text-muted-foreground">Chargement de l'établissement...</p>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="text-center py-8">
+            <p className="text-muted-foreground">Établissement non trouvé</p>
+          </div>
+        )}
       </div>
     );
   }
@@ -150,7 +159,7 @@ export default function EditHealthFacilityPage({ params }: EditHealthFacilityPag
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="name">Nom de l'établissement *</Label>
+                <Label htmlFor="name">Nom de l'établissement <span className="text-red-500">*</span></Label>
                 <Input
                   id="name"
                   value={formData.name}
@@ -160,7 +169,7 @@ export default function EditHealthFacilityPage({ params }: EditHealthFacilityPag
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="code">Code *</Label>
+                <Label htmlFor="code">Code <span className="text-red-500">*</span></Label>
                 <Input
                   id="code"
                   value={formData.code}
@@ -170,37 +179,16 @@ export default function EditHealthFacilityPage({ params }: EditHealthFacilityPag
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="facility_type">Type d'établissement *</Label>
-                <Select 
-                  value={formData.facility_type} 
-                  onValueChange={(value) => handleInputChange('facility_type', value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sélectionner un type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {getFacilityTypeOptions().map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="is_active">Statut</Label>
-                <Select 
-                  value={formData.is_active.toString()} 
-                  onValueChange={(value) => handleInputChange('is_active', value === 'true')}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sélectionner un statut" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="true">Actif</SelectItem>
-                    <SelectItem value="false">Inactif</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="facility_type">Type d'établissement <span className="text-red-500">*</span></Label>
+                <CustomSelect
+                  value={formData.facility_type}
+                  onChange={(value) => {
+                    const stringValue = Array.isArray(value) ? value[0] : value;
+                    handleInputChange('facility_type', stringValue || '');
+                  }}
+                  options={getFacilityTypeOptions()}
+                  placeholder="Sélectionner un type"
+                />
               </div>
             </div>
           </CardContent>

@@ -79,16 +79,46 @@ function NavMain({
   const { canAccess } = usePermissions()
   const pathname = usePathname();
   
+  // Afficher le menu même pendant le chargement, mais sans filtrer les permissions
   if (loading) {
     return (
       <SidebarGroup>
         <SidebarGroupLabel>Navigation</SidebarGroupLabel>
         <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton>
-              <span>Chargement...</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
+          {items.map((item) => (
+            <Collapsible
+              key={item.title}
+              asChild
+              defaultOpen={item.isActive}
+              className="group/collapsible"
+            >
+              <SidebarMenuItem>
+                <CollapsibleTrigger asChild>
+                  <SidebarMenuButton tooltip={item.title}>
+                    {item.icon && <item.icon />}
+                    <span>{item.title}</span>
+                    {item.items && item.items.length > 0 && (
+                      <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                    )}
+                  </SidebarMenuButton>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <SidebarMenuSub>
+                    {item.items?.map((subItem) => (
+                      <SidebarMenuSubItem key={subItem.title}>
+                        <SidebarMenuSubButton asChild>
+                          <Link href={subItem.url}>
+                            {subItem.icon && <subItem.icon />}
+                            <span>{subItem.title}</span>
+                          </Link>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                    ))}
+                  </SidebarMenuSub>
+                </CollapsibleContent>
+              </SidebarMenuItem>
+            </Collapsible>
+          ))}
         </SidebarMenu>
       </SidebarGroup>
     );
@@ -445,13 +475,7 @@ export function AppSidebar() {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        {loading ? (
-          <div className="flex items-center justify-center p-4">
-            <div className="text-sm text-gray-500">Chargement...</div>
-          </div>
-        ) : (
-          <NavMain items={menuItems} loading={loading} />
-        )}
+        <NavMain items={menuItems} loading={loading} />
       </SidebarContent>
       <SidebarFooter />
     </Sidebar>

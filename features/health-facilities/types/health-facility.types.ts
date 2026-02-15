@@ -7,7 +7,10 @@ export interface HealthFacility {
   region: string | null;
   phone: string | null;
   admin_user_id: string | null;
+  admin_given_name: string | null;
+  admin_family_name: string | null;
   is_active: boolean;
+  deleted_at?: string | null;
 }
 
 export interface AdminUser {
@@ -52,4 +55,5 @@ export interface HealthFacilityQueryParams {
   sort_by?: string;
   sort_order?: 'asc' | 'desc';
   search?: string;
+  deleted_at?: string | null;
 }

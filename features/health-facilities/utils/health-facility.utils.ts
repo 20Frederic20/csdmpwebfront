@@ -48,3 +48,14 @@ export function getHealthFacilityStatusBadge(status: boolean): { label: string; 
     ? { label: 'Actif', variant: 'default' }
     : { label: 'Inactif', variant: 'destructive' };
 }
+
+export function getFacilityTypeOptions(): { value: string; label: string }[] {
+  return [
+    { value: "university_hospital", label: "Hôpital universitaire" },
+    { value: "departmental_hospital", label: "Hôpital départemental" },
+    { value: "zone_hospital", label: "Hôpital de zone" },
+    { value: "health_center", label: "Centre de santé" },
+    { value: "dispensary", label: "Dispensaire" },
+    { value: "private_clinic", label: "Clinique privée" },
+  ];
+}

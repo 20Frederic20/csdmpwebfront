@@ -5,12 +5,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search, Plus, Filter, Building, MoreHorizontal, Eye, Edit, Trash2, UserCheck } from "lucide-react";
+import { Search, Plus, Filter, Building, MoreHorizontal, Eye, Edit, Trash2, RotateCcw, AlertTriangle } from "lucide-react";
 import { HealthFacility } from "@/features/health-facilities/types/health-facility.types";
 import { HealthFacilityService } from "@/features/health-facilities/services/health-facility.service";
-import { getFacilityTypeBadge, getHealthFacilityStatusBadge } from "@/features/health-facilities/utils/health-facility.utils";
+import { getFacilityTypeBadge } from "@/features/health-facilities/utils/health-facility.utils";
 import { useAuthToken } from "@/hooks/use-auth-token";
+import { usePermissions } from "@/hooks/use-permissions";
 import { toast } from "sonner";
 import Link from "next/link";
 import { ViewHealthFacilityModal } from "@/components/health-facilities/view-health-facility-modal";
@@ -41,35 +43,87 @@ export default function HealthFacilitiesPage() {
   const [itemsPerPage, setItemsPerPage] = useState(20);
   const [total, setTotal] = useState(0);
   const { token } = useAuthToken();
+  const { canAccess } = usePermissions();
 
   const handleFacilityDeleted = () => {
-    loadFacilities();
+    // Pas besoin de recharger, la mise à jour locale est déjà faite
   };
 
-  const handleToggleStatus = async (facilityId: string, currentStatus: boolean) => {
+  const handleFacilitySoftDeleted = async (id: string) => {
     try {
-      // TODO: Implémenter toggleFacilityStatus dans HealthFacilityService
-      // await HealthFacilityService.toggleFacilityStatus(facilityId, !currentStatus, token || undefined);
-      toast.success(`Établissement ${!currentStatus ? 'activé' : 'désactivé'} avec succès`);
-      loadFacilities(); // Recharger la liste
-    } catch (error) {
-      console.error('Error toggling facility status:', error);
-      toast.error('Erreur lors du changement de statut');
-    }
-  };
-
-  const handleDeleteFacility = async (facilityId: string) => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer cet établissement ?')) {
-      return;
-    }
-
-    try {
-      await HealthFacilityService.deleteHealthFacility(facilityId, token || undefined);
+      await HealthFacilityService.deleteHealthFacility(id, token || undefined);
+      
+      // Retirer de la liste
+      setFacilities(prevFacilities => prevFacilities.filter(facility => facility.id_ !== id));
+      setTotal(prevTotal => prevTotal - 1);
+      
       toast.success('Établissement supprimé avec succès');
-      loadFacilities(); // Recharger la liste
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting facility:', error);
-      toast.error('Erreur lors de la suppression');
+      toast.error(error.message || "Erreur lors de la suppression");
+    }
+  };
+
+  const handleFacilityPermanentlyDeleted = async (id: string) => {
+    try {
+      await HealthFacilityService.permanentlyDeleteHealthFacility(id, token || undefined);
+      
+      // Retirer de la liste
+      setFacilities(prevFacilities => prevFacilities.filter(facility => facility.id_ !== id));
+      setTotal(prevTotal => prevTotal - 1);
+      
+      toast.success('Établissement supprimé définitivement');
+    } catch (error: any) {
+      console.error('Error permanently deleting facility:', error);
+      toast.error(error.message || "Erreur lors de la suppression définitive");
+    }
+  };
+
+  const handleFacilityRestored = async (id: string) => {
+    try {
+      const restoredFacility = await HealthFacilityService.restoreHealthFacility(id, token || undefined);
+      
+      // Mettre à jour l'état localement en préservant les données existantes
+      setFacilities(prevFacilities => 
+        prevFacilities.map(facility => 
+          facility.id_ === id ? { 
+            ...facility, 
+            deleted_at: null,  // Mettre deleted_at à null
+            ...restoredFacility  // Écraser avec les données retournées par l'API
+          } : facility
+        )
+      );
+      
+      toast.success('Établissement restauré avec succès');
+    } catch (error: any) {
+      console.error('Error restoring facility:', error);
+      toast.error(error.message || "Erreur lors de la restauration");
+    }
+  };
+
+  const handleToggleStatus = async (id: string) => {
+    try {
+      const updatedFacility = await HealthFacilityService.toggleHealthFacilityStatus(id, token || undefined);
+      
+      if (updatedFacility && typeof updatedFacility.is_active === 'boolean') {
+        // Mettre à jour l'état localement sans recharger toute la liste
+        setFacilities(prevFacilities => 
+          prevFacilities.map(facility => 
+            facility.id_ === id ? { 
+              ...facility, 
+              is_active: updatedFacility.is_active,
+              id_: facility.id_  // Préserver l'ID original
+            } : facility
+          )
+        );
+        
+        toast.success(`Établissement ${updatedFacility.is_active ? 'activé' : 'désactivé'} avec succès`);
+      } else {
+        throw new Error('Réponse invalide du serveur');
+      }
+    } catch (error: any) {
+      console.error('Error toggling facility status:', error);
+      toast.error(error.message || "Erreur lors du changement de statut");
     }
   };
 
@@ -138,7 +192,7 @@ export default function HealthFacilitiesPage() {
 
   useEffect(() => {
     loadFacilities();
-  }, [currentPage, itemsPerPage, searchTerm]);
+  }, [currentPage, itemsPerPage, searchTerm, token]);
 
   return (
     <div className="container mx-auto py-6 space-y-6">
@@ -149,12 +203,14 @@ export default function HealthFacilitiesPage() {
             Gérez les établissements de santé et leurs informations.
           </p>
         </div>
-        <Link href="/health-facilities/add">
-          <Button className="cursor-pointer">
-            <Plus className="mr-2 h-4 w-4" />
-            Ajouter un établissement
-          </Button>
-        </Link>
+        {canAccess('health_facilities', 'create') && (
+          <Link href="/health-facilities/add">
+            <Button className="cursor-pointer">
+              <Plus className="mr-2 h-4 w-4" />
+              Ajouter un établissement
+            </Button>
+          </Link>
+        )}
       </div>
 
       <Card>
@@ -207,25 +263,52 @@ export default function HealthFacilitiesPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Nom</TableHead>
+                    <TableHead>Manager</TableHead>
                     <TableHead>Type</TableHead>
-                    <TableHead>Statut</TableHead>
                     <TableHead>Localisation</TableHead>
                     <TableHead>Téléphone</TableHead>
+                    <TableHead>Statut</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {facilities.map((facility) => (
                     <TableRow key={facility.id_}>
-                      <TableCell className="font-medium">{facility.name}</TableCell>
+                      <TableCell className="font-medium">
+                        <div className={`flex items-center gap-3 ${facility.deleted_at ? 'opacity-60' : ''}`}>
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-md font-medium ${
+                            facility.deleted_at 
+                              ? 'bg-gray-100 text-gray-500' 
+                              : 'bg-green-100 text-green-700'
+                          }`}>
+                            {facility.name.substring(0, 2).toUpperCase() || 'EF'}
+                          </div>
+                          <div>
+                            <div className="font-medium flex items-center gap-2">
+                              {facility.name}
+                              {facility.deleted_at && (
+                                <Badge variant="secondary" className="text-xs">
+                                  Supprimé
+                                </Badge>
+                              )}
+                            </div>
+                            <div className="text-md text-muted-foreground">
+                              <Badge variant="default" className="bg-green-500 text-white hover:bg-green-600">
+                                {facility.code}
+                              </Badge>
+                            </div>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {facility.admin_given_name && facility.admin_family_name 
+                          ? `${facility.admin_given_name} ${facility.admin_family_name}`
+                          : '—'
+                        }
+                      </TableCell>
                       <TableCell>
                         <Badge variant={getFacilityTypeBadge(facility.facility_type).variant as "default" | "secondary" | "destructive" | "outline"}>
                           {getFacilityTypeBadge(facility.facility_type).label}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={getHealthFacilityStatusBadge(facility.is_active).variant as "default" | "secondary" | "destructive" | "outline"}>
-                          {getHealthFacilityStatusBadge(facility.is_active).label}
                         </Badge>
                       </TableCell>
                       <TableCell>
@@ -238,6 +321,13 @@ export default function HealthFacilitiesPage() {
                         {facility.phone || '—'}
                       </TableCell>
                       <TableCell>
+                        <Switch 
+                          checked={facility.is_active}
+                          onCheckedChange={() => handleToggleStatus(facility.id_)}
+                          className="data-[state=checked]:bg-green-500"
+                        />
+                      </TableCell>
+                      <TableCell>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="sm" className="cursor-pointer">
@@ -245,40 +335,54 @@ export default function HealthFacilitiesPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem 
-                              className="cursor-pointer"
-                              onClick={() => {
-                                const modalButton = document.querySelector(`[data-health-facility-view="${facility.id_}"]`) as HTMLButtonElement;
-                                if (modalButton) modalButton.click();
-                              }}
-                            >
-                              <Eye className="h-4 w-4 mr-2" />
-                              Voir
-                            </DropdownMenuItem>
-                            <DropdownMenuItem asChild className="cursor-pointer">
-                              <Link href={`/health-facilities/${facility.id_}/edit`}>
-                                <Edit className="h-4 w-4 mr-2" />
-                                Modifier
-                              </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem 
-                              className="cursor-pointer"
-                              onClick={() => handleToggleStatus(facility.id_, facility.is_active)}
-                            >
-                              <UserCheck className="h-4 w-4 mr-2" />
-                              {facility.is_active ? 'Désactiver' : 'Activer'}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                              className="text-red-600 cursor-pointer"
-                              onClick={() => {
-                                const modalButton = document.querySelector(`[data-health-facility-delete="${facility.id_}"]`) as HTMLButtonElement;
-                                if (modalButton) modalButton.click();
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Supprimer
-                            </DropdownMenuItem>
+                            {canAccess('health_facilities', 'read') && (
+                              <DropdownMenuItem 
+                                className="cursor-pointer"
+                                onClick={() => {
+                                  const modalButton = document.querySelector(`[data-health-facility-view="${facility.id_}"]`) as HTMLButtonElement;
+                                  if (modalButton) modalButton.click();
+                                }}
+                              >
+                                <Eye className="h-4 w-4 mr-2" />
+                                Voir
+                              </DropdownMenuItem>
+                            )}
+                            {!facility.deleted_at && canAccess('health_facilities', 'update') && (
+                              <DropdownMenuItem asChild className="cursor-pointer">
+                                <Link href={`/health-facilities/${facility.id_}/edit`}>
+                                  <Edit className="h-4 w-4 mr-2" />
+                                  Modifier
+                                </Link>
+                              </DropdownMenuItem>
+                            )}
+                            {!facility.deleted_at && canAccess('health_facilities', 'delete') && (
+                              <DropdownMenuItem 
+                                className="cursor-pointer text-red-600"
+                                onClick={() => handleFacilitySoftDeleted(facility.id_)}
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Supprimer
+                              </DropdownMenuItem>
+                            )}
+                            {facility.deleted_at && (
+                              <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem 
+                                  className="cursor-pointer text-green-600"
+                                  onClick={() => handleFacilityRestored(facility.id_)}
+                                >
+                                  <RotateCcw className="h-4 w-4 mr-2" />
+                                  Restaurer
+                                </DropdownMenuItem>
+                                <DropdownMenuItem 
+                                  className="cursor-pointer text-red-600"
+                                  onClick={() => handleFacilityPermanentlyDeleted(facility.id_)}
+                                >
+                                  <AlertTriangle className="h-4 w-4 mr-2" />
+                                  Supprimer définitivement
+                                </DropdownMenuItem>
+                              </>
+                            )}
                           </DropdownMenuContent>
                         </DropdownMenu>
                         

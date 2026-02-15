@@ -251,41 +251,6 @@ export default function HospitalStaffPage() {
     }
   };
 
-  const getPaginationItems = () => {
-    const items = [];
-    const maxVisible = 5;
-    
-    if (totalPages <= maxVisible) {
-      for (let i = 1; i <= totalPages; i++) {
-        items.push(i);
-      }
-    } else {
-      items.push(1);
-      
-      if (currentPage <= 3) {
-        for (let i = 2; i <= 4; i++) {
-          items.push(i);
-        }
-        items.push('...');
-        items.push(totalPages);
-      } else if (currentPage >= totalPages - 2) {
-        items.push('...');
-        for (let i = totalPages - 3; i <= totalPages; i++) {
-          items.push(i);
-        }
-      } else {
-        items.push('...');
-        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
-          items.push(i);
-        }
-        items.push('...');
-        items.push(totalPages);
-      }
-    }
-    
-    return items;
-  };
-
   return (
     <div className="container mx-auto py-6 space-y-6">
       <div className="flex items-center justify-between">
