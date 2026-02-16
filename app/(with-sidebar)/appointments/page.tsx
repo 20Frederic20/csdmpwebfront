@@ -1,411 +1,491 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import CustomSelect from "@/components/ui/custom-select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { 
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-  PaginationEllipsis,
-} from "@/components/ui/pagination";
 import { 
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger,
   DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
 import { 
   Plus, 
+  Search, 
   Calendar, 
-  MoreHorizontal, 
+  User, 
+  Eye, 
   Edit, 
   Trash2, 
-  Eye, 
-  UserCheck,
-  ChevronUp,
-  ChevronDown,
-  Search,
-  Filter,
-  ChevronsUpDown,
+  CheckCircle,
+  XCircle,
+  Clock,
+  MoreHorizontal
 } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { AppointmentService } from "@/features/appointments/services/appointment.service";
+import { Appointment, AppointmentStatus, ListAppointmentQueryParams, AppointmentStatusUpdate } from "@/features/appointments/types/appointment.types";
+import { useAuthRefresh } from "@/hooks/use-auth-refresh";
+import { usePermissions } from "@/hooks/use-permissions";
 import { useAuthToken } from "@/hooks/use-auth-token";
-import { Appointment, ListAppointmentsQueryParams } from "@/features/appointments/types/appointments.types";
-import { appointmentsService } from "@/features/appointments/services/appointments.service";
-import { Patient } from "@/features/patients";
-import { PatientService } from "@/features/patients";
-import { HospitalStaff } from "@/features/hospital-staff";
-import { HospitalStaffService } from "@/features/hospital-staff";
-import CustomSelect from '@/components/ui/custom-select';
-
-const APPOINTMENT_STATUS = {
-  scheduled: { label: "Programmé", color: "bg-blue-100 text-blue-800" },
-  confirmed: { label: "Confirmé", color: "bg-green-100 text-green-800" },
-  cancelled: { label: "Annulé", color: "bg-red-100 text-red-800" },
-  completed: { label: "Terminé", color: "bg-gray-100 text-gray-800" },
-  no_show: { label: "Non présenté", color: "bg-orange-100 text-orange-800" },
-};
+import { ViewAppointmentModal } from "@/features/appointments/components/view-appointment-modal";
+import { EditAppointmentModal } from "@/features/appointments/components/edit-appointment-modal";
+import { CreateAppointmentModal } from "@/features/appointments/components/create-appointment-modal";
+import { ConfirmModal } from "@/components/ui/modal";
+import { DataPagination } from "@/components/ui/data-pagination";
+import { toast } from "sonner";
 
 export default function AppointmentsPage() {
   const router = useRouter();
+  const { isLoading: authLoading } = useAuthRefresh();
+  const { canAccess } = usePermissions();
   const { token } = useAuthToken();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   
   const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [patients, setPatients] = useState<Patient[]>([]);
-  const [doctors, setDoctors] = useState<HospitalStaff[]>([]);
-  const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("");
-  const [sortingField, setSortingField] = useState('scheduled_at');
-  const [sortingOrder, setSortingOrder] = useState<'asc' | 'desc'>('desc');
+  
+  const [search, setSearch] = useState('');
+  const [searchDate, setSearchDate] = useState('');
+  const [filterStatus, setFilterStatus] = useState<AppointmentStatus | undefined>(undefined);
+  
+  const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+  
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  const statusFilterOptions = [
-    { value: '', label: 'Tous les statuts' },
-    ...Object.entries(APPOINTMENT_STATUS).map(([key, value]) => ({
-      value: key,
-      label: value.label
-    }))
-  ];
-
-  const totalPages = Math.ceil(total / itemsPerPage);
-
-  useEffect(() => {
-    loadAppointments();
-    loadPatients();
-    loadDoctors();
-  }, [currentPage, itemsPerPage, sortingField, sortingOrder, searchTerm, statusFilter]);
-
-  const loadAppointments = async () => {
-    setLoading(true);
+  const fetchAppointments = async (page: number = 1) => {
     try {
-      const params: ListAppointmentsQueryParams = {
-        page: currentPage,
-        items_per_page: itemsPerPage,
-        sort_by: sortingField,
-        sort_order: sortingOrder,
-        search: searchTerm || undefined,
-        status: statusFilter || undefined,
+      setLoading(true);
+      setError(null);
+      
+      const params: ListAppointmentQueryParams = {
+        limit: itemsPerPage,
+        offset: (page - 1) * itemsPerPage,
+        sort_by: 'scheduled_at',
+        sort_order: 'asc'
       };
 
-      const response = await appointmentsService.getAppointments(params, token || undefined);
-      setAppointments(response.data || []);
-      setTotal(response.total || 0);
-    } catch (error: any) {
-      console.error('Error loading appointments:', error);
-      toast.error('Erreur lors du chargement des rendez-vous');
+      if (search && search.length >= 3) params.search = search;
+      if (filterStatus) params.status = filterStatus;
+      if (searchDate) params.scheduled_at = `${searchDate}T00:00:00`;
+
+      const response = await AppointmentService.getAppointments(params);
+      setAppointments(response.data);
+      setTotal(response.total);
+      setCurrentPage(page);
+    } catch (err) {
+      console.error('Failed to fetch appointments:', err);
+      setError('Erreur lors du chargement des rendez-vous');
     } finally {
       setLoading(false);
     }
   };
 
-  const loadPatients = async () => {
+  useEffect(() => {
+    if (token) {
+      fetchAppointments(currentPage);
+    }
+  }, [currentPage, itemsPerPage, token]);
+
+  useEffect(() => {
+    if (token) {
+      fetchAppointments(1);
+    }
+  }, [search, token]);
+
+  useEffect(() => {
+    if (token) {
+      fetchAppointments(1);
+    }
+  }, [search, searchDate, filterStatus, token]);
+
+  const handleCreateSuccess = (newAppointment: any) => {
+    // Ajouter le nouveau rendez-vous localement
+    setAppointments(prev => [newAppointment, ...prev]);
+    setTotal(prev => prev + 1);
+    setRefreshKey(prev => prev + 1);
+  };
+
+  const handleUpdate = (updatedAppointment: Appointment) => {
+    // Mettre à jour le rendez-vous localement (conserver les infos originales)
+    setAppointments(prev => 
+      prev.map(appointment => 
+        appointment.id === updatedAppointment.id 
+          ? { ...appointment, ...updatedAppointment } 
+          : appointment
+      )
+    );
+    setRefreshKey(prev => prev + 1);
+    setSelectedAppointment({ ...updatedAppointment });
+  };
+
+  const handleDelete = async () => {
+    if (!selectedAppointment?.id) return;
+    
     try {
-      const response = await PatientService.getPatients({ limit: 50 }, token || undefined);
-      setPatients(response.data || []);
-    } catch (error: any) {
-      console.error('Error loading patients:', error);
+      await AppointmentService.deleteAppointment(selectedAppointment.id);
+      
+      // Mettre à jour l'état localement (conserver les infos originales)
+      setAppointments(prev => 
+        prev.map(appointment => 
+          appointment.id === selectedAppointment.id 
+            ? { ...appointment, deleted_at: new Date().toISOString() } 
+            : appointment
+        )
+      );
+      
+      toast.success('Rendez-vous supprimé avec succès');
+      setDeleteModalOpen(false);
+      setSelectedAppointment(null);
+      setRefreshKey(prev => prev + 1);
+    } catch (error) {
+      console.error('Failed to delete appointment:', error);
+      toast.error('Erreur lors de la suppression du rendez-vous');
     }
   };
 
-  const loadDoctors = async () => {
+  const handlePermanentlyDelete = async (id: string) => {
     try {
-      const response = await HospitalStaffService.getHospitalStaff({ limit: 50 }, token || undefined);
-      setDoctors(response.data || []);
-    } catch (error: any) {
-      console.error('Error loading doctors:', error);
+      await AppointmentService.permanentlyDeleteAppointment(id);
+      
+      // Retirer de la liste principale
+      setAppointments(prev => prev.filter(appointment => appointment.id !== id));
+      setTotal(prev => prev - 1);
+      setRefreshKey(prev => prev + 1);
+      
+      toast.success('Rendez-vous supprimé définitivement');
+    } catch (error) {
+      console.error('Failed to permanently delete appointment:', error);
+      toast.error('Erreur lors de la suppression définitive');
     }
   };
 
-  const handleSort = (field: string) => {
-    if (sortingField === field) {
-      setSortingOrder(sortingOrder === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortingField(field);
-      setSortingOrder('asc');
-    }
-    setCurrentPage(1);
-  };
-
-  const getSortIcon = (field: string) => {
-    if (sortingField !== field) return <ChevronsUpDown className="h-4 w-4" />;
-    return sortingOrder === 'asc' ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />;
-  };
-
-  const handleToggleStatus = async (id: string) => {
+  const handleRestore = async (id: string) => {
     try {
-      await appointmentsService.toggleAppointmentStatus(id, token || undefined);
-      toast.success('Statut du rendez-vous mis à jour');
-      loadAppointments();
-    } catch (error: any) {
-      console.error('Error toggling appointment status:', error);
+      const restoredAppointment = await AppointmentService.restoreAppointment(id);
+      
+      // Mettre à jour l'état localement (conserver les infos originales)
+      setAppointments(prev => 
+        prev.map(appointment => 
+          appointment.id === id 
+            ? { ...appointment, ...restoredAppointment, deleted_at: undefined } 
+            : appointment
+        )
+      );
+      
+      setRefreshKey(prev => prev + 1);
+      
+      toast.success('Rendez-vous restauré avec succès');
+    } catch (error) {
+      console.error('Failed to restore appointment:', error);
+      toast.error('Erreur lors de la restauration');
+    }
+  };
+
+  const handleUpdateStatus = async (appointment: Appointment, newStatus: AppointmentStatusUpdate) => {
+    try {
+      const updatedAppointment = await AppointmentService.updateAppointmentStatus(appointment.id, newStatus);
+      
+      // Mettre à jour l'état localement (conserver les infos originales)
+      setAppointments(prev => 
+        prev.map(apt => 
+          apt.id === appointment.id 
+            ? { ...apt, ...updatedAppointment } 
+            : apt
+        )
+      );
+      
+      toast.success('Statut mis à jour avec succès');
+      setRefreshKey(prev => prev + 1);
+    } catch (error) {
+      console.error('Failed to update appointment status:', error);
       toast.error('Erreur lors de la mise à jour du statut');
     }
   };
 
-  const handleItemsPerPageChange = (value: string) => {
-    setItemsPerPage(parseInt(value));
+  const handleClearFilters = () => {
+    setSearch('');
+    setSearchDate('');
+    setFilterStatus(undefined);
+    setCurrentPage(1);
+    fetchAppointments(1);
+  };
+
+  // Reset page 1 quand la recherche change
+  const handleSearchChange = (field: 'search' | 'date' | 'status', value: string) => {
+    if (field === 'search') setSearch(value);
+    else if (field === 'date') setSearchDate(value);
+    else if (field === 'status') setFilterStatus(value as AppointmentStatus);
     setCurrentPage(1);
   };
 
-  const getPaginationItems = () => {
-    const items = [];
-    const maxVisible = 5;
-    
-    if (totalPages <= maxVisible) {
-      for (let i = 1; i <= totalPages; i++) {
-        items.push(i);
-      }
-    } else {
-      items.push(1);
-      
-      if (currentPage > 3) {
-        items.push('ellipsis');
-      }
-      
-      const start = Math.max(2, currentPage - 1);
-      const end = Math.min(totalPages - 1, currentPage + 1);
-      
-      for (let i = start; i <= end; i++) {
-        items.push(i);
-      }
-      
-      if (currentPage < totalPages - 2) {
-        items.push('ellipsis');
-      }
-      
-      items.push(totalPages);
-    }
-    
-    return items;
+  // Reset page 1 quand le nombre d'éléments par page change
+  const handleItemsPerPageChange = (value: number) => {
+    setItemsPerPage(value);
+    setCurrentPage(1);
   };
 
-  const getPatientName = (patientId: string) => {
-    const patient = patients.find(p => p.id_ === patientId);
-    return patient ? `${patient.given_name} ${patient.family_name}` : 'Patient inconnu';
+  const totalPages = Math.ceil(total / itemsPerPage);
+
+  // Filtrer les rendez-vous selon le filtre de suppression
+  const filteredAppointments = appointments.filter((appointment: Appointment) => {
+    return true; // 'all' - pas de filtre sur les supprimés
+  });
+
+  const getStatusBadge = (status: AppointmentStatus) => {
+    const statusConfig = {
+      scheduled: { label: 'Programmé', className: 'bg-blue-100 text-blue-800' },
+      confirmed: { label: 'Confirmé', className: 'bg-green-100 text-green-800' },
+      cancelled: { label: 'Annulé', className: 'bg-red-100 text-red-800' },
+      completed: { label: 'Terminé', className: 'bg-gray-100 text-gray-800' },
+      no_show: { label: 'Non présenté', className: 'bg-orange-100 text-orange-800' },
+      rescheduled: { label: 'Reprogrammé', className: 'bg-purple-100 text-purple-800' }
+    };
+
+    const config = statusConfig[status];
+    return (
+      <Badge className={config.className}>
+        {config.label}
+      </Badge>
+    );
   };
 
-  const getDoctorName = (doctorId: string | null) => {
-    if (!doctorId) return 'Non assigné';
-    const doctor = doctors.find(d => d.id_ === doctorId);
-    return doctor ? `Dr. ${doctor.matricule}` : 'Médecin inconnu';
-  };
+  if (authLoading) {
+    return (
+      <div className="container mx-auto py-8">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-lg">Chargement...</div>
+        </div>
+      </div>
+    );
+  }
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString('fr-FR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
+  if (!canAccess('appointments', 'read')) {
+    return (
+      <div className="container mx-auto py-8">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-lg text-red-600">Accès non autorisé</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
+    <div className="container mx-auto py-8 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Rendez-vous</h1>
-          <p className="text-muted-foreground">
-            Gérer les rendez-vous des patients
-          </p>
+          <h1 className="text-3xl font-bold">Rendez-vous</h1>
+          <p className="text-gray-600">Gérer les rendez-vous des patients</p>
         </div>
-        <Button 
-          onClick={() => router.push('/appointments/add')}
-          className="cursor-pointer"
-        >
-          <Plus className="mr-2 h-4 w-4" />
-          Nouveau rendez-vous
-        </Button>
+        {canAccess('appointments', 'create') && (
+          <Button onClick={() => setCreateModalOpen(true)}>
+            <Plus className="w-4 h-4 mr-2" />
+            Nouveau rendez-vous
+          </Button>
+        )}
       </div>
 
-      {/* Filters */}
+      {/* Search and Filters */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Filter className="h-5 w-5" />
-            Filtres
-          </CardTitle>
+          <CardTitle>Filtres</CardTitle>
+          <CardDescription>Rechercher et filtrer les rendez-vous</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="search">Rechercher</Label>
               <Input
-                placeholder="Rechercher..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                id="search"
+                placeholder="Rechercher (min. 3 caractères)"
+                value={search}
+                onChange={(e) => handleSearchChange('search', e.target.value)}
+              />
+              {search && search.length < 3 && (
+                <p className="text-xs text-gray-500">Minimum 3 caractères requis</p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="scheduled_at">Date</Label>
+              <Input
+                id="scheduled_at"
+                type="date"
+                value={searchDate}
+                onChange={(e) => handleSearchChange('date', e.target.value)}
               />
             </div>
-            <CustomSelect
-              options={statusFilterOptions}
-              value={statusFilter}
-              onChange={(value) => setStatusFilter((value as string) || "")}
-              placeholder="Statut"
-              className="h-12"
-            />
+            <div className="space-y-2">
+              <Label htmlFor="filterStatus">Statut</Label>
+              <CustomSelect
+                options={[
+                  { value: '', label: 'Tous les statuts' },
+                  { value: 'scheduled', label: 'Programmé' },
+                  { value: 'confirmed', label: 'Confirmé' },
+                  { value: 'cancelled', label: 'Annulé' },
+                  { value: 'completed', label: 'Terminé' },
+                  { value: 'no_show', label: 'Non présenté' },
+                  { value: 'rescheduled', label: 'Reprogrammé' }
+                ]}
+                value={filterStatus || ''}
+                onChange={(value) => handleSearchChange('status', value as AppointmentStatus)}
+                placeholder="Sélectionner un statut"
+                height="h-9"
+              />
+            </div>
+            <div className="space-y-2 flex items-end">
+              <Button onClick={handleClearFilters} className="w-full">
+                Effacer les filtres
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Appointments Table */}
+      {/* Results */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
-            Liste des rendez-vous ({total})
-          </CardTitle>
+          <CardTitle>Liste des rendez-vous ({total})</CardTitle>
         </CardHeader>
         <CardContent>
           {loading ? (
             <div className="flex items-center justify-center py-8">
-              <div className="text-muted-foreground">Chargement...</div>
+              <div className="text-lg">Chargement...</div>
             </div>
-          ) : appointments.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-8">
-              <Calendar className="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold">Aucun rendez-vous trouvé</h3>
-              <p className="text-muted-foreground mb-4">
-                {searchTerm || statusFilter || patientFilter || doctorFilter 
-                  ? "Aucun rendez-vous ne correspond à vos critères de recherche" 
-                  : "Commencez par créer un nouveau rendez-vous"}
-              </p>
-              <Button 
-                onClick={() => router.push('/appointments/add')}
-                className="cursor-pointer"
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Nouveau rendez-vous
-              </Button>
+          ) : error ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="text-lg text-red-600">{error}</div>
+            </div>
+          ) : !loading && !error && filteredAppointments.length === 0 ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="text-lg text-gray-500">Aucun rendez-vous trouvé</div>
             </div>
           ) : (
             <>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead 
-                      className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => handleSort('patient_id')}
-                    >
-                      <div className="flex items-center gap-1">
-                        Patient
-                        {getSortIcon('patient_id')}
-                      </div>
-                    </TableHead>
-                    <TableHead 
-                      className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => handleSort('doctor_id')}
-                    >
-                      <div className="flex items-center gap-1">
-                        Médecin
-                        {getSortIcon('doctor_id')}
-                      </div>
-                    </TableHead>
-                    <TableHead 
-                      className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => handleSort('scheduled_at')}
-                    >
-                      <div className="flex items-center gap-1">
-                        Date
-                        {getSortIcon('scheduled_at')}
-                      </div>
-                    </TableHead>
+                    <TableHead>Patient</TableHead>
+                    <TableHead>Médecin</TableHead>
+                    <TableHead>Date/Heure</TableHead>
                     <TableHead>Durée</TableHead>
-                    <TableHead>Motif</TableHead>
                     <TableHead>Statut</TableHead>
-                    <TableHead>Confirmation</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {appointments.map((appointment) => (
+                  {filteredAppointments.map((appointment) => (
                     <TableRow key={appointment.id}>
                       <TableCell className="font-medium">
-                        {getPatientName(appointment.patient_id)}
-                      </TableCell>
-                      <TableCell>
-                        {getDoctorName(appointment.doctor_id)}
-                      </TableCell>
-                      <TableCell>
-                        {formatDate(appointment.scheduled_at)}
-                      </TableCell>
-                      <TableCell>
-                        {appointment.estimated_duration ? `${appointment.estimated_duration} min` : '-'}
-                      </TableCell>
-                      <TableCell className="max-w-[200px] truncate">
-                        {appointment.reason || '-'}
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={APPOINTMENT_STATUS[appointment.status as keyof typeof APPOINTMENT_STATUS]?.color || 'bg-gray-100 text-gray-800'}>
-                          {APPOINTMENT_STATUS[appointment.status as keyof typeof APPOINTMENT_STATUS]?.label || appointment.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={appointment.is_confirmed_by_patient ? "default" : "secondary"}>
-                          {appointment.is_confirmed_by_patient ? "Confirmé" : "En attente"}
-                        </Badge>
-                      </TableCell>
+                      <div className={`flex items-center gap-3 ${appointment.deleted_at ? 'opacity-60' : ''}`}>
+                        {appointment.patient_full_name || appointment.patient_id}
+                        {appointment.deleted_at && (
+                          <Badge variant="secondary" className="text-xs">
+                            Supprimé
+                          </Badge>
+                        )}
+                      </div>
+                    </TableCell>
+                      <TableCell>{appointment.doctor_full_name || appointment.doctor_id || 'Non assigné'}</TableCell>
+                      <TableCell>{appointment.scheduled_at}</TableCell>
+                      <TableCell>{appointment.estimated_duration || 'N/A'} min</TableCell>
+                      <TableCell>{getStatusBadge(appointment.status)}</TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0">
-                              <span className="sr-only">Ouvrir le menu</span>
+                            <Button 
+                              variant="ghost" 
+                              className="h-8 w-8 p-0"
+                            >
                               <MoreHorizontal className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem 
-                              className="cursor-pointer"
-                              onClick={() => {
-                                // TODO: Implémenter modal voir
-                                console.log('Voir rendez-vous:', appointment.id);
-                              }}
-                            >
-                              <Eye className="h-4 w-4 mr-2" />
-                              Voir
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                              className="cursor-pointer"
-                              onClick={() => {
-                                // TODO: Implémenter modal modifier
-                                console.log('Modifier rendez-vous:', appointment.id);
-                              }}
-                            >
-                              <Edit className="h-4 w-4 mr-2" />
-                              Modifier
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem 
-                              className="cursor-pointer"
-                              onClick={() => handleToggleStatus(appointment.id)}
-                            >
-                              <UserCheck className="h-4 w-4 mr-2" />
-                              {appointment.is_active ? 'Désactiver' : 'Activer'}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                              className="cursor-pointer text-red-600"
-                              onClick={() => {
-                                // TODO: Implémenter modal supprimer
-                                console.log('Supprimer rendez-vous:', appointment.id);
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Supprimer
-                            </DropdownMenuItem>
+                            {canAccess('appointments', 'read') && (
+                              <DropdownMenuItem onClick={() => {
+                                setSelectedAppointment(appointment);
+                                setViewModalOpen(true);
+                              }}>
+                                <Eye className="mr-2 h-4 w-4" />
+                                Voir
+                              </DropdownMenuItem>
+                            )}
+                            {!appointment.deleted_at && canAccess('appointments', 'update') && (
+                              <DropdownMenuItem onClick={() => {
+                                setSelectedAppointment(appointment);
+                                setEditModalOpen(true);
+                              }}>
+                                <Edit className="mr-2 h-4 w-4" />
+                                Modifier
+                              </DropdownMenuItem>
+                            )}
+                            {!appointment.deleted_at && canAccess('appointments', 'update') && (
+                              <>
+                                <DropdownMenuSeparator />
+                                {appointment.status === 'scheduled' && (
+                                  <DropdownMenuItem onClick={() => handleUpdateStatus(appointment, 'confirm')}>
+                                    <CheckCircle className="mr-2 h-4 w-4" />
+                                    Confirmer
+                                  </DropdownMenuItem>
+                                )}
+                                {(appointment.status === 'scheduled' || appointment.status === 'confirmed') && (
+                                  <DropdownMenuItem onClick={() => handleUpdateStatus(appointment, 'cancel')}>
+                                    <XCircle className="mr-2 h-4 w-4" />
+                                    Annuler
+                                  </DropdownMenuItem>
+                                )}
+                                {(appointment.status === 'scheduled' || appointment.status === 'confirmed') && (
+                                  <DropdownMenuItem onClick={() => handleUpdateStatus(appointment, 'complete')}>
+                                    <CheckCircle className="mr-2 h-4 w-4" />
+                                    Terminer
+                                  </DropdownMenuItem>
+                                )}
+                              </>
+                            )}
+                            {!appointment.deleted_at && canAccess('appointments', 'delete') && (
+                              <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem 
+                                  onClick={() => {
+                                    setSelectedAppointment(appointment);
+                                    setDeleteModalOpen(true);
+                                  }}
+                                  className="text-red-600"
+                                >
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Supprimer
+                                </DropdownMenuItem>
+                              </>
+                            )}
+                            {appointment.deleted_at && (
+                              <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={() => handleRestore(appointment.id)}>
+                                  <CheckCircle className="mr-2 h-4 w-4" />
+                                  Restaurer
+                                </DropdownMenuItem>
+                                <DropdownMenuItem 
+                                  onClick={() => handlePermanentlyDelete(appointment.id)}
+                                  className="text-red-600"
+                                >
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Supprimer définitivement
+                                </DropdownMenuItem>
+                              </>
+                            )}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
@@ -413,66 +493,64 @@ export default function AppointmentsPage() {
                   ))}
                 </TableBody>
               </Table>
-              
+
               {/* Pagination */}
-              <div className="flex items-center justify-between space-x-2 py-4">
-                <div className="flex items-center space-x-2 flex-shrink-0">
-                  <p className="text-md text-muted-foreground">
-                    Affichage de {((currentPage - 1) * itemsPerPage) + 1} à {Math.min(currentPage * itemsPerPage, total)} sur {total} résultats
-                  </p>
-                  <Select value={itemsPerPage.toString()} onValueChange={handleItemsPerPageChange}>
-                    <SelectTrigger className="h-8 w-[70px]">
-                      <SelectValue placeholder={itemsPerPage.toString()} />
-                    </SelectTrigger>
-                    <SelectContent side="top">
-                      {[10, 20, 30, 40, 50].map((size) => (
-                        <SelectItem key={size} value={size.toString()}>
-                          {size}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex-1 flex justify-end">
-                  <Pagination className="justify-end">
-                    <PaginationContent>
-                      <PaginationItem>
-                        <PaginationPrevious
-                          onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                          className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                        />
-                      </PaginationItem>
-                      
-                      {getPaginationItems().map((item, index) => (
-                        <PaginationItem key={index}>
-                          {item === 'ellipsis' ? (
-                            <PaginationEllipsis />
-                          ) : (
-                            <PaginationLink
-                              onClick={() => setCurrentPage(item as number)}
-                              className={currentPage === item ? "cursor-pointer" : "cursor-pointer"}
-                              isActive={currentPage === item}
-                            >
-                              {item}
-                            </PaginationLink>
-                          )}
-                        </PaginationItem>
-                      ))}
-                      
-                      <PaginationItem>
-                        <PaginationNext
-                          onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                          className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                        />
-                      </PaginationItem>
-                    </PaginationContent>
-                  </Pagination>
-                </div>
-              </div>
+              <DataPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={total}
+                itemsPerPage={itemsPerPage}
+                onPageChange={setCurrentPage}
+                onItemsPerPageChange={handleItemsPerPageChange}
+              />
             </>
           )}
         </CardContent>
       </Card>
+
+      {/* Modals */}
+      {selectedAppointment && (
+        <>
+          <ViewAppointmentModal
+            isOpen={viewModalOpen}
+            onClose={() => {
+              setViewModalOpen(false);
+              setSelectedAppointment(null);
+            }}
+            appointment={selectedAppointment}
+          />
+          <EditAppointmentModal
+            isOpen={editModalOpen}
+            onClose={() => {
+              setEditModalOpen(false);
+              setSelectedAppointment(null);
+            }}
+            appointment={selectedAppointment}
+            onUpdate={handleUpdate}
+          />
+        </>
+      )}
+      
+      <CreateAppointmentModal
+        isOpen={createModalOpen}
+        onClose={() => setCreateModalOpen(false)}
+        onSuccess={handleCreateSuccess}
+      />
+      
+      {selectedAppointment && (
+        <ConfirmModal
+          isOpen={deleteModalOpen}
+          onClose={() => {
+            setDeleteModalOpen(false);
+            setSelectedAppointment(null);
+          }}
+          onConfirm={handleDelete}
+          title="Supprimer le rendez-vous"
+          message={`Êtes-vous sûr de vouloir supprimer le rendez-vous du ${selectedAppointment.scheduled_at} ?`}
+          confirmText="Supprimer"
+          cancelText="Annuler"
+        />
+      )}
     </div>
   );
 }
