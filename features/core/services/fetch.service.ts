@@ -55,7 +55,7 @@ export class FetchService {
 
   static async makeRequest<T>(
     endpoint: string,
-    options: FetchOptions & { method: 'POST' | 'PUT' | 'DELETE' | 'PATCH' },
+    options: FetchOptions & { method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' },
     dataKey?: string
   ): Promise<T> {
     try {
