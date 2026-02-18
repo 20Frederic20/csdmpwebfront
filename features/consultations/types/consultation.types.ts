@@ -101,6 +101,6 @@ export interface ListConsultationsQueryParams {
   end_date?: string;
   limit?: number;
   offset?: number;
-  sort_by?: 'chief_complaint' | 'status' | 'created_at' | 'follow_up_date';
+  sort_by?: 'created_at' | 'chief_complaint' | 'status' | 'follow_up_date';
   sort_order?: 'asc' | 'desc';
 }
