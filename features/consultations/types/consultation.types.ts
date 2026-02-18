@@ -12,9 +12,11 @@ export interface VitalSigns {
 export interface Consultation {
   id_: string;
   patient_id: string;
+  patient_full_name?: string | null;
   chief_complaint: string;
   triage_by_id?: string | null;
   consulted_by_id?: string | null;
+  consulted_by_full_name?: string | null;
   parent_consultation_id?: string | null;
   other_symptoms?: string | null;
   vital_signs?: VitalSigns | null;
@@ -69,9 +71,11 @@ export interface UpdateConsultationRequest {
 export interface ConsultationResponse {
   id: string;
   patient_id: string;
+  patient_full_name?: string | null;
   chief_complaint: string;
   triage_by_id?: string | null;
   consulted_by_id?: string | null;
+  consulted_by_full_name?: string | null;
   parent_consultation_id?: string | null;
   other_symptoms?: string | null;
   vital_signs?: VitalSigns | null;
@@ -101,6 +105,6 @@ export interface ListConsultationsQueryParams {
   end_date?: string;
   limit?: number;
   offset?: number;
-  sort_by?: 'created_at' | 'chief_complaint' | 'status' | 'follow_up_date';
+  sort_by?: 'created_at' | 'chief_complaint' | 'status' | 'follow_up_date' | 'patient_full_name' | 'consulted_by_full_name';
   sort_order?: 'asc' | 'desc';
 }
