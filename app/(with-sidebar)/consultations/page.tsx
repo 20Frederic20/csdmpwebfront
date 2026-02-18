@@ -6,22 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { 
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-  PaginationEllipsis,
-} from "@/components/ui/pagination";
-import { 
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   Plus, 
   Activity, 
@@ -29,81 +19,136 @@ import {
   Edit, 
   Trash2, 
   Eye, 
-  UserCheck,
   ChevronUp,
   ChevronDown,
   ChevronsUpDown,
   DollarSign,
   Shield,
-  Clock,
   CheckCircle,
-  XCircle,
-  AlertCircle,
 } from "lucide-react";
-import { Consultation, ListConsultationsQueryParams } from "@/features/consultations";
+import { Consultation, ListConsultationsQM, ListConsultationsQueryParams } from "@/features/consultations";
 import { ConsultationService } from "@/features/consultations";
 import { useAuthToken } from "@/hooks/use-auth-token";
+import { usePermissions } from "@/hooks/use-permissions";
 import { 
   getConsultationStatusLabel, 
   getConsultationStatusBadge, 
   getConsultationStatusOptions,
   formatVitalSigns,
-  formatAmount
+  formatAmount,
+  canDeleteConsultation,
+  canRestoreConsultation
 } from "@/features/consultations";
-import { toast } from "sonner";
 import Link from "next/link";
+import { DataPagination } from "@/components/ui/data-pagination";
 
 export default function ConsultationsPage() {
-  const [consultations, setConsultations] = useState<Consultation[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [consultationsData, setConsultationsData] = useState<ListConsultationsQM | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
-  const [total, setTotal] = useState(0);
-  const [sortingField, setSortingField] = useState('id');
+  const [search, setSearch] = useState('');
+  const [filterStatus, setFilterStatus] = useState<string>('');
+  const [sortingField, setSortingField] = useState('chief_complaint');
   const [sortingOrder, setSortingOrder] = useState<'asc' | 'desc'>('desc');
   const { token } = useAuthToken();
+  const { canAccess } = usePermissions();
+
+  // États pour les modals
+  const [selectedConsultation, setSelectedConsultation] = useState<Consultation | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
+  const handleOpenDeleteModal = (consultation: Consultation) => {
+    setSelectedConsultation(consultation);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleConsultationDeleted = (id: string) => {
+    if (consultationsData) {
+      setConsultationsData({
+        ...consultationsData,
+        data: consultationsData.data.map(c =>
+          c.id_ === id ? { ...c, deleted_at: new Date().toISOString() } : c
+        )
+      });
+    }
+  };
+
+  const handleConsultationRestored = (restoredConsultation: Consultation) => {
+    if (consultationsData) {
+      setConsultationsData({
+        ...consultationsData,
+        data: consultationsData.data.map(c =>
+          c.id_ === restoredConsultation.id_ ? { ...restoredConsultation, deleted_at: undefined } : c
+        )
+      });
+    }
+  };
+
+  const handlePermanentlyDeleted = (id: string) => {
+    if (consultationsData) {
+      setConsultationsData({
+        ...consultationsData,
+        data: consultationsData.data.filter(c => c.id_ !== id),
+        total: consultationsData.total - 1
+      });
+    }
+  };
 
   const loadConsultations = async () => {
-    setLoading(true);
     try {
+      setLoading(true);
+      setError(null);
+
       const offset = (currentPage - 1) * itemsPerPage;
+
       const params: ListConsultationsQueryParams = {
         limit: itemsPerPage,
         offset,
-        sort_by: sortingField,
+        sort_by: sortingField as any,
         sort_order: sortingOrder,
       };
 
-      const response = await ConsultationService.getConsultations(params, token || undefined);
-      setConsultations(response.data || []);
-      setTotal(response.total || 0);
-    } catch (error) {
-      console.error('Error loading consultations:', error);
-      toast.error('Erreur lors du chargement des consultations');
-      setConsultations([]);
-      setTotal(0);
+      // Ajouter les filtres de recherche
+      if (search) params.search = search;
+      if (filterStatus) params.status = filterStatus as any;
+
+      const data = await ConsultationService.getConsultations(params);
+      setConsultationsData(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Une erreur est survenue');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadConsultations();
-  }, [currentPage, itemsPerPage, sortingField, sortingOrder]);
+    if (token) {
+      loadConsultations();
+    } else {
+      setLoading(false);
+      setError('Token d\'authentification manquant');
+    }
+  }, [token]);
 
+  useEffect(() => {
+    if (token) {
+      loadConsultations();
+    }
+  }, [currentPage, itemsPerPage, search, filterStatus, sortingField, sortingOrder, token]);
+
+  // Gestion du tri
   const handleSort = (field: string) => {
     if (sortingField === field) {
+      // Même champ : inverser l'ordre
       setSortingOrder(sortingOrder === 'asc' ? 'desc' : 'asc');
     } else {
+      // Nouveau champ : réinitialiser à asc
       setSortingField(field);
       setSortingOrder('asc');
     }
-    setCurrentPage(1);
-  };
-
-  const handleItemsPerPageChange = (value: string) => {
-    setItemsPerPage(parseInt(value));
-    setCurrentPage(1);
+    setCurrentPage(1); // Revenir à la première page
   };
 
   // Obtenir l'icône de tri pour un champ
@@ -111,82 +156,32 @@ export default function ConsultationsPage() {
     if (sortingField !== field) {
       return <ChevronsUpDown className="h-4 w-4" />;
     }
-    return sortingOrder === 'asc' 
+    return sortingOrder === 'asc'
       ? <ChevronUp className="h-4 w-4" />
       : <ChevronDown className="h-4 w-4" />;
   };
 
-  const handleConsultationUpdated = () => {
-    loadConsultations();
+  // Reset page 1 quand la recherche change
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    setCurrentPage(1);
   };
 
-  const handleConsultationDeleted = () => {
-    loadConsultations();
+  // Reset page 1 quand le filtre change
+  const handleFilterChange = (value: string) => {
+    setFilterStatus(value);
+    setCurrentPage(1);
   };
 
-  const handleToggleStatus = async (consultationId: string, currentStatus: boolean) => {
-    try {
-      await ConsultationService.toggleConsultationStatus(consultationId, token || undefined);
-      toast.success(`Consultation ${currentStatus ? 'désactivée' : 'activée'} avec succès`);
-      loadConsultations();
-    } catch (error) {
-      console.error('Error toggling consultation status:', error);
-      toast.error('Erreur lors du changement de statut');
-    }
+  // Reset page 1 quand le nombre d'éléments par page change
+  const handleItemsPerPageChange = (value: number) => {
+    setItemsPerPage(value);
+    setCurrentPage(1);
   };
 
-  // Fonction pour obtenir l'icône de statut
-  const getStatusIcon = (status: Consultation['status']) => {
-    switch (status) {
-      case 'scheduled':
-        return <Clock className="h-4 w-4" />;
-      case 'completed':
-        return <CheckCircle className="h-4 w-4" />;
-      case 'pending':
-        return <AlertCircle className="h-4 w-4" />;
-      case 'cancelled':
-        return <XCircle className="h-4 w-4" />;
-      default:
-        return <Clock className="h-4 w-4" />;
-    }
-  };
-
-  // Calcul de pagination
-  const totalPages = Math.ceil(total / itemsPerPage);
-  const getPaginationItems = () => {
-    const items = [];
-    const maxVisible = 5;
-    
-    if (totalPages <= maxVisible) {
-      for (let i = 1; i <= totalPages; i++) {
-        items.push(i);
-      }
-    } else {
-      if (currentPage <= 3) {
-        for (let i = 1; i <= 4; i++) {
-          items.push(i);
-        }
-        items.push('ellipsis');
-        items.push(totalPages);
-      } else if (currentPage >= totalPages - 2) {
-        items.push(1);
-        items.push('ellipsis');
-        for (let i = totalPages - 3; i <= totalPages; i++) {
-          items.push(i);
-        }
-      } else {
-        items.push(1);
-        items.push('ellipsis');
-        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
-          items.push(i);
-        }
-        items.push('ellipsis');
-        items.push(totalPages);
-      }
-    }
-    
-    return items;
-  };
+  // Calcul des données paginées
+  const totalPages = consultationsData ? Math.ceil(consultationsData.total / itemsPerPage) : 0;
+  const consultations = consultationsData?.data || [];
 
   return (
     <div className="space-y-6">
@@ -195,23 +190,70 @@ export default function ConsultationsPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Consultations</h1>
           <p className="text-muted-foreground">
-            Gérer les consultations médicales
+            Gérer les consultations médicales et les dossiers patients.
           </p>
         </div>
-        <Link href="/consultations/add">
-          <Button className="cursor-pointer h-12">
-            <Plus className="mr-2 h-4 w-4" />
-            Nouvelle consultation
-          </Button>
-        </Link>
+        {canAccess('consultations', 'create') && (
+          <Link href="/consultations/add">
+            <Button className="cursor-pointer">
+              <Plus className="mr-2 h-4 w-4" />
+              Nouvelle consultation
+            </Button>
+          </Link>
+        )}
       </div>
+
+      {/* Filtres */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Filtres</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Recherche</label>
+              <input
+                type="text"
+                placeholder="Rechercher une consultation..."
+                value={search}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Statut</label>
+              <select
+                value={filterStatus}
+                onChange={(e) => handleFilterChange(e.target.value)}
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="">Tous les statuts</option>
+                {getConsultationStatusOptions().map(option => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-2 flex items-end">
+              <Button onClick={() => {
+                setSearch('');
+                setFilterStatus('');
+                setCurrentPage(1);
+              }} className="w-full">
+                Effacer les filtres
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Tableau des consultations */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Activity className="h-5 w-5" />
-            Liste des consultations ({total})
+            Liste des consultations ({consultationsData?.total || 0})
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -220,6 +262,28 @@ export default function ConsultationsPage() {
               <div className="text-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
                 <p className="text-muted-foreground">Chargement des consultations...</p>
+              </div>
+            </div>
+          ) : error ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="text-lg text-red-600">{error}</div>
+            </div>
+          ) : !loading && !error && consultations.length === 0 ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="text-center">
+                <Activity className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2">
+                  Aucune consultation trouvée.
+                </h3>
+                <p className="text-muted-foreground mb-4">
+                  Commencez par créer la première consultation.
+                </p>
+                <Link href="/consultations/add">
+                  <Button>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Créer la première consultation
+                  </Button>
+                </Link>
               </div>
             </div>
           ) : (
@@ -262,202 +326,132 @@ export default function ConsultationsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {consultations.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={8} className="text-center py-8">
-                        <div className="text-center">
-                          <Activity className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                          <h3 className="text-lg font-semibold mb-2">
-                            Aucune consultation enregistrée.
-                          </h3>
-                          <p className="text-muted-foreground mb-4">
-                            Commencez par créer la première consultation.
-                          </p>
-                          <Link href="/consultations/add">
-                            <Button>
-                              <Plus className="h-4 w-4 mr-2" />
-                              Créer la première consultation
-                            </Button>
-                          </Link>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    consultations.map((consultation) => {
-                      const statusBadge = getConsultationStatusBadge(consultation.status);
-                      return (
-                        <TableRow key={consultation.id_}>
-                          <TableCell className="font-medium">
-                            <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-md font-medium">
-                                {consultation.patient_id?.substring(0, 2).toUpperCase() || 'PT'}
-                              </div>
-                              <div>
-                                <div className="font-medium">{consultation.patient_id}</div>
-                                <div className="text-md text-muted-foreground">ID: {consultation.id_}</div>
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="max-w-xs truncate" title={consultation.chief_complaint}>
-                              {consultation.chief_complaint}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              {getStatusIcon(consultation.status)}
-                              <Badge 
-                                variant={statusBadge.variant as "default" | "secondary" | "destructive" | "outline"}
-                                className={statusBadge.className}
-                              >
-                                {getConsultationStatusLabel(consultation.status)}
+                  {consultations.map((consultation) => {
+                    const statusBadge = getConsultationStatusBadge(consultation.status);
+                    return (
+                      <TableRow key={consultation.id_} className={consultation.deleted_at ? 'opacity-60' : ''}>
+                        <TableCell className="font-medium">
+                          <div className="flex items-center gap-3">
+                            {consultation.patient_id}
+                            {consultation.deleted_at && (
+                              <Badge variant="secondary" className="text-xs">
+                                Supprimée
                               </Badge>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="text-md max-w-xs truncate" title={formatVitalSigns(consultation.vital_signs)}>
-                              {formatVitalSigns(consultation.vital_signs)}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="text-md max-w-xs truncate" title={consultation.diagnosis || 'Non défini'}>
-                              {consultation.diagnosis || 'Non défini'}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-1">
-                              <DollarSign className="h-4 w-4 text-muted-foreground" />
-                              <span className="text-md">{formatAmount(consultation.amount_paid)}</span>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              {consultation.is_confidential && (
-                                <Shield className="h-4 w-4 text-red-500" />
-                              )}
-                              <Badge 
-                                variant={consultation.is_confidential ? "destructive" : "outline"}
-                                className={consultation.is_confidential ? "bg-red-100 text-red-800" : ""}
-                              >
-                                {consultation.is_confidential ? 'Confidentiel' : 'Normal'}
-                              </Badge>
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="sm" className="cursor-pointer">
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem 
-                                  className="cursor-pointer"
-                                  onClick={() => {
-                                    // TODO: Implémenter modal voir
-                                    console.log('Voir consultation:', consultation.id_);
-                                  }}
-                                >
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="max-w-xs truncate" title={consultation.chief_complaint}>
+                            {consultation.chief_complaint}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Badge 
+                              variant={statusBadge.variant as "default" | "secondary" | "destructive" | "outline"}
+                              className={statusBadge.className}
+                            >
+                              {getConsultationStatusLabel(consultation.status)}
+                            </Badge>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm max-w-xs truncate" title={formatVitalSigns(consultation.vital_signs)}>
+                            {formatVitalSigns(consultation.vital_signs)}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm max-w-xs truncate" title={consultation.diagnosis || 'Non défini'}>
+                            {consultation.diagnosis || 'Non défini'}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            <DollarSign className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-sm">{formatAmount(consultation.amount_paid)}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            {consultation.is_confidential && (
+                              <Shield className="h-4 w-4 text-red-500" />
+                            )}
+                            <Badge 
+                              variant={consultation.is_confidential ? "destructive" : "outline"}
+                              className={consultation.is_confidential ? "bg-red-100 text-red-800" : ""}
+                            >
+                              {consultation.is_confidential ? 'Confidentiel' : 'Normal'}
+                            </Badge>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm" className="cursor-pointer">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem asChild>
+                                <Link href={`/consultations/${consultation.id_}`} className="cursor-pointer">
                                   <Eye className="h-4 w-4 mr-2" />
                                   Voir
-                                </DropdownMenuItem>
-                                <DropdownMenuItem 
-                                  className="cursor-pointer"
-                                  onClick={() => {
-                                    // TODO: Implémenter modal modifier
-                                    console.log('Modifier consultation:', consultation.id_);
-                                  }}
-                                >
+                                </Link>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem asChild>
+                                <Link href={`/consultations/${consultation.id_}/edit`} className="cursor-pointer">
                                   <Edit className="h-4 w-4 mr-2" />
                                   Modifier
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem 
-                                  className="cursor-pointer"
-                                  onClick={() => handleToggleStatus(consultation.id_, consultation.is_active)}
-                                >
-                                  <UserCheck className="h-4 w-4 mr-2" />
-                                  {consultation.is_active ? 'Désactiver' : 'Activer'}
-                                </DropdownMenuItem>
+                                </Link>
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              {!consultation.deleted_at && canDeleteConsultation(consultation) && (
                                 <DropdownMenuItem 
                                   className="cursor-pointer text-red-600"
-                                  onClick={() => {
-                                    // TODO: Implémenter modal supprimer
-                                    console.log('Supprimer consultation:', consultation.id_);
-                                  }}
+                                  onClick={() => handleOpenDeleteModal(consultation)}
                                 >
                                   <Trash2 className="h-4 w-4 mr-2" />
                                   Supprimer
                                 </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })
-                  )}
+                              )}
+                              {consultation.deleted_at && canRestoreConsultation(consultation) && (
+                                <DropdownMenuItem 
+                                  className="cursor-pointer"
+                                  onClick={() => handleConsultationRestored(consultation)}
+                                >
+                                  <CheckCircle className="h-4 w-4 mr-2" />
+                                  Restaurer
+                                </DropdownMenuItem>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
-              
+
               {/* Pagination */}
-              <div className="flex items-center justify-between space-x-2 py-4">
-                <div className="flex items-center space-x-2 flex-shrink-0">
-                  <p className="text-md text-muted-foreground">
-                    Affichage de {((currentPage - 1) * itemsPerPage) + 1} à {Math.min(currentPage * itemsPerPage, total)} sur {total} résultats
-                  </p>
-                  <Select value={itemsPerPage.toString()} onValueChange={handleItemsPerPageChange}>
-                    <SelectTrigger className="h-8 w-[70px]">
-                      <SelectValue placeholder={itemsPerPage.toString()} />
-                    </SelectTrigger>
-                    <SelectContent side="top">
-                      {[10, 20, 30, 40, 50].map((size) => (
-                        <SelectItem key={size} value={size.toString()}>
-                          {size}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex-1 flex justify-end">
-                  <Pagination className="justify-end">
-                    <PaginationContent>
-                      <PaginationItem>
-                        <PaginationPrevious
-                          onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                          className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                        />
-                      </PaginationItem>
-                      
-                      {getPaginationItems().map((item, index) => (
-                        <PaginationItem key={index}>
-                          {item === 'ellipsis' ? (
-                            <PaginationEllipsis />
-                          ) : (
-                            <PaginationLink
-                              onClick={() => setCurrentPage(item as number)}
-                              className={currentPage === item ? "cursor-pointer" : "cursor-pointer"}
-                              isActive={currentPage === item}
-                            >
-                              {item}
-                            </PaginationLink>
-                          )}
-                        </PaginationItem>
-                      ))}
-                      
-                      <PaginationItem>
-                        <PaginationNext
-                          onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                          className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                        />
-                      </PaginationItem>
-                    </PaginationContent>
-                  </Pagination>
-                </div>
-              </div>
+              <DataPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={consultationsData?.total || 0}
+                itemsPerPage={itemsPerPage}
+                onPageChange={setCurrentPage}
+                onItemsPerPageChange={handleItemsPerPageChange}
+              />
             </>
           )}
         </CardContent>
       </Card>
+
+      {/* Modals */}
+      {selectedConsultation && isDeleteModalOpen && (
+        <>
+          {/* TODO: Ajouter modal de suppression quand il sera créé */}
+        </>
+      )}
     </div>
   );
 }
