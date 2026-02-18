@@ -1,4 +1,4 @@
-import { ConsultationStatus } from '../types/consultation.types';
+import { Consultation, ConsultationStatus, VitalSigns } from '../types/consultation.types';
 
 export const getConsultationStatusLabel = (status: ConsultationStatus): string => {
   switch (status) {
@@ -37,7 +37,7 @@ export const getConsultationStatusBadge = (status: ConsultationStatus) => {
   }
 };
 
-export const formatVitalSigns = (vitalSigns: any) => {
+export const formatVitalSigns = (vitalSigns: VitalSigns | null | undefined): string => {
   if (!vitalSigns) return 'Non renseignés';
   
   const signs = [];
@@ -59,4 +59,64 @@ export const formatAmount = (amount: number | null | undefined): string => {
     currency: 'XOF',
     minimumFractionDigits: 0,
   }).format(amount);
+};
+
+export const formatDate = (dateString: string | null | undefined): string => {
+  if (!dateString) return 'Non définie';
+  return new Date(dateString).toLocaleDateString('fr-FR');
+};
+
+export const formatDateTime = (dateString: string | null | undefined): string => {
+  if (!dateString) return 'Non définie';
+  return new Date(dateString).toLocaleString('fr-FR');
+};
+
+export const getConsultationDisplayName = (consultation: Consultation): string => {
+  return consultation.chief_complaint || `Consultation du ${formatDate(consultation.follow_up_date)}`;
+};
+
+export const isConsultationActive = (consultation: Consultation): boolean => {
+  return consultation.is_active && !consultation.deleted_at;
+};
+
+export const canDeleteConsultation = (consultation: Consultation): boolean => {
+  return consultation.is_active && !consultation.deleted_at;
+};
+
+export const canRestoreConsultation = (consultation: Consultation): boolean => {
+  return !consultation.is_active && !!consultation.deleted_at;
+};
+
+export const getConsultationFilters = () => [
+  { value: 'chief_complaint', label: 'Motif principal' },
+  { value: 'status', label: 'Statut' },
+  { value: 'consulted_by_id', label: 'Consultant' },
+  { value: 'follow_up_date', label: 'Date de suivi' },
+  { value: 'created_at', label: 'Date de création' },
+];
+
+export const validateConsultationData = (data: Partial<Consultation>): string[] => {
+  const errors: string[] = [];
+  
+  if (!data.patient_id) {
+    errors.push('Le patient est requis');
+  }
+  
+  if (!data.chief_complaint || data.chief_complaint.trim().length === 0) {
+    errors.push('Le motif principal est requis');
+  }
+  
+  if (data.chief_complaint && data.chief_complaint.length > 500) {
+    errors.push('Le motif principal ne peut pas dépasser 500 caractères');
+  }
+  
+  if (data.diagnosis && data.diagnosis.length > 2000) {
+    errors.push('Le diagnostic ne peut pas dépasser 2000 caractères');
+  }
+  
+  if (data.treatment_plan && data.treatment_plan.length > 2000) {
+    errors.push('Le plan de traitement ne peut pas dépasser 2000 caractères');
+  }
+  
+  return errors;
 };
