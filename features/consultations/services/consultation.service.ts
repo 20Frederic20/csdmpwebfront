@@ -2,31 +2,20 @@ import {
   Consultation, 
   CreateConsultationRequest, 
   UpdateConsultationRequest, 
-  ListConsultationsQueryParams, 
-  ListConsultationsResponse 
+  ConsultationResponse,
+  ListConsultationsQM, 
+  ListConsultationsQueryParams 
 } from '../types/consultation.types';
+import { FetchService } from '../../core/services/fetch.service';
 
 export class ConsultationService {
-  private static readonly BASE_URL = process.env.NODE_ENV === 'development'
-    ? ''
-    : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000');
-  private static readonly API_URL = `${this.BASE_URL}/api/v1`;
-
-  private static getAuthToken(): string | null {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('access_token');
-    }
-    return null;
-  }
-
   // Récupérer toutes les consultations
   static async getConsultations(
-    params?: ListConsultationsQueryParams,
-    token?: string
-  ): Promise<ListConsultationsResponse> {
-    const authToken = token || this.getAuthToken();
-    const queryParams = new URLSearchParams();
+    params?: ListConsultationsQueryParams
+  ): Promise<ListConsultationsQM> {
+    console.log('Fetching consultations with params:', params);
     
+    const queryParams = new URLSearchParams();
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {
@@ -34,128 +23,57 @@ export class ConsultationService {
         }
       });
     }
-
-    const response = await fetch(`${this.API_URL}/consultations?${queryParams.toString()}`, {
-      headers: {
-        'Authorization': authToken ? `Bearer ${authToken}` : '',
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch consultations: ${response.statusText}`);
-    }
-
-    return response.json();
+    
+    const endpoint = `consultations${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+    return FetchService.get<ListConsultationsQM>(endpoint, 'Consultations');
   }
 
   // Récupérer une consultation par ID
   static async getConsultationById(
-    id: string,
-    token?: string
-  ): Promise<Consultation> {
-    const authToken = token || this.getAuthToken();
-    
-    const response = await fetch(`${this.API_URL}/consultations/${id}`, {
-      headers: {
-        'Authorization': authToken ? `Bearer ${authToken}` : '',
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch consultation: ${response.statusText}`);
-    }
-
-    return response.json();
+    id: string
+  ): Promise<ConsultationResponse> {
+    console.log('Fetching consultation by ID:', id);
+    return FetchService.get<ConsultationResponse>(`consultations/${id}`, 'Consultation');
   }
 
   // Créer une consultation
   static async createConsultation(
-    data: CreateConsultationRequest,
-    token?: string
-  ): Promise<Consultation> {
-    const authToken = token || this.getAuthToken();
-    
-    const response = await fetch(`${this.API_URL}/consultations`, {
-      method: 'POST',
-      headers: {
-        'Authorization': authToken ? `Bearer ${authToken}` : '',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to create consultation: ${response.statusText}`);
-    }
-
-    return response.json();
+    data: CreateConsultationRequest
+  ): Promise<ConsultationResponse> {
+    console.log('Creating consultation:', data);
+    return FetchService.post<ConsultationResponse>('consultations', data, 'Consultation');
   }
 
   // Mettre à jour une consultation
   static async updateConsultation(
     id: string,
-    data: UpdateConsultationRequest,
-    token?: string
-  ): Promise<Consultation> {
-    const authToken = token || this.getAuthToken();
-    
-    const response = await fetch(`${this.API_URL}/consultations/${id}`, {
-      method: 'PUT',
-      headers: {
-        'Authorization': authToken ? `Bearer ${authToken}` : '',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to update consultation: ${response.statusText}`);
-    }
-
-    return response.json();
+    data: UpdateConsultationRequest
+  ): Promise<ConsultationResponse> {
+    console.log('Updating consultation:', id, data);
+    return FetchService.put<ConsultationResponse>(`consultations/${id}`, data, 'Consultation');
   }
 
-  // Supprimer une consultation
+  // Supprimer (soft delete) une consultation
   static async deleteConsultation(
-    id: string,
-    token?: string
+    id: string
   ): Promise<void> {
-    const authToken = token || this.getAuthToken();
-    
-    const response = await fetch(`${this.API_URL}/consultations/${id}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': authToken ? `Bearer ${authToken}` : '',
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to delete consultation: ${response.statusText}`);
-    }
+    console.log('Soft deleting consultation:', id);
+    return FetchService.delete<void>(`consultations/${id}/soft-delete`, 'Consultation');
   }
 
-  // Toggle statut de consultation
-  static async toggleConsultationStatus(
-    id: string,
-    token?: string
-  ): Promise<Consultation> {
-    const authToken = token || this.getAuthToken();
-    
-    const response = await fetch(`${this.API_URL}/consultations/${id}/toggle-status`, {
-      method: 'POST',
-      headers: {
-        'Authorization': authToken ? `Bearer ${authToken}` : '',
-        'Content-Type': 'application/json',
-      },
-    });
+  // Restaurer une consultation
+  static async restoreConsultation(
+    id: string
+  ): Promise<ConsultationResponse> {
+    console.log('Restoring consultation:', id);
+    return FetchService.patch<ConsultationResponse>(`consultations/${id}/restore`, {}, 'Consultation');
+  }
 
-    if (!response.ok) {
-      throw new Error(`Failed to toggle consultation status: ${response.statusText}`);
-    }
-
-    return response.json();
+  // Supprimer définitivement une consultation
+  static async permanentlyDeleteConsultation(
+    id: string
+  ): Promise<void> {
+    console.log('Permanently deleting consultation:', id);
+    return FetchService.delete<void>(`consultations/${id}`, 'Consultation');
   }
 }
