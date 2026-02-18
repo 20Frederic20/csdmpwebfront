@@ -1,5 +1,23 @@
 "use client"
 
+import { useEffect, useState } from "react"
+
+// Client-side wrapper for Collapsible to handle hydration
+function ClientCollapsible({ children, defaultOpen, ...props }: React.ComponentProps<typeof Collapsible> & { defaultOpen?: boolean }) {
+  const [isOpen, setIsOpen] = useState(false)
+  
+  // Use useEffect to set initial state only on client side, preventing SSR mismatch
+  useEffect(() => {
+    setIsOpen(!!defaultOpen)
+  }, [defaultOpen])
+  
+  return (
+    <Collapsible open={isOpen} onOpenChange={setIsOpen} {...props}>
+      {children}
+    </Collapsible>
+  )
+}
+
 import {
     Sidebar,
     SidebarContent,
@@ -144,7 +162,7 @@ function NavMain({
           }) : [];
           
           return (
-            <Collapsible
+            <ClientCollapsible
               key={item.title}
               asChild
               defaultOpen={item.isActive}
@@ -180,7 +198,7 @@ function NavMain({
                   </CollapsibleContent>
                 )}
               </SidebarMenuItem>
-            </Collapsible>
+            </ClientCollapsible>
           );
         })}
       </SidebarMenu>
