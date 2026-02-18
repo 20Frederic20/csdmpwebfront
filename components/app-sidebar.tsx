@@ -33,18 +33,11 @@ import {
     SidebarMenuSubButton,
 } from "@/components/ui/sidebar"
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
 import {
-  ChevronDown,
   ChevronRight,
   Plus,
   Users,
@@ -57,13 +50,7 @@ import {
   Activity,
   Beaker,
   Shield,
-  List,
-  Import,
   Calendar,
-  Settings,
-  Building,
-  Heart,
-  UserCheck,
   Link as LinkIcon,
 } from "lucide-react"
 import Link from "next/link"
