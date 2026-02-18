@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import CustomSelect from "@/components/ui/custom-select";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -44,6 +45,7 @@ export default function EditConsultationPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   // Formulaire
   const [formData, setFormData] = useState<UpdateConsultationRequest>({
@@ -73,7 +75,7 @@ export default function EditConsultationPage() {
       const data = await ConsultationService.getConsultationById(consultationId);
       setConsultation(data);
       
-      // Pré-remplir le formulaire
+      // Pré-remplir le formulaire avec les données existantes
       setFormData({
         chief_complaint: data.chief_complaint || "",
         other_symptoms: data.other_symptoms || "",
@@ -114,6 +116,14 @@ export default function EditConsultationPage() {
       ...prev,
       [field]: value
     }));
+    // Effacer l'erreur du champ quand l'utilisateur modifie la valeur
+    if (fieldErrors[field]) {
+      setFieldErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
+    }
   };
 
   const handleVitalSignsChange = (field: string, value: string) => {
@@ -125,39 +135,76 @@ export default function EditConsultationPage() {
         [field]: numValue
       }
     }));
+    // Effacer l'erreur du champ quand l'utilisateur modifie la valeur
+    const fieldName = `vital_signs.${field}`;
+    if (fieldErrors[fieldName]) {
+      setFieldErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[fieldName];
+        return newErrors;
+      });
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validation
-    const validationErrors = validateConsultationData({
-      ...consultation,
-      ...formData
-    });
+    // Réinitialiser les erreurs de champs
+    setFieldErrors({});
     
-    if (validationErrors.length > 0) {
-      setErrors(validationErrors);
-      toast.error('Veuillez corriger les erreurs dans le formulaire');
-      return;
-    }
-
     try {
       setSaving(true);
       setErrors([]);
       
-      const updateData = {
-        ...formData,
-        amount_paid: formData.amount_paid === null ? null : formData.amount_paid
+      const updateData: UpdateConsultationRequest = {
+        chief_complaint: formData.chief_complaint || null,
+        other_symptoms: formData.other_symptoms || null,
+        diagnosis: formData.diagnosis || null,
+        treatment_plan: formData.treatment_plan || null,
+        follow_up_notes: formData.follow_up_notes || null,
+        follow_up_date: formData.follow_up_date || null,
+        status: formData.status || "scheduled",
+        billing_code: formData.billing_code || null,
+        amount_paid: formData.amount_paid === null ? null : formData.amount_paid,
+        is_confidential: formData.is_confidential || false,
+        vital_signs: {
+          temperature: formData.vital_signs?.temperature || null,
+          pulse: formData.vital_signs?.pulse || null,
+          systolic_bp: formData.vital_signs?.systolic_bp || null,
+          diastolic_bp: formData.vital_signs?.diastolic_bp || null,
+          weight: formData.vital_signs?.weight || null,
+          height: formData.vital_signs?.height || null,
+        }
       };
 
       const updatedConsultation = await ConsultationService.updateConsultation(consultationId, updateData);
       
       toast.success('Consultation mise à jour avec succès');
       router.push('/consultations');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating consultation:', error);
-      toast.error('Erreur lors de la mise à jour de la consultation');
+      
+      // Extraire et afficher les erreurs de champ spécifiques
+      if (error?.detail && Array.isArray(error.detail)) {
+        const newFieldErrors: Record<string, string> = {};
+        const generalErrors: string[] = [];
+        
+        error.detail.forEach((err: any) => {
+          if (err.loc && Array.isArray(err.loc) && err.loc.length >= 2) {
+            const fieldName = err.loc[1]; // Le champ est en deuxième position
+            newFieldErrors[fieldName] = err.msg;
+          } else {
+            generalErrors.push(err.msg);
+          }
+        });
+        
+        setFieldErrors(newFieldErrors);
+        setErrors(generalErrors);
+      } else {
+        setErrors(['Erreur lors de la mise à jour de la consultation']);
+      }
+      
+      toast.error('Veuillez corriger les erreurs dans le formulaire');
     } finally {
       setSaving(false);
     }
@@ -194,19 +241,11 @@ export default function EditConsultationPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link href="/consultations">
-            <Button variant="outline" size="sm">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Retour
-            </Button>
-          </Link>
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Modifier la consultation</h1>
-            <p className="text-muted-foreground">
-              Patient: {consultation.patient_id} | ID: {consultation.id_}
-            </p>
-          </div>
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Modifier la consultation</h1>
+          <p className="text-muted-foreground">
+            Patient: {consultation.patient_id} | ID: {consultation.id_}
+          </p>
         </div>
       </div>
 
@@ -231,7 +270,13 @@ export default function EditConsultationPage() {
                   placeholder="Décrivez le motif principal de la consultation..."
                   rows={3}
                   required
+                  className={fieldErrors['chief_complaint'] ? 'border-red-500 focus:ring-red-500' : ''}
                 />
+                {fieldErrors['chief_complaint'] && (
+                  <p className="text-sm text-red-600 mt-1">
+                    {fieldErrors['chief_complaint']}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -247,21 +292,13 @@ export default function EditConsultationPage() {
 
               <div className="space-y-2">
                 <Label htmlFor="status">Statut</Label>
-                <Select 
-                  value={formData.status} 
-                  onValueChange={(value) => handleInputChange('status', value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sélectionner un statut" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {getConsultationStatusOptions().map(option => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <CustomSelect
+                  options={getConsultationStatusOptions()}
+                  value={formData.status}
+                  onChange={(value) => handleInputChange('status', value as string)}
+                  placeholder="Sélectionner un statut"
+                  height="h-12"
+                />
               </div>
 
               <div className="flex items-center space-x-2">
@@ -418,7 +455,13 @@ export default function EditConsultationPage() {
                   type="date"
                   value={formData.follow_up_date}
                   onChange={(e) => handleInputChange('follow_up_date', e.target.value)}
+                  className={fieldErrors['follow_up_date'] ? 'border-red-500 focus:ring-red-500' : ''}
                 />
+                {fieldErrors['follow_up_date'] && (
+                  <p className="text-sm text-red-600 mt-1">
+                    {fieldErrors['follow_up_date']}
+                  </p>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -478,10 +521,11 @@ export default function EditConsultationPage() {
         )}
 
         {/* Actions */}
-        <div className="flex justify-end gap-4">
+        <div className="flex justify-end gap-4 mt-8">
           <Link href="/consultations">
             <Button variant="outline" type="button">
-              Annuler
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Retour
             </Button>
           </Link>
           <Button type="submit" disabled={saving}>
