@@ -76,4 +76,13 @@ export class ConsultationService {
     console.log('Permanently deleting consultation:', id);
     return FetchService.delete<void>(`consultations/${id}`, 'Consultation');
   }
+
+  // Toggle le statut actif d'une consultation
+  static async toggleConsultationStatus(
+    id: string,
+    token?: string
+  ): Promise<ConsultationResponse> {
+    console.log('Toggling consultation status:', id);
+    return FetchService.patch<ConsultationResponse>(`consultations/${id}/toggle-status`, {}, 'Consultation');
+  }
 }
