@@ -84,7 +84,7 @@ export const canDeleteConsultation = (consultation: Consultation): boolean => {
 };
 
 export const canRestoreConsultation = (consultation: Consultation): boolean => {
-  return !consultation.is_active && !!consultation.deleted_at;
+  return !!consultation.deleted_at;
 };
 
 export const getConsultationFilters = () => [
