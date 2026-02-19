@@ -3,7 +3,9 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { 
   DropdownMenu,
@@ -14,17 +16,15 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { 
   Plus, 
-  Activity, 
-  MoreHorizontal, 
   Edit, 
   Trash2, 
-  Eye, 
-  ChevronUp,
-  ChevronDown,
-  ChevronsUpDown,
+  Activity, 
   DollarSign,
-  Shield,
   CheckCircle,
+  AlertTriangle,
+  ChevronsUpDown,
+  Eye,
+  MoreHorizontal
 } from "lucide-react";
 import { Consultation, ListConsultationsQM, ListConsultationsQueryParams } from "@/features/consultations";
 import { ConsultationService } from "@/features/consultations";
@@ -39,10 +39,13 @@ import {
   canDeleteConsultation,
   canRestoreConsultation
 } from "@/features/consultations";
+import { toast } from "sonner";
 import Link from "next/link";
 import { DataPagination } from "@/components/ui/data-pagination";
+import { useRouter } from "next/navigation";
 
 export default function ConsultationsPage() {
+  const router = useRouter();
   const [consultationsData, setConsultationsData] = useState<ListConsultationsQM | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -64,35 +67,96 @@ export default function ConsultationsPage() {
     setIsDeleteModalOpen(true);
   };
 
-  const handleConsultationDeleted = (id: string) => {
-    if (consultationsData) {
-      setConsultationsData({
-        ...consultationsData,
-        data: consultationsData.data.map(c =>
-          c.id_ === id ? { ...c, deleted_at: new Date().toISOString() } : c
-        )
-      });
+  const handleViewConsultation = (consultation: Consultation) => {
+    router.push(`/consultations/${consultation.id_}`);
+  };
+
+  const handleEditConsultation = (consultation: Consultation) => {
+    router.push(`/consultations/${consultation.id_}/edit`);
+  };
+
+  const handleConsultationDeleted = async (consultation: Consultation) => {
+    try {
+      await ConsultationService.deleteConsultation(consultation.id_);
+      
+      // Mettre à jour l'état localement
+      if (consultationsData) {
+        setConsultationsData({
+          ...consultationsData,
+          data: consultationsData.data.map(c =>
+            c.id_ === consultation.id_ ? { ...c, deleted_at: new Date().toISOString() } : c
+          )
+        });
+      }
+      
+      toast.success('Consultation supprimée avec succès');
+    } catch (error) {
+      console.error('Error deleting consultation:', error);
+      toast.error('Erreur lors de la suppression de la consultation');
     }
   };
 
-  const handleConsultationRestored = (restoredConsultation: Consultation) => {
-    if (consultationsData) {
-      setConsultationsData({
-        ...consultationsData,
-        data: consultationsData.data.map(c =>
-          c.id_ === restoredConsultation.id_ ? { ...restoredConsultation, deleted_at: undefined } : c
-        )
-      });
+  const handleConsultationRestored = async (consultation: Consultation) => {
+    try {
+      const restoredConsultation = await ConsultationService.restoreConsultation(consultation.id_);
+      
+      // Mettre à jour l'état localement
+      if (consultationsData) {
+        setConsultationsData({
+          ...consultationsData,
+          data: consultationsData.data.map(c =>
+            c.id_ === restoredConsultation.id_ ? { ...restoredConsultation, deleted_at: undefined } : c
+          )
+        });
+      }
+      
+      toast.success('Consultation restaurée avec succès');
+    } catch (error) {
+      console.error('Error restoring consultation:', error);
+      toast.error('Erreur lors de la restauration de la consultation');
     }
   };
 
-  const handlePermanentlyDeleted = (id: string) => {
-    if (consultationsData) {
-      setConsultationsData({
-        ...consultationsData,
-        data: consultationsData.data.filter(c => c.id_ !== id),
-        total: consultationsData.total - 1
-      });
+  const handleToggleStatus = async (id: string) => {
+    try {
+      const updatedConsultation = await ConsultationService.toggleConsultationStatus(id, token || undefined);
+      
+      if (updatedConsultation && typeof updatedConsultation.is_active === 'boolean') {
+        // Mettre à jour l'état localement sans recharger toute la liste
+        if (consultationsData) {
+          setConsultationsData({
+            ...consultationsData,
+            data: consultationsData.data.map(consultation => 
+              consultation.id_ === id ? { ...updatedConsultation, id_: consultation.id_ } : consultation
+            )
+          });
+        }
+        
+        toast.success(`Consultation ${updatedConsultation.is_active ? 'activée' : 'désactivée'} avec succès`);
+      }
+    } catch (error: any) {
+      console.error('Error toggling consultation status:', error);
+      toast.error(error.message || "Erreur lors du changement de statut");
+    }
+  };
+
+  const handlePermanentlyDeleted = async (consultation: Consultation) => {
+    try {
+      await ConsultationService.permanentlyDeleteConsultation(consultation.id_);
+      
+      // Retirer de la liste
+      if (consultationsData) {
+        setConsultationsData({
+          ...consultationsData,
+          data: consultationsData.data.filter(c => c.id_ !== consultation.id_),
+          total: consultationsData.total - 1
+        });
+      }
+      
+      toast.success('Consultation supprimée définitivement');
+    } catch (error) {
+      console.error('Error permanently deleting consultation:', error);
+      toast.error('Erreur lors de la suppression définitive de la consultation');
     }
   };
 
@@ -293,20 +357,20 @@ export default function ConsultationsPage() {
                   <TableRow>
                     <TableHead 
                       className="cursor-pointer hover:bg-muted/50 transition-colors"
-                      onClick={() => handleSort('patient_id')}
+                      onClick={() => handleSort('patient_full_name')}
                     >
                       <div className="flex items-center gap-2">
                         Patient
-                        {getSortIcon('patient_id')}
+                        {getSortIcon('patient_full_name')}
                       </div>
                     </TableHead>
                     <TableHead 
                       className="cursor-pointer hover:bg-muted/50 transition-colors"
-                      onClick={() => handleSort('chief_complaint')}
+                      onClick={() => handleSort('consulted_by_full_name')}
                     >
                       <div className="flex items-center gap-2">
-                        Motif principal
-                        {getSortIcon('chief_complaint')}
+                        Médecin
+                        {getSortIcon('consulted_by_full_name')}
                       </div>
                     </TableHead>
                     <TableHead 
@@ -321,7 +385,7 @@ export default function ConsultationsPage() {
                     <TableHead>Signes vitaux</TableHead>
                     <TableHead>Diagnostic</TableHead>
                     <TableHead>Montant</TableHead>
-                    <TableHead>Confidentialité</TableHead>
+                    <TableHead>Active</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -332,17 +396,19 @@ export default function ConsultationsPage() {
                       <TableRow key={consultation.id_} className={consultation.deleted_at ? 'opacity-60' : ''}>
                         <TableCell className="font-medium">
                           <div className="flex items-center gap-3">
-                            {consultation.patient_id}
+                            <div className="max-w-xs truncate" title={consultation.patient_full_name || consultation.patient_id}>
+                              {consultation.patient_full_name || consultation.patient_id}
+                            </div>
                             {consultation.deleted_at && (
                               <Badge variant="secondary" className="text-xs">
-                                Supprimée
+                                Supprimé
                               </Badge>
                             )}
                           </div>
                         </TableCell>
                         <TableCell>
-                          <div className="max-w-xs truncate" title={consultation.chief_complaint}>
-                            {consultation.chief_complaint}
+                          <div className="max-w-xs truncate" title={consultation.consulted_by_full_name || 'Non assigné'}>
+                            {consultation.consulted_by_full_name || 'Non assigné'}
                           </div>
                         </TableCell>
                         <TableCell>
@@ -372,17 +438,17 @@ export default function ConsultationsPage() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <div className="flex items-center gap-2">
-                            {consultation.is_confidential && (
-                              <Shield className="h-4 w-4 text-red-500" />
-                            )}
-                            <Badge 
-                              variant={consultation.is_confidential ? "destructive" : "outline"}
-                              className={consultation.is_confidential ? "bg-red-100 text-red-800" : ""}
-                            >
-                              {consultation.is_confidential ? 'Confidentiel' : 'Normal'}
+                          {canAccess('consultations', 'toggle') ? (
+                            <Switch 
+                              checked={consultation.is_active}
+                              onCheckedChange={() => handleToggleStatus(consultation.id_)}
+                              className="data-[state=checked]:bg-green-500"
+                            />
+                          ) : (
+                            <Badge variant={consultation.is_active ? "default" : "secondary"}>
+                              {consultation.is_active ? 'Oui' : 'Non'}
                             </Badge>
-                          </div>
+                          )}
                         </TableCell>
                         <TableCell className="text-right">
                           <DropdownMenu>
@@ -398,22 +464,15 @@ export default function ConsultationsPage() {
                                   Voir
                                 </Link>
                               </DropdownMenuItem>
-                              <DropdownMenuItem asChild>
-                                <Link href={`/consultations/${consultation.id_}/edit`} className="cursor-pointer">
-                                  <Edit className="h-4 w-4 mr-2" />
-                                  Modifier
-                                </Link>
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              {!consultation.deleted_at && canDeleteConsultation(consultation) && (
-                                <DropdownMenuItem 
-                                  className="cursor-pointer text-red-600"
-                                  onClick={() => handleOpenDeleteModal(consultation)}
-                                >
-                                  <Trash2 className="h-4 w-4 mr-2" />
-                                  Supprimer
+                              {!consultation.deleted_at && (
+                                <DropdownMenuItem asChild>
+                                  <Link href={`/consultations/${consultation.id_}/edit`} className="cursor-pointer">
+                                    <Edit className="h-4 w-4 mr-2" />
+                                    Modifier
+                                  </Link>
                                 </DropdownMenuItem>
                               )}
+                              <DropdownMenuSeparator />
                               {consultation.deleted_at && canRestoreConsultation(consultation) && (
                                 <DropdownMenuItem 
                                   className="cursor-pointer"
@@ -421,6 +480,15 @@ export default function ConsultationsPage() {
                                 >
                                   <CheckCircle className="h-4 w-4 mr-2" />
                                   Restaurer
+                                </DropdownMenuItem>
+                              )}
+                              {consultation.deleted_at && (
+                                <DropdownMenuItem 
+                                  className="cursor-pointer text-red-600"
+                                  onClick={() => handlePermanentlyDeleted(consultation)}
+                                >
+                                  <AlertTriangle className="h-4 w-4 mr-2" />
+                                  Supprimer définitivement
                                 </DropdownMenuItem>
                               )}
                             </DropdownMenuContent>

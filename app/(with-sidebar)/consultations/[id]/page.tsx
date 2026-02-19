@@ -22,7 +22,7 @@ import {
   AlertTriangle,
   CheckSquare
 } from "lucide-react";
-import { Consultation, ConsultationResponse, UpdateConsultationRequest } from "@/features/consultations";
+import { Consultation, UpdateConsultationRequest } from "@/features/consultations";
 import { ConsultationService } from "@/features/consultations";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { 
