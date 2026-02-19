@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -24,7 +23,9 @@ import {
   AlertTriangle,
   ChevronsUpDown,
   Eye,
-  MoreHorizontal
+  MoreHorizontal,
+  ChevronDown,
+  ChevronUp
 } from "lucide-react";
 import { Consultation, ListConsultationsQM, ListConsultationsQueryParams } from "@/features/consultations";
 import { ConsultationService } from "@/features/consultations";
@@ -79,12 +80,17 @@ export default function ConsultationsPage() {
     try {
       await ConsultationService.deleteConsultation(consultation.id_);
       
-      // Mettre à jour l'état localement
       if (consultationsData) {
         setConsultationsData({
           ...consultationsData,
           data: consultationsData.data.map(c =>
-            c.id_ === consultation.id_ ? { ...c, deleted_at: new Date().toISOString() } : c
+            c.id_ === consultation.id_ ? { 
+              ...c,
+              deleted_at: new Date().toISOString(),
+              is_active: false,
+              patient_full_name: consultation.patient_full_name || c.patient_full_name,
+              consulted_by_full_name: consultation.consulted_by_full_name || c.consulted_by_full_name
+            } : c
           )
         });
       }
@@ -100,12 +106,18 @@ export default function ConsultationsPage() {
     try {
       const restoredConsultation = await ConsultationService.restoreConsultation(consultation.id_);
       
-      // Mettre à jour l'état localement
+      // Mettre à jour l'état localement immédiatement
       if (consultationsData) {
         setConsultationsData({
           ...consultationsData,
           data: consultationsData.data.map(c =>
-            c.id_ === restoredConsultation.id_ ? { ...restoredConsultation, deleted_at: undefined } : c
+            c.id_ === consultation.id_ ? { 
+              ...c,
+              deleted_at: undefined,
+              ...(restoredConsultation && typeof restoredConsultation === 'object' ? restoredConsultation : {}),
+              patient_full_name: consultation.patient_full_name || restoredConsultation?.patient_full_name,
+              consulted_by_full_name: consultation.consulted_by_full_name || restoredConsultation?.consulted_by_full_name
+            } : c
           )
         });
       }
@@ -127,7 +139,12 @@ export default function ConsultationsPage() {
           setConsultationsData({
             ...consultationsData,
             data: consultationsData.data.map(consultation => 
-              consultation.id_ === id ? { ...updatedConsultation, id_: consultation.id_ } : consultation
+              consultation.id_ === id ? { 
+                ...updatedConsultation, 
+                id_: consultation.id_,
+                patient_full_name: consultation.patient_full_name || updatedConsultation.patient_full_name,
+                consulted_by_full_name: consultation.consulted_by_full_name || updatedConsultation.consulted_by_full_name
+              } : consultation
             )
           });
         }
@@ -225,13 +242,11 @@ export default function ConsultationsPage() {
       : <ChevronDown className="h-4 w-4" />;
   };
 
-  // Reset page 1 quand la recherche change
   const handleSearchChange = (value: string) => {
     setSearch(value);
     setCurrentPage(1);
   };
 
-  // Reset page 1 quand le filtre change
   const handleFilterChange = (value: string) => {
     setFilterStatus(value);
     setCurrentPage(1);
@@ -243,7 +258,6 @@ export default function ConsultationsPage() {
     setCurrentPage(1);
   };
 
-  // Calcul des données paginées
   const totalPages = consultationsData ? Math.ceil(consultationsData.total / itemsPerPage) : 0;
   const consultations = consultationsData?.data || [];
 
@@ -392,14 +406,16 @@ export default function ConsultationsPage() {
                 <TableBody>
                   {consultations.map((consultation) => {
                     const statusBadge = getConsultationStatusBadge(consultation.status);
+                    const isDeleted = consultation.deleted_at != null && consultation.deleted_at !== undefined && consultation.deleted_at !== '';
+                    console.log('Debug - Consultation ID:', consultation.id_, 'deleted_at:', consultation.deleted_at, 'isDeleted:', isDeleted, 'typeof deleted_at:', typeof consultation.deleted_at);
                     return (
-                      <TableRow key={consultation.id_} className={consultation.deleted_at ? 'opacity-60' : ''}>
+                      <TableRow key={consultation.id_} className={isDeleted ? 'opacity-60' : ''}>
                         <TableCell className="font-medium">
                           <div className="flex items-center gap-3">
                             <div className="max-w-xs truncate" title={consultation.patient_full_name || consultation.patient_id}>
                               {consultation.patient_full_name || consultation.patient_id}
                             </div>
-                            {consultation.deleted_at && (
+                            {isDeleted && (
                               <Badge variant="secondary" className="text-xs">
                                 Supprimé
                               </Badge>
@@ -438,7 +454,7 @@ export default function ConsultationsPage() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          {canAccess('consultations', 'toggle') ? (
+                          {canAccess('consultations', 'toggle') && !isDeleted ? (
                             <Switch 
                               checked={consultation.is_active}
                               onCheckedChange={() => handleToggleStatus(consultation.id_)}
@@ -464,7 +480,7 @@ export default function ConsultationsPage() {
                                   Voir
                                 </Link>
                               </DropdownMenuItem>
-                              {!consultation.deleted_at && (
+                              {!isDeleted && (
                                 <DropdownMenuItem asChild>
                                   <Link href={`/consultations/${consultation.id_}/edit`} className="cursor-pointer">
                                     <Edit className="h-4 w-4 mr-2" />
@@ -473,7 +489,16 @@ export default function ConsultationsPage() {
                                 </DropdownMenuItem>
                               )}
                               <DropdownMenuSeparator />
-                              {consultation.deleted_at && canRestoreConsultation(consultation) && (
+                              {!isDeleted && canDeleteConsultation(consultation) && (
+                                <DropdownMenuItem 
+                                  className="cursor-pointer text-red-600"
+                                  onClick={() => handleConsultationDeleted(consultation)}
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Supprimer
+                                </DropdownMenuItem>
+                              )}
+                              {isDeleted && canRestoreConsultation(consultation) && (
                                 <DropdownMenuItem 
                                   className="cursor-pointer"
                                   onClick={() => handleConsultationRestored(consultation)}
@@ -482,7 +507,7 @@ export default function ConsultationsPage() {
                                   Restaurer
                                 </DropdownMenuItem>
                               )}
-                              {consultation.deleted_at && (
+                              {isDeleted && (
                                 <DropdownMenuItem 
                                   className="cursor-pointer text-red-600"
                                   onClick={() => handlePermanentlyDeleted(consultation)}
