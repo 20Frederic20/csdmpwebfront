@@ -6,6 +6,7 @@ import {
   TestType 
 } from '../types/lab-results.types';
 import { AuthClientService } from '@/features/core/auth/services/auth-client.service';
+import { FetchService } from '@/features/core/services/fetch.service';
 
 export class LabResultsService {
   private static readonly BASE_URL = process.env.NODE_ENV === 'development' 
@@ -107,5 +108,15 @@ export class LabResultsService {
 
   static async getLabResultsByPerformerId(performerId: string, params?: Omit<ListLabResultQueryParams, 'performer_id'>): Promise<ListLabResultQM> {
     return this.getLabResults({ ...params, performer_id: performerId });
+  }
+
+  static async restoreLabResult(id: string): Promise<LabResult> {
+    console.log('Restoring lab result:', id);
+    return FetchService.patch<LabResult>(`lab-results/${id}/restore`, {}, 'Lab result');
+  }
+
+  static async permanentlyDeleteLabResult(id: string): Promise<void> {
+    console.log('Permanently deleting lab result:', id);
+    return FetchService.delete<void>(`lab-results/${id}`, 'Lab result');
   }
 }
