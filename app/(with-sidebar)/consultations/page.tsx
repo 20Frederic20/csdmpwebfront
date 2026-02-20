@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import CustomSelect from "@/components/ui/custom-select";
 import { 
   Plus, 
   Edit, 
@@ -300,18 +301,16 @@ export default function ConsultationsPage() {
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Statut</label>
-              <select
+              <CustomSelect
                 value={filterStatus}
-                onChange={(e) => handleFilterChange(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="">Tous les statuts</option>
-                {getConsultationStatusOptions().map(option => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+                onChange={(value: string | string[] | null) => handleFilterChange(value as string)}
+                options={[
+                  { value: '', label: 'Tous les statuts' },
+                  ...getConsultationStatusOptions()
+                ]}
+                placeholder="Sélectionner un statut"
+                className="w-full"
+              />
             </div>
             <div className="space-y-2 flex items-end">
               <Button onClick={() => {
