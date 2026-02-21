@@ -8,9 +8,9 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Search, Plus, Filter, Building, MoreHorizontal, Eye, Edit, Trash2, RotateCcw, AlertTriangle } from "lucide-react";
-import { HealthFacility } from "@/features/health-facilities/types/health-facility.types";
+import { HealthFacility, FacilityType, HealthcareLevel } from "@/features/health-facilities/types/health-facility.types";
 import { HealthFacilityService } from "@/features/health-facilities/services/health-facility.service";
-import { getFacilityTypeBadge } from "@/features/health-facilities/utils/health-facility.utils";
+import { formatFacilityType, getFacilityTypeOptions, getHealthcareLevelOptions, canDeleteHealthFacility, canRestoreHealthFacility } from "@/features/health-facilities/utils/health-facility.utils";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { usePermissions } from "@/hooks/use-permissions";
 import { toast } from "sonner";
@@ -45,17 +45,24 @@ export default function HealthFacilitiesPage() {
   const { token } = useAuthToken();
   const { canAccess } = usePermissions();
 
-  const handleFacilityDeleted = () => {
-    // Pas besoin de recharger, la mise à jour locale est déjà faite
-  };
+  const handleFacilityDeleted = (() => {
+
+  }) 
 
   const handleFacilitySoftDeleted = async (id: string) => {
     try {
       await HealthFacilityService.deleteHealthFacility(id, token || undefined);
       
-      // Retirer de la liste
-      setFacilities(prevFacilities => prevFacilities.filter(facility => facility.id_ !== id));
-      setTotal(prevTotal => prevTotal - 1);
+      // Mettre à jour localement avec deleted_at (soft delete)
+      setFacilities(prevFacilities => 
+        prevFacilities.map(facility => 
+          facility.id_ === id ? { 
+            ...facility,
+            deleted_at: new Date().toISOString(),
+            is_active: false
+          } : facility
+        )
+      );
       
       toast.success('Établissement supprimé avec succès');
     } catch (error: any) {
@@ -192,7 +199,7 @@ export default function HealthFacilitiesPage() {
 
   useEffect(() => {
     loadFacilities();
-  }, [currentPage, itemsPerPage, searchTerm, token]);
+  }, [currentPage, itemsPerPage, searchTerm]);
 
   return (
     <div className="container mx-auto py-6 space-y-6">
@@ -263,9 +270,10 @@ export default function HealthFacilitiesPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Nom</TableHead>
-                    <TableHead>Manager</TableHead>
                     <TableHead>Type</TableHead>
-                    <TableHead>Localisation</TableHead>
+                    <TableHead>Niveau</TableHead>
+                    <TableHead>Région</TableHead>
+                    <TableHead>Zone</TableHead>
                     <TableHead>Téléphone</TableHead>
                     <TableHead>Statut</TableHead>
                     <TableHead>Actions</TableHead>
@@ -301,21 +309,18 @@ export default function HealthFacilitiesPage() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        {facility.admin_given_name && facility.admin_family_name 
-                          ? `${facility.admin_given_name} ${facility.admin_family_name}`
-                          : '—'
-                        }
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={getFacilityTypeBadge(facility.facility_type).variant as "default" | "secondary" | "destructive" | "outline"}>
-                          {getFacilityTypeBadge(facility.facility_type).label}
+                        <Badge variant="outline">
+                          {formatFacilityType(facility.facility_type)}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        {facility.district && facility.region 
-                          ? `${facility.district}, ${facility.region}`
-                          : facility.district || facility.region || '—'
-                        }
+                        {facility.healthcare_level || '—'}
+                      </TableCell>
+                      <TableCell>
+                        {facility.region || '—'}
+                      </TableCell>
+                      <TableCell>
+                        {facility.health_zone || '—'}
                       </TableCell>
                       <TableCell>
                         {facility.phone || '—'}
