@@ -9,12 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { 
   ArrowLeft, 
-  Save, 
-  Calendar, 
-  Building, 
-  FileText, 
-  User,
-  Activity
+  Save,
 } from "lucide-react";
 import { LabResultsService } from "@/features/lab-results/services/lab-results.service";
 import { LabResult, TestType } from "@/features/lab-results/types/lab-results.types";
