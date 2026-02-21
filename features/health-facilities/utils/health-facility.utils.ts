@@ -1,39 +1,75 @@
-import { HealthFacility } from '../types/health-facility.types';
-import { Badge } from '@/components/ui/badge';
+import { HealthFacility, FacilityType, HealthcareLevel } from '../types/health-facility.types';
 
-export function formatFacilityType(type: string): string {
+export function formatFacilityType(type: FacilityType): string {
   switch (type) {
-    case 'university_hospital':
+    case FacilityType.UNIVERSITY_HOSPITAL:
       return 'Hôpital universitaire';
-    case 'departmental_hospital':
+    case FacilityType.DEPARTMENTAL_HOSPITAL:
       return 'Hôpital départemental';
-    case 'zone_hospital':
+    case FacilityType.ZONE_HOSPITAL:
       return 'Hôpital de zone';
-    case 'health_center':
+    case FacilityType.HEALTH_CENTER:
       return 'Centre de santé';
-    case 'dispensary':
+    case FacilityType.DISPENSARY:
       return 'Dispensaire';
-    case 'private_clinic':
+    case FacilityType.PRIVATE_CLINIC:
       return 'Clinique privée';
+    case FacilityType.MATERNITY_CLINIC:
+      return 'Clinique de maternité';
+    case FacilityType.MEDICAL_OFFICE:
+      return 'Cabinet médical';
+    case FacilityType.CONFESSIONAL_CENTER:
+      return 'Centre confessionnel';
     default:
       return type;
   }
 }
 
-export function getFacilityTypeBadge(type: string): { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' } {
+export function getFacilityTypeOptions(): { value: FacilityType; label: string }[] {
+  return [
+    { value: FacilityType.UNIVERSITY_HOSPITAL, label: "Hôpital universitaire" },
+    { value: FacilityType.DEPARTMENTAL_HOSPITAL, label: "Hôpital départemental" },
+    { value: FacilityType.ZONE_HOSPITAL, label: "Hôpital de zone" },
+    { value: FacilityType.HEALTH_CENTER, label: "Centre de santé" },
+    { value: FacilityType.DISPENSARY, label: "Dispensaire" },
+    { value: FacilityType.PRIVATE_CLINIC, label: "Clinique privée" },
+    { value: FacilityType.MATERNITY_CLINIC, label: "Clinique de maternité" },
+    { value: FacilityType.MEDICAL_OFFICE, label: "Cabinet médical" },
+    { value: FacilityType.CONFESSIONAL_CENTER, label: "Centre confessionnel" },
+  ];
+}
+
+export function getHealthcareLevelOptions(): { value: HealthcareLevel; label: string }[] {
+  return [
+    { value: HealthcareLevel.NATIONAL, label: "National" },
+    { value: HealthcareLevel.DEPARTMENTAL, label: "Départemental" },
+    { value: HealthcareLevel.ZONAL, label: "Zonal" },
+    { value: HealthcareLevel.COMMUNAL, label: "Communal" },
+    { value: HealthcareLevel.PRIMARY, label: "Primaire" },
+    { value: HealthcareLevel.PRIVATE, label: "Privé" },
+  ];
+}
+
+export function getFacilityTypeBadge(type: FacilityType): { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' } {
   switch (type) {
-    case 'university_hospital':
+    case FacilityType.UNIVERSITY_HOSPITAL:
       return { label: 'Hôpital universitaire', variant: 'default' };
-    case 'departmental_hospital':
+    case FacilityType.DEPARTMENTAL_HOSPITAL:
       return { label: 'Hôpital départemental', variant: 'default' };
-    case 'zone_hospital':
+    case FacilityType.ZONE_HOSPITAL:
       return { label: 'Hôpital de zone', variant: 'outline' };
-    case 'health_center':
+    case FacilityType.HEALTH_CENTER:
       return { label: 'Centre de santé', variant: 'secondary' };
-    case 'dispensary':
+    case FacilityType.DISPENSARY:
       return { label: 'Dispensaire', variant: 'outline' };
-    case 'private_clinic':
+    case FacilityType.PRIVATE_CLINIC:
       return { label: 'Clinique privée', variant: 'default' };
+    case FacilityType.MATERNITY_CLINIC:
+      return { label: 'Clinique de maternité', variant: 'outline' };
+    case FacilityType.MEDICAL_OFFICE:
+      return { label: 'Cabinet médical', variant: 'secondary' };
+    case FacilityType.CONFESSIONAL_CENTER:
+      return { label: 'Centre confessionnel', variant: 'outline' };
     default:
       return { label: type, variant: 'outline' };
   }
@@ -49,13 +85,10 @@ export function getHealthFacilityStatusBadge(status: boolean): { label: string; 
     : { label: 'Inactif', variant: 'destructive' };
 }
 
-export function getFacilityTypeOptions(): { value: string; label: string }[] {
-  return [
-    { value: "university_hospital", label: "Hôpital universitaire" },
-    { value: "departmental_hospital", label: "Hôpital départemental" },
-    { value: "zone_hospital", label: "Hôpital de zone" },
-    { value: "health_center", label: "Centre de santé" },
-    { value: "dispensary", label: "Dispensaire" },
-    { value: "private_clinic", label: "Clinique privée" },
-  ];
+export function canDeleteHealthFacility(facility: HealthFacility): boolean {
+  return facility.deleted_at === null;
+}
+
+export function canRestoreHealthFacility(facility: HealthFacility): boolean {
+  return facility.deleted_at !== null;
 }
