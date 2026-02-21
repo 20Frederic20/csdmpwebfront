@@ -1,63 +1,150 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Building, User, Phone, MapPin, Users, Save, Trash2, RotateCcw, AlertTriangle } from "lucide-react";
-import { HealthFacility, UpdateHealthFacilityRequest } from "@/features/health-facilities/types/health-facility.types";
+import CustomSelect from "@/components/ui/custom-select";
+import { PhoneInput } from "@/components/ui/phone-input";
+import { ArrowLeft, Building, User, Phone, MapPin, Users } from "lucide-react";
+import { CreateHealthFacilityRequest, AdminUser, FacilityType, HealthcareLevel } from "@/features/health-facilities/types/health-facility.types";
 import { HealthFacilityService } from "@/features/health-facilities/services/health-facility.service";
+import { UserService } from "@/features/users/services/user.service";
+import { getFacilityTypeOptions, getHealthcareLevelOptions } from "@/features/health-facilities/utils/health-facility.utils";
+import LocationService from "@/features/location/services/location.service";
+import { getDepartmentOptions, getCityOptions, getCountryOptions } from "@/features/location/utils/location.utils";
+import { Country, Department, City } from "@/features/location/types/location.types";
 import { useAuthToken } from "@/hooks/use-auth-token";
-import { usePermissions } from "@/hooks/use-permissions";
 import { toast } from "sonner";
 import Link from "next/link";
-import { getFacilityTypeOptions } from "@/features/health-facilities/utils/health-facility.utils";
-import CustomSelect from "@/components/ui/custom-select";
-
-interface EditHealthFacilityPageProps {
-  params: {
-    id: string;
-  };
-}
 
 export default function EditHealthFacilityPage() {
   const params = useParams();
   const router = useRouter();
+  const { token } = useAuthToken();
   const [loading, setLoading] = useState(false);
   const [fetchLoading, setFetchLoading] = useState(true);
-  const [facility, setFacility] = useState<HealthFacility | null>(null);
-  const [formData, setFormData] = useState<UpdateHealthFacilityRequest>({
-    name: "",
-    code: "",
-    facility_type: null,
-    district: "",
-    region: "",
-    phone: "",
-    admin_user_id: null,
-    is_active: true,
-  });
-  const { token } = useAuthToken();
-  const { canAccess } = usePermissions();
+  const [adminMode, setAdminMode] = useState<'create' | 'select'>('select');
+  const [availableUsers, setAvailableUsers] = useState<any[]>([]);
+  const [countries, setCountries] = useState<Country[]>([]);
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [cities, setCities] = useState<City[]>([]);
+  const [filteredCities, setFilteredCities] = useState<City[]>([]);
+  const [selectedCountry, setSelectedCountry] = useState<Country | null>(null);
   const facilityId = params.id as string;
 
+  // Options pour le type d'établissement
+  const facilityTypeOptions = [
+    { value: "university_hospital", label: "Hôpital universitaire" },
+    { value: "departmental_hospital", label: "Hôpital départemental" },
+    { value: "zone_hospital", label: "Hôpital de zone" },
+    { value: "health_center", label: "Centre de santé" },
+    { value: "dispensary", label: "Dispensaire" },
+    { value: "private_clinic", label: "Clinique privée" },
+  ];
+
+  // Options pour les utilisateurs disponibles
+  const userOptions = availableUsers.map((user) => ({
+    value: user.id_,
+    label: `${user.given_name} ${user.family_name} (${user.health_id})`
+  }));
+
+  const [formData, setFormData] = useState<CreateHealthFacilityRequest>({
+    name: "",
+    code: "",
+    facility_type: FacilityType.HEALTH_CENTER,
+    healthcare_level: HealthcareLevel.PRIMARY,
+    region: "", // Ville
+    district: "", // Département
+    health_zone: "",
+    country_code: "BJ", // Bénin par défaut
+    department_code: "", // Code du département (relié à district)
+    city_code: "", // Code de la ville (relié à region)
+    snis_code: null,
+    tax_id: null,
+    authorization_decree_number: null,
+    authorization_decree_date: null,
+    commune_code: null,
+    latitude: null,
+    longitude: null,
+    phone: null,
+    admin_user_id: null,
+    admin_user: null,
+    is_active: true,
+  });
+
+  const [adminUserData, setAdminUserData] = useState<AdminUser>({
+    given_name: "",
+    family_name: "",
+    health_id: "",
+    password: "",
+    roles: ["user"],
+  });
+
+  // Charger les données de l'établissement et de localisation
   useEffect(() => {
-    const loadFacility = async () => {
+    const loadData = async () => {
       try {
+        // Charger les données de localisation (Bénin par défaut)
+        const locationData = await LocationService.fetchLocationData('BJ');
+        setCountries(locationData.countries);
+        setDepartments(locationData.departments);
+        setCities(locationData.cities);
+        setFilteredCities(locationData.cities);
+        
+        // Set default country (Bénin)
+        const benin = locationData.countries.find(c => c.country_code === 'BJ');
+        if (benin) {
+          setSelectedCountry(benin);
+        }
+
+        // Charger les données de l'établissement
         const facilityData = await HealthFacilityService.getHealthFacilityById(facilityId, token || undefined);
-        setFacility(facilityData);
+        
+        let phoneDisplay = facilityData.phone || "";
+        if (phoneDisplay && benin) {
+          if (phoneDisplay.startsWith(benin.phone_prefix)) {
+            phoneDisplay = phoneDisplay.substring(benin.phone_prefix.length);
+          }
+        }
+
+        const deptCode = facilityData.district ? 
+          locationData.departments.find(d => d.name === facilityData.district)?.code || "" : "";
+        
+        const cityCode = facilityData.region ? 
+          locationData.cities.find(c => c.name === facilityData.region)?.code || "" : "";
+
         setFormData({
           name: facilityData.name,
           code: facilityData.code,
           facility_type: facilityData.facility_type,
-          district: facilityData.district || "",
+          healthcare_level: facilityData.healthcare_level,
           region: facilityData.region || "",
-          phone: facilityData.phone || "",
+          district: facilityData.district || "",
+          health_zone: facilityData.health_zone || "",
+          country_code: "BJ",
+          department_code: deptCode,
+          city_code: cityCode,
+          snis_code: facilityData.snis_code,
+          tax_id: facilityData.tax_id,
+          authorization_decree_number: facilityData.authorization_decree_number,
+          authorization_decree_date: facilityData.authorization_decree_date,
+          commune_code: facilityData.commune_code,
+          latitude: facilityData.latitude,
+          longitude: facilityData.longitude,
+          phone: phoneDisplay,
           admin_user_id: facilityData.admin_user_id || null,
+          admin_user: null,
           is_active: facilityData.is_active,
         });
+
+        if (deptCode) {
+          const deptCities = locationData.cities.filter(city => city.state_code === deptCode);
+          setFilteredCities(deptCities);
+        }
+
       } catch (error: any) {
         toast.error('Erreur lors du chargement de l\'établissement');
         router.push('/health-facilities');
@@ -66,197 +153,178 @@ export default function EditHealthFacilityPage() {
       }
     };
 
-    loadFacility();
-  }, [facilityId, token, router]);
+    loadData();
+  }, [facilityId, token]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Handler pour le changement de pays
+  const handleCountryChange = async (country: Country) => {
+    setSelectedCountry(country);
+    handleInputChange("country_code", country.country_code);
     
-    if (!formData.name.trim()) {
-      toast.error("Le nom de l'établissement est requis");
-      return;
-    }
-    if (!formData.code.trim()) {
-      toast.error("Le code est requis");
-      return;
-    }
-    if (!formData.facility_type) {
-      toast.error("Le type d'établissement est requis");
-      return;
-    }
-
-    setLoading(true);
+    // Charger les départements et villes du nouveau pays
     try {
-      await HealthFacilityService.updateHealthFacility(facilityId, formData, token || undefined);
-      router.push('/health-facilities');
-    } catch (error: any) {
-      toast.error(error.message || "Erreur lors de la mise à jour");
-    } finally {
-      setLoading(false);
+      const [newDepartments, newCities] = await Promise.all([
+        LocationService.fetchDepartments(country.country_code),
+        LocationService.fetchCities(country.country_code)
+      ]);
+      
+      setDepartments(newDepartments);
+      setCities(newCities);
+      setFilteredCities(newCities); // Réinitialiser avec toutes les villes du nouveau pays
+      
+      // Réinitialiser les sélections
+      setFormData(prev => ({
+        ...prev,
+        district: "",
+        department_code: "",
+        region: "",
+        city_code: ""
+      }));
+    } catch (error) {
+      console.error('Error loading country data:', error);
+      toast.error('Erreur lors du chargement des données du pays');
     }
   };
 
-  const handleInputChange = (field: string, value: string | boolean) => {
+  // Handler pour synchroniser district et department_code
+  const handleDistrictChange = (value: string) => {
+    const dept = departments.find(d => d.name === value);
+    const deptCode = dept?.code || "";
+    
+    setFormData(prev => ({
+      ...prev,
+      district: value,
+      department_code: deptCode,
+      region: "", // Réinitialiser la ville
+      city_code: "" // Réinitialiser le code ville
+    }));
+    
+    // Filtrer les villes par département
+    if (deptCode) {
+      const deptCities = cities.filter(city => city.state_code === deptCode);
+      setFilteredCities(deptCities); // Mettre à jour les villes filtrées
+    } else {
+      setFilteredCities(cities); // Si pas de département, montrer toutes les villes
+    }
+  };
+
+  // Handler pour synchroniser region et city_code
+  const handleRegionChange = (value: string) => {
+    const city = filteredCities.find(c => c.name === value); // Chercher dans les villes filtrées
+    setFormData(prev => ({
+      ...prev,
+      region: value,
+      city_code: city?.code || ""
+    }));
+  };
+
+  // Obtenir les villes filtrées par département
+  const getFilteredCities = () => {
+    return filteredCities;
+  };
+
+  // Charger la liste des utilisateurs disponibles
+  useEffect(() => {
+    const loadUsers = async () => {
+      try {
+        const response = await UserService.getUsers({
+          limit: 100,
+          is_active: true
+        }, token || undefined);
+        setAvailableUsers(response.data || []);
+      } catch (error) {
+        console.error('Error loading users:', error);
+      }
+    };
+
+    if (token) {
+      loadUsers();
+    }
+  }, [token]);
+
+  const handleInputChange = (field: string, value: string | boolean | null) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }));
   };
 
-  const handleSoftDelete = async () => {
-    if (!facility) return;
-    
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer cet établissement ?')) {
-      try {
-        await HealthFacilityService.deleteHealthFacility(facility.id_, token || undefined);
-        toast.success('Établissement supprimé avec succès');
-        router.push('/health-facilities');
-      } catch (error: any) {
-        toast.error(error.message || "Erreur lors de la suppression");
-      }
-    }
+  const handleAdminUserChange = (field: string, value: string | string[]) => {
+    setAdminUserData(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
 
-  const handlePermanentlyDelete = async () => {
-    if (!facility) return;
-    
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer définitivement cet établissement ? Cette action est irréversible.')) {
-      try {
-        await HealthFacilityService.permanentlyDeleteHealthFacility(facility.id_, token || undefined);
-        toast.success('Établissement supprimé définitivement');
-        router.push('/health-facilities');
-      } catch (error: any) {
-        toast.error(error.message || "Erreur lors de la suppression définitive");
-      }
-    }
-  };
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
 
-  const handleRestore = async () => {
-    if (!facility) return;
-    
     try {
-      const restoredFacility = await HealthFacilityService.restoreHealthFacility(facility.id_, token || undefined);
-      setFacility(restoredFacility);
-      toast.success('Établissement restauré avec succès');
-    } catch (error: any) {
-      toast.error(error.message || "Erreur lors de la restauration");
+      // Validation : un admin est obligatoire
+      if (adminMode === 'select' && !formData.admin_user_id) {
+        toast.error("Veuillez sélectionner un administrateur existant");
+        setLoading(false);
+        return;
+      }
+
+      if (adminMode === 'create' && !adminUserData.given_name && !adminUserData.family_name) {
+        toast.error("Veuillez remplir les informations de l'administrateur");
+        setLoading(false);
+        return;
+      }
+
+      const submitData: CreateHealthFacilityRequest = {
+        ...formData,
+        admin_user: adminMode === 'create' ? adminUserData : null,
+        admin_user_id: adminMode === 'select' ? formData.admin_user_id : null,
+      };
+
+      await HealthFacilityService.updateHealthFacility(facilityId, submitData, token || undefined);
+      toast.success("Établissement de santé mis à jour avec succès");
+      router.push("/health-facilities");
+    } catch (error) {
+      console.error('Error updating health facility:', error);
+      toast.error(error instanceof Error ? error.message : 'Une erreur est survenue lors de la mise à jour de l\'établissement');
+    } finally {
+      setLoading(false);
     }
   };
-
-  if (fetchLoading) {
-    return (
-      <div className="container mx-auto py-6">
-        {fetchLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <div className="text-center">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-blue-600 mx-auto mb-2"></div>
-              <p className="text-muted-foreground">Chargement de l'établissement...</p>
-            </div>
-          </div>
-        ) : (
-          <div className="text-center py-8">
-            <p className="text-muted-foreground">Établissement non trouvé</p>
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  if (!facility) {
-    return (
-      <div className="container mx-auto py-6">
-        <div className="text-center py-8">
-          <p className="text-muted-foreground">Établissement non trouvé</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="container mx-auto py-6 space-y-6">
-      {/* Header */}
       <div className="flex items-center gap-4">
-        <Button 
-          variant="outline" 
-          onClick={() => router.push('/health-facilities')}
-          className="cursor-pointer"
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Retour
-        </Button>
-        <div className="flex-1">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight">Modifier l'établissement</h1>
-              <p className="text-muted-foreground">
-                Modifier les informations de l'établissement de santé
-              </p>
-            </div>
-            <div className="flex gap-2">
-              {facility && facility.deleted_at && canAccess('health_facilities', 'restore') && (
-                <Button 
-                  variant="outline" 
-                  onClick={handleRestore}
-                  className="cursor-pointer"
-                >
-                  <RotateCcw className="mr-2 h-4 w-4" />
-                  Restaurer
-                </Button>
-              )}
-              {facility && !facility.deleted_at && canAccess('health_facilities', 'soft_delete') && (
-                <Button 
-                  variant="outline" 
-                  onClick={handleSoftDelete}
-                  className="cursor-pointer text-red-600 border-red-600 hover:bg-red-50"
-                >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Supprimer
-                </Button>
-              )}
-              {facility && facility.deleted_at && canAccess('health_facilities', 'delete') && (
-                <Button 
-                  variant="destructive" 
-                  onClick={handlePermanentlyDelete}
-                  className="cursor-pointer"
-                >
-                  <AlertTriangle className="mr-2 h-4 w-4" />
-                  Supprimer définitivement
-                </Button>
-              )}
-            </div>
-          </div>
+        <Link href="/health-facilities">
+          <Button variant="outline" size="sm">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Retour
+          </Button>
+        </Link>
+        <div>
+          <h1 className="text-3xl font-bold">Modifier l'établissement de santé</h1>
+          <p className="text-muted-foreground">
+            Modifiez les informations de l'établissement de santé
+          </p>
         </div>
       </div>
 
-      {facility && facility.deleted_at && (
-        <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <div className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-yellow-600" />
-            <div>
-              <h3 className="font-semibold text-yellow-800">Établissement supprimé</h3>
-              <p className="text-sm text-yellow-700">
-                Cet établissement a été supprimé. Vous pouvez le restaurer ou le supprimer définitivement.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit} className={`space-y-6 ${facility && facility.deleted_at ? 'opacity-50 pointer-events-none' : ''}`}>
-        {/* Informations principales */}
+      <form onSubmit={handleSubmit} className="space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle>Informations principales</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Building className="h-5 w-5" />
+              Informations générales
+            </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Nom de l'établissement <span className="text-red-500">*</span></Label>
                 <Input
                   id="name"
                   value={formData.name}
-                  onChange={(e) => handleInputChange('name', e.target.value)}
-                  placeholder="Entrez le nom de l'établissement"
+                  onChange={(e) => handleInputChange("name", e.target.value)}
+                  placeholder="Hôpital Central de..."
                   required
                 />
               </div>
@@ -265,88 +333,334 @@ export default function EditHealthFacilityPage() {
                 <Input
                   id="code"
                   value={formData.code}
-                  onChange={(e) => handleInputChange('code', e.target.value)}
-                  placeholder="Entrez le code"
+                  onChange={(e) => handleInputChange("code", e.target.value)}
+                  placeholder="HC001"
                   required
                 />
               </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="facility_type">Type d'établissement <span className="text-red-500">*</span></Label>
                 <CustomSelect
-                  value={formData.facility_type}
-                  onChange={(value) => {
-                    const stringValue = Array.isArray(value) ? value[0] : value;
-                    handleInputChange('facility_type', stringValue || '');
-                  }}
                   options={getFacilityTypeOptions()}
-                  placeholder="Sélectionner un type"
+                  value={formData.facility_type}
+                  onChange={(value) => handleInputChange("facility_type", value as FacilityType)}
+                  placeholder="Sélectionner un type d'établissement"
+                  height="h-12"
+                  className="w-full"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="healthcare_level">Niveau sanitaire <span className="text-red-500">*</span></Label>
+                <CustomSelect
+                  options={getHealthcareLevelOptions()}
+                  value={formData.healthcare_level}
+                  onChange={(value) => handleInputChange("healthcare_level", value as HealthcareLevel)}
+                  placeholder="Sélectionner un niveau sanitaire"
+                  height="h-12"
+                  className="w-full"
                 />
               </div>
             </div>
-          </CardContent>
-        </Card>
 
-        {/* Informations de localisation */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Informations de localisation</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="district">District</Label>
-                <Input
-                  id="district"
+                <Label htmlFor="country">Pays <span className="text-red-500">*</span></Label>
+                <CustomSelect
+                  options={getCountryOptions(countries)}
+                  value={selectedCountry?.country_code || ''}
+                  onChange={(value) => {
+                    const country = countries.find(c => c.country_code === value);
+                    if (country) handleCountryChange(country);
+                  }}
+                  placeholder="Sélectionner un pays"
+                  height="h-12"
+                  className="w-full"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="district">Département <span className="text-red-500">*</span></Label>
+                <CustomSelect
+                  options={getDepartmentOptions(departments)}
                   value={formData.district}
-                  onChange={(e) => handleInputChange('district', e.target.value)}
-                  placeholder="Entrez le district"
+                  onChange={(value) => handleDistrictChange(value || '')}
+                  placeholder="Sélectionner un département"
+                  height="h-12"
+                  className="w-full"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="region">Région</Label>
-                <Input
-                  id="region"
+                <Label htmlFor="region">Ville <span className="text-red-500">*</span></Label>
+                <CustomSelect
+                  options={getCityOptions(getFilteredCities())}
                   value={formData.region}
-                  onChange={(e) => handleInputChange('region', e.target.value)}
-                  placeholder="Entrez la région"
+                  onChange={(value) => handleRegionChange(value || '')}
+                  placeholder="Sélectionner une ville"
+                  height="h-12"
+                  className="w-full"
                 />
               </div>
-              <div className="md:col-span-2">
-                <Label htmlFor="phone">Téléphone</Label>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="phone">Téléphone <span className="text-red-500">*</span></Label>
+              <div className="flex">
+                <div className="flex items-center px-3 py-2 border border-r-0 border-input bg-muted text-muted-foreground rounded-l-md">
+                  {selectedCountry?.phone_prefix || '+...'}
+                </div>
                 <Input
                   id="phone"
-                  value={formData.phone}
-                  onChange={(e) => handleInputChange('phone', e.target.value)}
-                  placeholder="Entrez le numéro de téléphone"
+                  type="tel"
+                  value={formData.phone && selectedCountry ? 
+                    formData.phone.startsWith(selectedCountry.phone_prefix) ? 
+                      formData.phone.substring(selectedCountry.phone_prefix.length) : 
+                      formData.phone.replace(/\D/g, '') : 
+                    formData.phone || ""}
+                  onChange={(e) => {
+                    const cleanPhone = e.target.value.replace(/\D/g, '');
+                    const fullPhone = selectedCountry ? selectedCountry.phone_prefix + cleanPhone : cleanPhone;
+                    handleInputChange("phone", fullPhone);
+                  }}
+                  placeholder="xxx xxx xxx"
+                  disabled={!selectedCountry}
+                  className="rounded-l-none"
+                />
+              </div>
+              {selectedCountry && (
+                <p className="text-xs text-muted-foreground">
+                  {selectedCountry.phone_prefix} xxx xxx xxx ({selectedCountry.national_length} chiffres)
+                </p>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="health_zone">Zone sanitaire</Label>
+                <Input
+                  id="health_zone"
+                  value={formData.health_zone || ""}
+                  onChange={(e) => handleInputChange("health_zone", e.target.value || null)}
+                  placeholder="Zone sanitaire"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="is_active"
+                checked={formData.is_active}
+                onChange={(e) => handleInputChange("is_active", e.target.checked)}
+                className="rounded border-gray-300"
+              />
+              <Label htmlFor="is_active">Établissement actif</Label>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <MapPin className="h-5 w-5" />
+              Informations supplémentaires
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="snis_code">Code SNIS</Label>
+                <Input
+                  id="snis_code"
+                  value={formData.snis_code || ""}
+                  onChange={(e) => handleInputChange("snis_code", e.target.value || null)}
+                  placeholder="Code SNIS"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="tax_id">ID Fiscal</Label>
+                <Input
+                  id="tax_id"
+                  value={formData.tax_id || ""}
+                  onChange={(e) => handleInputChange("tax_id", e.target.value || null)}
+                  placeholder="ID Fiscal"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="authorization_decree_number">Numéro d'arrêté d'autorisation</Label>
+                <Input
+                  id="authorization_decree_number"
+                  value={formData.authorization_decree_number || ""}
+                  onChange={(e) => handleInputChange("authorization_decree_number", e.target.value || null)}
+                  placeholder="Numéro d'arrêté"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="authorization_decree_date">Date d'arrêté d'autorisation</Label>
+                <Input
+                  id="authorization_decree_date"
+                  type="date"
+                  value={formData.authorization_decree_date || ""}
+                  onChange={(e) => handleInputChange("authorization_decree_date", e.target.value || null)}
+                  placeholder="Date d'arrêté"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="commune_code">Code de la commune</Label>
+                <Input
+                  id="commune_code"
+                  value={formData.commune_code || ""}
+                  onChange={(e) => handleInputChange("commune_code", e.target.value || null)}
+                  placeholder="Code de la commune"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="latitude">Latitude</Label>
+                <Input
+                  id="latitude"
+                  type="number"
+                  step="any"
+                  value={formData.latitude?.toString() || ""}
+                  onChange={(e) => handleInputChange("latitude", e.target.value ? parseFloat(e.target.value) : null)}
+                  placeholder="6.123456"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="longitude">Longitude</Label>
+                <Input
+                  id="longitude"
+                  type="number"
+                  step="any"
+                  value={formData.longitude?.toString() || ""}
+                  onChange={(e) => handleInputChange("longitude", e.target.value ? parseFloat(e.target.value) : null)}
+                  placeholder="2.123456"
                 />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Actions */}
         <Card>
-          <CardContent className="pt-6">
-            <div className="flex justify-end gap-3">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => router.push('/health-facilities')}
-                className="cursor-pointer"
-              >
-                Annuler
-              </Button>
-              <Button
-                type="submit"
-                disabled={loading || (facility && facility.deleted_at)}
-                className="cursor-pointer"
-              >
-                <Save className="mr-2 h-4 w-4" />
-                {loading ? "Mise à jour..." : "Mettre à jour"}
-              </Button>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <User className="h-5 w-5" />
+              Administrateur de l'établissement
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-4">
+              <Label className="text-base font-medium">Choix de l'administrateur <span className="text-red-500">*</span></Label>
+              
+              <div className="flex gap-4">
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="adminMode"
+                    checked={adminMode === 'select'}
+                    onChange={() => setAdminMode('select')}
+                    className="text-blue-600"
+                  />
+                  <span>Sélectionner un utilisateur existant</span>
+                </label>
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="adminMode"
+                    checked={adminMode === 'create'}
+                    onChange={() => setAdminMode('create')}
+                    className="text-blue-600"
+                  />
+                  <span>Créer un nouvel administrateur</span>
+                </label>
+              </div>
             </div>
+
+            {adminMode === 'select' && (
+              <div className="space-y-4 border-t pt-4">
+                <div className="space-y-2">
+                  <Label htmlFor="admin_user_id">Utilisateur existant <span className="text-red-500">*</span></Label>
+                  <CustomSelect
+                    options={userOptions}
+                    value={formData.admin_user_id}
+                    onChange={(value) => handleInputChange("admin_user_id", value as string | null)}
+                    placeholder="Sélectionner un utilisateur"
+                    height="h-12"
+                    className="w-full"
+                  />
+                </div>
+              </div>
+            )}
+
+            {adminMode === 'create' && (
+              <div className="space-y-4 border-t pt-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="admin_given_name">Prénom de l'administrateur <span className="text-red-500">*</span></Label>
+                    <Input
+                      id="admin_given_name"
+                      value={adminUserData.given_name}
+                      onChange={(e) => handleAdminUserChange("given_name", e.target.value)}
+                      placeholder="Jean"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="admin_family_name">Nom de l'administrateur <span className="text-red-500">*</span></Label>
+                    <Input
+                      id="admin_family_name"
+                      value={adminUserData.family_name}
+                      onChange={(e) => handleAdminUserChange("family_name", e.target.value)}
+                      placeholder="Dupont"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="admin_health_id">ID Santé <span className="text-red-500">*</span></Label>
+                    <Input
+                      id="admin_health_id"
+                      value={adminUserData.health_id}
+                      onChange={(e) => handleAdminUserChange("health_id", e.target.value)}
+                      placeholder="TG123456"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="admin_password">Mot de passe <span className="text-red-500">*</span></Label>
+                    <Input
+                      id="admin_password"
+                      type="password"
+                      value={adminUserData.password}
+                      onChange={(e) => handleAdminUserChange("password", e.target.value)}
+                      placeholder="••••••••"
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
+
+        <div className="flex justify-end gap-4">
+          <Link href="/health-facilities">
+            <Button variant="outline" type="button" className="cursor-pointer">
+              Annuler
+            </Button>
+          </Link>
+          <Button type="submit" disabled={loading} className="cursor-pointer">
+            {loading ? "Mise à jour..." : "Mettre à jour"}
+          </Button>
+        </div>
       </form>
     </div>
   );
