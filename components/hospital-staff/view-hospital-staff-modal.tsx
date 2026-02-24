@@ -7,10 +7,11 @@ import { Badge } from "@/components/ui/badge";
 import { Eye } from "lucide-react";
 import { HospitalStaff } from "@/features/hospital-staff";
 import { 
-  getSpecialtyLabel, 
-  getDepartmentLabel, 
-  getExperienceLabel 
-} from "@/features/hospital-staff";
+  formatEmploymentStatus, 
+  formatSpecialty, 
+  formatDepartment, 
+  getEmploymentStatusBadge
+} from "@/features/hospital-staff/utils/hospital-staff.utils";
 
 interface ViewHospitalStaffModalProps {
   staff: HospitalStaff;
@@ -73,7 +74,7 @@ export function ViewHospitalStaffModal({ staff }: ViewHospitalStaffModalProps) {
                 <label className="text-md font-medium text-muted-foreground">Spécialité</label>
                 <div className="mt-1">
                   <Badge variant="secondary">
-                    {getSpecialtyLabel(staff.specialty)}
+                    {formatSpecialty(staff.specialty)}
                   </Badge>
                 </div>
               </div>
@@ -81,13 +82,13 @@ export function ViewHospitalStaffModal({ staff }: ViewHospitalStaffModalProps) {
                 <label className="text-md font-medium text-muted-foreground">Département</label>
                 <div className="mt-1">
                   <Badge variant="outline">
-                    {getDepartmentLabel(staff.department)}
+                    {formatDepartment(staff.department)}
                   </Badge>
                 </div>
               </div>
               <div>
                 <label className="text-md font-medium text-muted-foreground">Années d'expérience</label>
-                <p className="mt-1">{getExperienceLabel(staff.year_of_exp)}</p>
+                <p className="mt-1">{staff.year_of_exp === 0 ? 'Débutant' : `${staff.year_of_exp} ans d'expérience`}</p>
               </div>
               <div>
                 <label className="text-md font-medium text-muted-foreground">ID Établissement</label>

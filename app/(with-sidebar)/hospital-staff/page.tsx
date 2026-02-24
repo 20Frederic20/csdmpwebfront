@@ -1,11 +1,27 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Search, Plus, Filter, Users, MoreHorizontal, Eye, Edit, Trash2, RotateCcw, AlertTriangle, UserPlus, ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react";
+import { HospitalStaff, CreateHospitalStaffRequest, UpdateHospitalStaffRequest, EmploymentStatus, MedicalSpecialty, HospitalDepartment, HospitalStaffResponse, HospitalStaffQueryParams } from "@/features/hospital-staff";
+import { HospitalStaffService } from "@/features/hospital-staff/services/hospital-staff.service";
+import { toast } from "sonner";
+import Link from "next/link";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  PaginationEllipsis,
+} from "@/components/ui/pagination";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,39 +29,20 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { 
-  Search, 
-  Plus, 
-  Filter, 
-  Users, 
-  MoreHorizontal, 
-  Edit, 
-  Trash2, 
-  Eye, 
-  UserCheck,
-  ChevronUp, 
-  ChevronDown, 
-  ChevronsUpDown,
-  RotateCcw,
-  AlertTriangle
-} from "lucide-react";
-import { toast } from "sonner";
-import { 
-  HospitalStaff, 
-  ListHospitalStaffQueryParams, 
-  HospitalStaffSpecialty, 
-  HospitalStaffDepartment 
-} from "@/features/hospital-staff";
-import { HospitalStaffService } from "@/features/hospital-staff";
+import CustomSelect from "@/components/ui/custom-select";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { usePermissions } from "@/hooks/use-permissions";
 import { 
-  getSpecialtyLabel, 
-  getDepartmentLabel, 
+  formatEmploymentStatus, 
+  getEmploymentStatusOptions, 
+  formatSpecialty, 
   getSpecialtyOptions, 
-  getDepartmentOptions 
-} from "@/features/hospital-staff";
-import Link from "next/link";
+  formatDepartment, 
+  getDepartmentOptions,
+  getEmploymentStatusBadge,
+  canDeleteHospitalStaff,
+  canRestoreHospitalStaff
+} from "@/features/hospital-staff/utils/hospital-staff.utils";
 import { ViewHospitalStaffModal } from "@/components/hospital-staff/view-hospital-staff-modal";
 import { EditHospitalStaffModal } from "@/components/hospital-staff/edit-hospital-staff-modal";
 import { DeleteHospitalStaffModal } from "@/components/hospital-staff/delete-hospital-staff-modal";
@@ -53,13 +50,13 @@ import { HospitalStaffFilters } from "@/components/hospital-staff/hospital-staff
 import { DataPagination } from "@/components/ui/data-pagination";
 
 export default function HospitalStaffPage() {
-  const [staff, setStaff] = useState<HospitalStaff[]>([]);
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(20);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   const [total, setTotal] = useState(0);
-  const [sortingField, setSortingField] = useState('matricule');
+  const [staff, setStaff] = useState<HospitalStaff[]>([]);
+  const [sortingColumn, setSortingColumn] = useState<string>('user_given_name');
   const [sortingOrder, setSortingOrder] = useState<'asc' | 'desc'>('asc');
   const { token } = useAuthToken();
   const { canAccess } = usePermissions();
@@ -67,8 +64,8 @@ export default function HospitalStaffPage() {
   // États pour les filtres
   const [filters, setFilters] = useState({
     search: "",
-    specialty: "" as HospitalStaffSpecialty | "",
-    department: "" as HospitalStaffDepartment | "",
+    specialty: "" as MedicalSpecialty | "",
+    department: "" as HospitalDepartment | "",
   });
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
@@ -90,18 +87,18 @@ export default function HospitalStaffPage() {
   };
 
   // Mémoriser les paramètres pour éviter les rechargements multiples
-  const params = useMemo((): ListHospitalStaffQueryParams => {
+  const params = useMemo((): HospitalStaffQueryParams => {
     const offset = (currentPage - 1) * itemsPerPage;
     return {
-      search: searchTerm || filters.search || undefined,
+      search: filters.search || undefined,
       limit: itemsPerPage,
       offset,
-      sort_by: sortingField,
+      sort_by: sortingColumn,
       sort_order: sortingOrder,
-      specialty: filters.specialty as HospitalStaffSpecialty || undefined,
-      department: filters.department as HospitalStaffDepartment || undefined,
+      specialty: filters.specialty as MedicalSpecialty || undefined,
+      department: filters.department as HospitalDepartment || undefined,
     };
-  }, [currentPage, itemsPerPage, searchTerm, sortingField, sortingOrder, filters.search, filters.specialty, filters.department]);
+  }, [currentPage, itemsPerPage, sortingColumn, sortingOrder, filters.search, filters.specialty, filters.department]);
 
   useEffect(() => {
     if (token) {
@@ -143,18 +140,18 @@ export default function HospitalStaffPage() {
   const handleFiltersReset = () => {
     setFilters({
       search: "",
-      specialty: "" as HospitalStaffSpecialty | "",
-      department: "" as HospitalStaffDepartment | "",
+      specialty: "" as MedicalSpecialty | "",
+      department: "" as HospitalDepartment | "",
     });
     setCurrentPage(1);
   };
 
   // Gérer le tri
   const handleSort = (field: string) => {
-    if (sortingField === field) {
+    if (sortingColumn === field) {
       setSortingOrder(sortingOrder === 'asc' ? 'desc' : 'asc');
     } else {
-      setSortingField(field);
+      setSortingColumn(field);
       setSortingOrder('asc');
     }
     setCurrentPage(1);
@@ -162,7 +159,7 @@ export default function HospitalStaffPage() {
 
   // Obtenir l'icône de tri pour un champ
   const getSortIcon = (field: string) => {
-    if (sortingField !== field) {
+    if (sortingColumn !== field) {
       return <ChevronsUpDown className="h-4 w-4" />;
     }
     return sortingOrder === 'asc' 
@@ -348,13 +345,13 @@ export default function HospitalStaffPage() {
                         <div className="text-center">
                           <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                           <h3 className="text-lg font-semibold mb-2">
-                            {searchTerm || filters.search || filters.specialty || filters.department
+                            {filters.search || filters.specialty || filters.department
                               ? 'Aucun membre du personnel trouvé pour cette recherche.' 
                               : 'Aucun membre du personnel enregistré.'
                             }
                           </h3>
                           <p className="text-muted-foreground mb-4">
-                            {searchTerm || filters.search || filters.specialty || filters.department
+                            {filters.search || filters.specialty || filters.department
                               ? 'Essayez de modifier vos critères de recherche.'
                               : 'Commencez par ajouter le premier membre du personnel.'
                             }
@@ -395,12 +392,12 @@ export default function HospitalStaffPage() {
                         </TableCell>
                         <TableCell>
                           <Badge variant="secondary">
-                            {getSpecialtyLabel(member.specialty)}
+                            {formatSpecialty(member.specialty)}
                           </Badge>
                         </TableCell>
                         <TableCell>
                           <Badge variant="outline">
-                            {getDepartmentLabel(member.department)}
+                            {formatDepartment(member.department)}
                           </Badge>
                         </TableCell>
                         <TableCell>
@@ -447,10 +444,7 @@ export default function HospitalStaffPage() {
                               {canAccess('hospital_staffs', 'update') && (
                                 <DropdownMenuItem 
                                   className="cursor-pointer"
-                                  onClick={() => {
-                                    const modalButton = document.querySelector(`[data-hospital-staff-edit="${member.id_}"]`) as HTMLButtonElement;
-                                    if (modalButton) modalButton.click();
-                                  }}
+                                  onClick={() => router.push(`/hospital-staff/${member.id_}/edit`)}
                                 >
                                   <Edit className="h-4 w-4 mr-2" />
                                   Modifier
