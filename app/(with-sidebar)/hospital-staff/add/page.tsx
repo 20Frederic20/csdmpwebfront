@@ -4,38 +4,27 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import CustomSelect from "@/components/ui/custom-select";
-import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Save, X, User, Building2, Loader2 } from "lucide-react";
-import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
+import { CreateHospitalStaffRequest, EmploymentStatus, MedicalSpecialty, HospitalDepartment } from "@/features/hospital-staff";
+import { HospitalStaffService } from "@/features/hospital-staff/services/hospital-staff.service";
 import { 
-  CreateHospitalStaffRequest, 
-  HospitalStaffSpecialty, 
-  HospitalStaffDepartment,
-  CreateUserRequest 
-} from "@/features/hospital-staff";
-import { HospitalStaffService } from "@/features/hospital-staff";
+  getEmploymentStatusOptions
+} from "@/features/hospital-staff/utils/hospital-staff.utils";
 import { useAuthToken } from "@/hooks/use-auth-token";
-import { 
-  getSpecialtyOptions, 
-  getDepartmentOptions 
-} from "@/features/hospital-staff";
+import { toast } from "sonner";
+import { ArrowLeft, Save, X } from "lucide-react";
 import { HealthFacility } from "@/features/health-facilities";
 import { HealthFacilityService, HealthFacilityQueryParams } from "@/features/health-facilities/services/health-facility.service";
 import { User as UserType, ListUsersQueryParams } from "@/features/users";
 import { UserService } from "@/features/users/services/user.service";
-
-const userRoles = [
-  { value: "health_pro", label: "Professionnel de santé" },
-  { value: "doctor", label: "Médecin" },
-  { value: "nurse", label: "Infirmier" },
-  { value: "midwife", label: "Sage-femme" },
-  { value: "lab_technician", label: "Technicien de labo" },
-  { value: "pharmacist", label: "Pharmacien" },
-  { value: "community_agent", label: "Agent communautaire" },
-];
+import { CreationTypeSelector } from "@/components/hospital-staff/creation-type-selector";
+import { HealthFacilitySelector } from "@/components/ui/health-facility-selector";
+import { UserSelector } from "@/components/ui/user-selector";
+import { UserCreationForm } from "@/components/hospital-staff/user-creation-form";
+import { StaffInformationForm } from "@/components/hospital-staff/staff-information-form";
+import CustomSelect from "@/components/ui/custom-select";
 
 export default function AddHospitalStaffPage() {
   const router = useRouter();
@@ -49,9 +38,12 @@ export default function AddHospitalStaffPage() {
     health_facility_id: "",
     matricule: "",
     year_of_exp: 0,
-    specialty: "general_practitioner",
-    department: "internal_medicine",
-    user_id: null,
+    specialty: MedicalSpecialty.GENERAL_PRACTITIONER,
+    department: HospitalDepartment.EMERGENCY,
+    user_id: "",
+    order_number: null,
+    employment_status: EmploymentStatus.STATE_PERMANENT,
+    is_active: true, // Gardé par défaut mais non affiché
     user_data: {
       given_name: "",
       family_name: "",
@@ -158,19 +150,19 @@ export default function AddHospitalStaffPage() {
     }
     
     if (createUser) {
-      if (!formData.user_data?.given_name.trim()) {
+      if (!formData.user_data?.given_name?.trim()) {
         toast.error("Le prénom est requis");
         return;
       }
-      if (!formData.user_data?.family_name.trim()) {
+      if (!formData.user_data?.family_name?.trim()) {
         toast.error("Le nom de famille est requis");
         return;
       }
-      if (!formData.user_data?.health_id.trim()) {
+      if (!formData.user_data?.health_id?.trim()) {
         toast.error("L'ID santé est requis");
         return;
       }
-      if (!formData.user_data?.password.trim()) {
+      if (!formData.user_data?.password?.trim()) {
         toast.error("Le mot de passe est requis");
         return;
       }
@@ -190,11 +182,21 @@ export default function AddHospitalStaffPage() {
     setLoading(true);
     try {
       const staffData: CreateHospitalStaffRequest = {
-        ...formData,
+        health_facility_id: formData.health_facility_id,
+        matricule: formData.matricule,
+        year_of_exp: formData.year_of_exp,
+        specialty: formData.specialty,
+        department: formData.department,
+        user_id: createUser ? null : (formData.user_id || null),
+        order_number: formData.order_number,
+        employment_status: formData.employment_status,
+        is_active: formData.is_active,
         user_data: createUser ? {
-          ...formData.user_data!,
+          given_name: formData.user_data?.given_name || "",
+          family_name: formData.user_data?.family_name || "",
+          health_id: formData.user_data?.health_id || "",
+          password: formData.user_data?.password || "",
           roles: selectedRoles,
-          is_active: true,
         } : null,
       };
 
@@ -219,7 +221,7 @@ export default function AddHospitalStaffPage() {
     }));
   };
 
-  const handleUserDataChange = (field: keyof CreateUserRequest, value: string) => {
+  const handleUserDataChange = (field: string, value: string) => {
     setFormData(prev => ({
       ...prev,
       user_data: {
@@ -229,24 +231,17 @@ export default function AddHospitalStaffPage() {
     }));
   };
 
-  const toggleRole = (role: string) => {
-    setSelectedRoles(prev => {
-      if (prev.includes(role)) {
-        return prev.filter(r => r !== role);
-      } else {
-        return [...prev, role];
-      }
-    });
-  };
-
   const resetForm = () => {
     setFormData({
       health_facility_id: "",
       matricule: "",
       year_of_exp: 0,
-      specialty: "general_practitioner",
-      department: "internal_medicine",
-      user_id: null,
+      specialty: MedicalSpecialty.GENERAL_PRACTITIONER,
+      department: HospitalDepartment.EMERGENCY,
+      user_id: "",
+      order_number: null,
+      employment_status: EmploymentStatus.STATE_PERMANENT,
+      is_active: true,
       user_data: {
         given_name: "",
         family_name: "",
@@ -298,26 +293,10 @@ export default function AddHospitalStaffPage() {
             <CardTitle>Type de création</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex gap-4">
-              <Button
-                type="button"
-                variant={createUser ? "default" : "outline"}
-                onClick={() => setCreateUser(true)}
-                className="cursor-pointer"
-              >
-                <User className="mr-2 h-4 w-4" />
-                Créer un nouvel utilisateur
-              </Button>
-              <Button
-                type="button"
-                variant={!createUser ? "default" : "outline"}
-                onClick={() => setCreateUser(false)}
-                className="cursor-pointer"
-              >
-                <Building2 className="mr-2 h-4 w-4" />
-                Utiliser un utilisateur existant
-              </Button>
-            </div>
+            <CreationTypeSelector 
+              createUser={createUser} 
+              onCreateUserChange={setCreateUser} 
+            />
           </CardContent>
         </Card>
 
@@ -326,67 +305,26 @@ export default function AddHospitalStaffPage() {
           <CardHeader>
             <CardTitle>Informations du personnel</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label htmlFor="health_facility_id">Établissement de santé <span className="text-red-500">*</span></Label>
-                <CustomSelect
-                  options={healthFacilities.map(facility => ({
-                    value: facility.id_,
-                    label: `${facility.name} (${facility.id_})`
-                  }))}
-                  value={formData.health_facility_id}
-                  onChange={(value) => handleInputChange('health_facility_id', value as string)}
-                  placeholder="Sélectionner un établissement"
-                  isDisabled={loadingFacilities}
-                  isLoading={loadingFacilities}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="matricule">Matricule <span className="text-red-500">*</span></Label>
-                <Input
-                  id="matricule"
-                  value={formData.matricule}
-                  onChange={(e) => handleInputChange('matricule', e.target.value)}
-                  placeholder="Entrez le matricule"
-                  required
-                  className="h-12"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="year_of_exp">Années d'expérience <span className="text-red-500">*</span></Label>
-                <Input
-                  id="year_of_exp"
-                  type="number"
-                  min="0"
-                  max="70"
-                  value={formData.year_of_exp}
-                  onChange={(e) => handleInputChange('year_of_exp', parseInt(e.target.value) || 0)}
-                  placeholder="0"
-                  required
-                  className="h-12"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="specialty">Spécialité <span className="text-red-500">*</span></Label>
-                <CustomSelect
-                  options={getSpecialtyOptions()}
-                  value={formData.specialty}
-                  onChange={(value) => handleInputChange('specialty', value as HospitalStaffSpecialty)}
-                  placeholder="Sélectionner une spécialité"
-                />
-              </div>
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="department">Département <span className="text-red-500">*</span></Label>
-                <CustomSelect
-                  options={getDepartmentOptions()}
-                  value={formData.department}
-                  onChange={(value) => handleInputChange('department', value as HospitalStaffDepartment)}
-                  placeholder="Sélectionner un département"
-                />
-              </div>
-            </div>
-          </CardContent>
+          <CardContent className="space-y-6">
+            <HealthFacilitySelector
+              healthFacilities={healthFacilities}
+              selectedFacility={formData.health_facility_id}
+              onFacilityChange={(value) => handleInputChange('health_facility_id', value)}
+              isLoading={loadingFacilities}
+              required
+            />
+
+            <StaffInformationForm
+              matricule={formData.matricule}
+              yearOfExp={formData.year_of_exp}
+              specialty={formData.specialty}
+              department={formData.department}
+              orderNumber={formData.order_number ? Number(formData.order_number) : null}
+              employmentStatus={formData.employment_status || undefined}
+              onFieldChange={handleInputChange}
+            />
+
+            </CardContent>
         </Card>
 
         {/* Utilisateur existant */}
@@ -396,23 +334,13 @@ export default function AddHospitalStaffPage() {
               <CardTitle>Utilisateur existant</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2">
-                <Label htmlFor="user_id">Utilisateur <span className="text-red-500">*</span></Label>
-                <CustomSelect
-                  options={users.map(user => ({
-                    value: user.id_,
-                    label: `${user.given_name} ${user.family_name} (${user.id_})`
-                  }))}
-                  value={formData.user_id || ""}
-                  onChange={(value) => {
-                    console.log('Selected user:', value);
-                    handleInputChange('user_id', value as string);
-                  }}
-                  placeholder="Sélectionner un utilisateur"
-                  isDisabled={loadingUsers}
-                  isLoading={loadingUsers}
-                />
-              </div>
+              <UserSelector
+                users={users}
+                selectedUser={formData.user_id || ""}
+                onUserChange={(value) => handleInputChange('user_id', value)}
+                isLoading={loadingUsers}
+                required
+              />
             </CardContent>
           </Card>
         )}
@@ -423,95 +351,13 @@ export default function AddHospitalStaffPage() {
             <CardHeader>
               <CardTitle>Nouvel utilisateur</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="given_name">Prénom <span className="text-red-500">*</span></Label>
-                  <Input
-                    id="given_name"
-                    value={formData.user_data?.given_name || ""}
-                    onChange={(e) => handleUserDataChange('given_name', e.target.value)}
-                    placeholder="Entrez le prénom"
-                    required
-                    className="h-12"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="family_name">Nom de famille <span className="text-red-500">*</span></Label>
-                  <Input
-                    id="family_name"
-                    value={formData.user_data?.family_name || ""}
-                    onChange={(e) => handleUserDataChange('family_name', e.target.value)}
-                    placeholder="Entrez le nom de famille"
-                    required
-                    className="h-12"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="health_id">ID Santé <span className="text-red-500">*</span></Label>
-                  <Input
-                    id="health_id"
-                    value={formData.user_data?.health_id || ""}
-                    onChange={(e) => handleUserDataChange('health_id', e.target.value)}
-                    placeholder="Entrez l'ID santé"
-                    required
-                    className="h-12"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password">Mot de passe <span className="text-red-500">*</span></Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    value={formData.user_data?.password || ""}
-                    onChange={(e) => handleUserDataChange('password', e.target.value)}
-                    placeholder="Entrez le mot de passe"
-                    required
-                    minLength={6}
-                    className="h-12"
-                  />
-                </div>
-              </div>
-
-              {/* Rôles */}
-              <div className="space-y-4">
-                <Label className="text-base font-semibold">Rôles <span className="text-red-500">*</span></Label>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                  {userRoles.map((role) => (
-                    <div
-                      key={role.value}
-                      className={`flex items-center gap-2 p-3 border rounded-lg cursor-pointer transition-colors ${
-                        selectedRoles.includes(role.value)
-                          ? 'border-primary bg-primary/10'
-                          : 'border-border hover:bg-muted/50'
-                      }`}
-                      onClick={() => toggleRole(role.value)}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedRoles.includes(role.value)}
-                        onChange={() => toggleRole(role.value)}
-                        className="sr-only"
-                      />
-                      <span className="text-md">{role.label}</span>
-                    </div>
-                  ))}
-                </div>
-                {selectedRoles.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    <span className="text-md text-muted-foreground">Rôles sélectionnés:</span>
-                    {selectedRoles.map((role) => (
-                      <Badge key={role} variant="secondary" className="cursor-pointer">
-                        {userRoles.find(r => r.value === role)?.label || role}
-                        <X
-                          className="h-3 w-3 ml-1"
-                          onClick={() => toggleRole(role)}
-                        />
-                      </Badge>
-                    ))}
-                  </div>
-                )}
-              </div>
+            <CardContent>
+              <UserCreationForm
+                userData={formData.user_data || {}}
+                selectedRoles={selectedRoles}
+                onUserDataChange={handleUserDataChange}
+                onRolesChange={setSelectedRoles}
+              />
             </CardContent>
           </Card>
         )}
