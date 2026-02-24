@@ -11,6 +11,25 @@ export interface Patient {
   version?: number | null;
 }
 
+export interface CreatePatientRequest {
+  given_name: string;
+  family_name: string;
+  birth_date: string;
+  gender: 'male' | 'female' | 'other' | 'unknown';
+  location: string;
+  owner_id?: string | null;
+}
+
+export interface UpdatePatientRequest {
+  given_name?: string;
+  family_name?: string;
+  birth_date?: string;
+  gender?: 'male' | 'female' | 'other' | 'unknown';
+  location?: string;
+  owner_id?: string | null;
+  is_active?: boolean;
+}
+
 export interface PatientsResponse {
   data: Patient[];
   total: number;
