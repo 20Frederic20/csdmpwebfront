@@ -21,10 +21,9 @@ import { HospitalStaff } from "@/features/hospital-staff";
 import { HospitalStaffService } from "@/features/hospital-staff";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { 
-  getSpecialtyLabel, 
-  getDepartmentLabel, 
-  getExperienceLabel 
-} from "@/features/hospital-staff";
+  formatSpecialty, 
+  formatDepartment
+} from "@/features/hospital-staff/utils/hospital-staff.utils";
 
 export default function HospitalStaffDetailPage() {
   const params = useParams();
@@ -203,7 +202,7 @@ export default function HospitalStaffDetailPage() {
                   <label className="text-md font-medium text-muted-foreground">Spécialité</label>
                   <div className="mt-1">
                     <Badge variant="secondary">
-                      {getSpecialtyLabel(staff.specialty)}
+                      {formatSpecialty(staff.specialty)}
                     </Badge>
                   </div>
                 </div>
@@ -211,7 +210,7 @@ export default function HospitalStaffDetailPage() {
                   <label className="text-md font-medium text-muted-foreground">Département</label>
                   <div className="mt-1">
                     <Badge variant="outline">
-                      {getDepartmentLabel(staff.department)}
+                      {formatDepartment(staff.department)}
                     </Badge>
                   </div>
                 </div>
@@ -219,7 +218,7 @@ export default function HospitalStaffDetailPage() {
                   <label className="text-md font-medium text-muted-foreground">Années d'expérience</label>
                   <div className="flex items-center gap-2 mt-1">
                     <Calendar className="h-4 w-4 text-muted-foreground" />
-                    <span>{getExperienceLabel(staff.year_of_exp)}</span>
+                    <span>{staff.year_of_exp === 0 ? 'Débutant' : `${staff.year_of_exp} ans d'expérience`}</span>
                   </div>
                 </div>
                 <div>
