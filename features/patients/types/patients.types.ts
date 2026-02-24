@@ -7,6 +7,18 @@ export interface Patient {
   location: string;
   owner_id: string;
   is_active: boolean;
+  is_main?: boolean;
+  health_id?: string | null;
+  birth_place?: string | null;
+  residence_city?: string | null;
+  neighborhood?: string | null;
+  phone_number?: string | null;
+  npi_number?: string | null;
+  blood_group?: string | null;
+  father_full_name?: string | null;
+  mother_full_name?: string | null;
+  emergency_contact_name?: string | null;
+  emergency_contact_phone?: string | null;
   deleted_at?: string | null;
   version?: number | null;
 }
@@ -16,8 +28,19 @@ export interface CreatePatientRequest {
   family_name: string;
   birth_date: string;
   gender: 'male' | 'female' | 'other' | 'unknown';
-  location: string;
+  location?: string | null;
   owner_id?: string | null;
+  birth_place?: string | null;
+  residence_city?: string | null;
+  neighborhood?: string | null;
+  phone_number?: string | null;
+  npi_number?: string | null;
+  blood_group?: string | null;
+  father_full_name?: string | null;
+  mother_full_name?: string | null;
+  emergency_contact_name?: string | null;
+  emergency_contact_phone?: string | null;
+  is_main?: boolean;
 }
 
 export interface UpdatePatientRequest {
@@ -25,8 +48,19 @@ export interface UpdatePatientRequest {
   family_name?: string;
   birth_date?: string;
   gender?: 'male' | 'female' | 'other' | 'unknown';
-  location?: string;
+  location?: string | null;
   owner_id?: string | null;
+  birth_place?: string | null;
+  residence_city?: string | null;
+  neighborhood?: string | null;
+  phone_number?: string | null;
+  npi_number?: string | null;
+  blood_group?: string | null;
+  father_full_name?: string | null;
+  mother_full_name?: string | null;
+  emergency_contact_name?: string | null;
+  emergency_contact_phone?: string | null;
+  is_main?: boolean;
   is_active?: boolean;
 }
 

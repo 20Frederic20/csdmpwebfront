@@ -13,6 +13,7 @@ import { UserService } from "@/features/users";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { PatientInformationForm } from "@/components/patients/patient-information-form";
 import { PatientOwnerSelector } from "@/components/patients/patient-owner-selector";
+import { PatientAdditionalInfoForm } from "@/components/patients/patient-additional-info-form";
 
 export default function AddPatientPage() {
   const router = useRouter();
@@ -26,6 +27,17 @@ export default function AddPatientPage() {
     gender: "male",
     location: "",
     owner_id: null,
+    birth_place: null,
+    residence_city: null,
+    neighborhood: null,
+    phone_number: null,
+    npi_number: null,
+    blood_group: null,
+    father_full_name: null,
+    mother_full_name: null,
+    emergency_contact_name: null,
+    emergency_contact_phone: null,
+    is_main: false,
   });
   const { token } = useAuthToken();
 
@@ -83,7 +95,7 @@ export default function AddPatientPage() {
       toast.error("La date de naissance est requise");
       return;
     }
-    if (!formData.location.trim()) {
+    if (!formData.location?.trim()) {
       toast.error("La localisation est requise");
       return;
     }
@@ -95,8 +107,19 @@ export default function AddPatientPage() {
         family_name: formData.family_name,
         birth_date: formData.birth_date,
         gender: formData.gender,
-        location: formData.location,
+        location: formData.location || "",
         owner_id: formData.owner_id || null,
+        birth_place: formData.birth_place || null,
+        residence_city: formData.residence_city || null,
+        neighborhood: formData.neighborhood || null,
+        phone_number: formData.phone_number || null,
+        npi_number: formData.npi_number || null,
+        blood_group: formData.blood_group || null,
+        father_full_name: formData.father_full_name || null,
+        mother_full_name: formData.mother_full_name || null,
+        emergency_contact_name: formData.emergency_contact_name || null,
+        emergency_contact_phone: formData.emergency_contact_phone || null,
+        is_main: formData.is_main || false,
       };
 
       await PatientService.createPatient(patientData, token || undefined);
@@ -112,7 +135,7 @@ export default function AddPatientPage() {
     }
   };
 
-  const handleInputChange = (field: keyof CreatePatientRequest, value: string) => {
+  const handleInputChange = (field: keyof CreatePatientRequest, value: string | null) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -127,6 +150,17 @@ export default function AddPatientPage() {
       gender: "male",
       location: "",
       owner_id: null,
+      birth_place: null,
+      residence_city: null,
+      neighborhood: null,
+      phone_number: null,
+      npi_number: null,
+      blood_group: null,
+      father_full_name: null,
+      mother_full_name: null,
+      emergency_contact_name: null,
+      emergency_contact_phone: null,
+      is_main: false,
     });
   };
 
@@ -174,7 +208,32 @@ export default function AddPatientPage() {
               familyName={formData.family_name}
               birthDate={formData.birth_date}
               gender={formData.gender}
-              location={formData.location}
+              location={formData.location || ""}
+              onFieldChange={handleInputChange}
+            />
+          </CardContent>
+        </Card>
+
+        {/* Informations additionnelles */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Informations additionnelles</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Informations médicales et contacts d'urgence (optionnel)
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <PatientAdditionalInfoForm
+              birthPlace={formData.birth_place}
+              residenceCity={formData.residence_city}
+              neighborhood={formData.neighborhood}
+              phoneNumber={formData.phone_number}
+              npiNumber={formData.npi_number}
+              bloodGroup={formData.blood_group}
+              fatherFullName={formData.father_full_name}
+              motherFullName={formData.mother_full_name}
+              emergencyContactName={formData.emergency_contact_name}
+              emergencyContactPhone={formData.emergency_contact_phone}
               onFieldChange={handleInputChange}
             />
           </CardContent>

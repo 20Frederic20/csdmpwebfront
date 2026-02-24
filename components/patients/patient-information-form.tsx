@@ -10,8 +10,8 @@ interface PatientInformationFormProps {
   familyName: string;
   birthDate: string;
   gender: "male" | "female" | "other" | "unknown";
-  location: string;
-  onFieldChange: (field: keyof CreatePatientRequest, value: string) => void;
+  location: string | null;
+  onFieldChange: (field: keyof CreatePatientRequest, value: string | null) => void;
 }
 
 export function PatientInformationForm({
@@ -92,8 +92,8 @@ export function PatientInformationForm({
         </Label>
         <Input
           id="location"
-          value={location}
-          onChange={(e) => onFieldChange('location', e.target.value)}
+          value={location || ""}
+          onChange={(e) => onFieldChange('location', e.target.value || null)}
           placeholder="Entrez la localisation"
           required
           className="h-10"
