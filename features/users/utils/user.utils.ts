@@ -1,18 +1,18 @@
 import { UserRole } from "../types/user.types";
 
 export const USER_ROLES_LABELS: Record<UserRole, string> = {
-  user: "Utilisateur",
-  parent: "Parent",
-  patient: "Patient",
-  health_pro: "Professionnel de santé",
-  doctor: "Médecin",
-  nurse: "Infirmier",
-  midwife: "Sage-femme",
-  lab_technician: "Technicien de labo",
-  pharmacist: "Pharmacien",
-  community_agent: "Agent communautaire",
-  admin: "Administrateur",
-  super_admin: "Super administrateur",
+  USER: "Utilisateur",
+  PARENT: "Parent",
+  PATIENT: "Patient",
+  HEALTH_PRO: "Professionnel de santé",
+  DOCTOR: "Médecin",
+  NURSE: "Infirmier",
+  MIDWIFE: "Sage-femme",
+  LAB_TECHNICIAN: "Technicien de labo",
+  PHARMACIST: "Pharmacien",
+  COMMUNITY_AGENT: "Agent communautaire",
+  ADMIN: "Administrateur",
+  SUPER_ADMIN: "Super administrateur",
 };
 
 export const formatUserRole = (role: UserRole): string => {
@@ -26,27 +26,27 @@ export const formatUserRoles = (roles: UserRole[]): string => {
 
 export const getUserRoleBadge = (role: UserRole) => {
   switch (role) {
-    case 'super_admin':
+    case 'SUPER_ADMIN':
       return { label: formatUserRole(role), variant: 'destructive' as const };
-    case 'admin':
+    case 'ADMIN':
       return { label: formatUserRole(role), variant: 'destructive' as const };
-    case 'doctor':
+    case 'DOCTOR':
       return { label: formatUserRole(role), variant: 'default' as const };
-    case 'nurse':
+    case 'NURSE':
       return { label: formatUserRole(role), variant: 'secondary' as const };
-    case 'midwife':
+    case 'MIDWIFE':
       return { label: formatUserRole(role), variant: 'secondary' as const };
-    case 'pharmacist':
+    case 'PHARMACIST':
       return { label: formatUserRole(role), variant: 'default' as const };
-    case 'lab_technician':
+    case 'LAB_TECHNICIAN':
       return { label: formatUserRole(role), variant: 'outline' as const };
-    case 'community_agent':
+    case 'COMMUNITY_AGENT':
       return { label: formatUserRole(role), variant: 'outline' as const };
-    case 'health_pro':
+    case 'HEALTH_PRO':
       return { label: formatUserRole(role), variant: 'default' as const };
-    case 'patient':
+    case 'PATIENT':
       return { label: formatUserRole(role), variant: 'outline' as const };
-    case 'parent':
+    case 'PARENT':
       return { label: formatUserRole(role), variant: 'outline' as const };
     default:
       return { label: formatUserRole(role), variant: 'outline' as const };
@@ -63,18 +63,18 @@ export const getPrimaryRole = (roles: UserRole[]): UserRole | null => {
   
   // Ordre de priorité des rôles
   const priorityOrder: UserRole[] = [
-    'super_admin',
-    'admin',
-    'doctor',
-    'pharmacist',
-    'nurse',
-    'midwife',
-    'lab_technician',
-    'health_pro',
-    'community_agent',
-    'parent',
-    'patient',
-    'user'
+    'SUPER_ADMIN',
+    'ADMIN',
+    'DOCTOR',
+    'PHARMACIST',
+    'NURSE',
+    'MIDWIFE',
+    'LAB_TECHNICIAN',
+    'HEALTH_PRO',
+    'COMMUNITY_AGENT',
+    'PARENT',
+    'PATIENT',
+    'USER'
   ];
 
   for (const role of priorityOrder) {
