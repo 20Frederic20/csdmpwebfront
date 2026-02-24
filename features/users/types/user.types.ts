@@ -40,15 +40,15 @@ export interface ListUsersQueryParams {
 }
 
 export type UserRole = 
-  | "user"
-  | "parent"
-  | "patient"
-  | "health_pro"
-  | "doctor"
-  | "nurse"
-  | "midwife"
-  | "lab_technician"
-  | "pharmacist"
-  | "community_agent"
-  | "admin"
-  | "super_admin";
+  | "USER"
+  | "PARENT"
+  | "PATIENT"
+  | "HEALTH_PRO"
+  | "DOCTOR"
+  | "NURSE"
+  | "MIDWIFE"
+  | "LAB_TECHNICIAN"
+  | "PHARMACIST"
+  | "COMMUNITY_AGENT"
+  | "ADMIN"
+  | "SUPER_ADMIN";
