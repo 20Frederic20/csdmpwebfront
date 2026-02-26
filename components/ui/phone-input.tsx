@@ -83,8 +83,6 @@ export function PhoneInput({
     const newPhone = e.target.value;
     setPhoneNumber(newPhone);
     
-    // Ne pas ajouter le préfixe automatiquement, il est déjà affiché à gauche
-    // On envoie juste le numéro saisi + le préfixe
     if (selectedCountry) {
       const fullPhone = selectedCountry.phone_prefix + newPhone.replace(/\D/g, '');
       onChange(fullPhone);
@@ -98,7 +96,12 @@ export function PhoneInput({
     ? value.substring(selectedCountry.phone_prefix.length)
     : value.replace(/\D/g, '');
 
-  const validation = selectedCountry ? validatePhoneNumber(selectedCountry.phone_prefix + displayPhone, selectedCountry) : { isValid: true, message: '' };
+  // Valider seulement les chiffres après le préfixe
+  const phoneWithoutPrefix = selectedCountry && value.startsWith(selectedCountry.phone_prefix)
+    ? value.substring(selectedCountry.phone_prefix.length)
+    : value.replace(/\D/g, '');
+
+  const validation = selectedCountry && phoneWithoutPrefix ? validatePhoneNumber(phoneWithoutPrefix, selectedCountry) : { isValid: true, message: '' };
 
   return (
     <div className="space-y-2">
@@ -123,7 +126,7 @@ export function PhoneInput({
         )}
       </Label>
       <div className="flex">
-        <div className="flex items-center px-3 py-2 border border-r-0 border-input bg-muted text-muted-foreground rounded-l-md">
+        <div className="flex items-center px-3 py-2 border border-r-0 border-input bg-muted text-muted-foreground rounded-l-md h-9">
           {selectedCountry?.phone_prefix || '+...'}
         </div>
         <Input
@@ -137,21 +140,13 @@ export function PhoneInput({
         />
       </div>
       
-      {/* Display validation message */}
-      {selectedCountry && !validation.isValid && (
+      {/* Validation message */}
+      {selectedCountry && phoneWithoutPrefix && !validation.isValid && (
         <p className="text-sm text-red-500 mt-1">
           {validation.message}
         </p>
       )}
       
-      {/* Display country notes */}
-      {selectedCountry && selectedCountry.notes && (
-        <p className="text-xs text-muted-foreground mt-1">
-          {selectedCountry.notes}
-        </p>
-      )}
-      
-      {/* Display error from props */}
       {error && (
         <p className="text-sm text-red-500 mt-1">
           {error}
