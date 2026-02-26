@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import CustomSelect from "@/components/ui/custom-select";
 import { CitySelector } from "@/components/ui/city-selector";
+import { SimplePhoneInput } from "@/components/ui/simple-phone-input";
 import { CreatePatientRequest } from "@/features/patients";
 
 interface PatientAdditionalInfoFormProps {
@@ -48,13 +49,12 @@ export function PatientAdditionalInfoForm({
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       <div className="space-y-2">
-        <Label htmlFor="birth_place">Lieu de naissance</Label>
-        <Input
-          id="birth_place"
-          value={birthPlace || ""}
-          onChange={(e) => onFieldChange('birth_place', e.target.value || null)}
-          placeholder="Entrez le lieu de naissance"
-          className="h-10"
+        <CitySelector
+          selectedCity={birthPlace || ""}
+          onCityChange={(value) => onFieldChange('birth_place', value)}
+          label="Lieu de naissance"
+          placeholder="Sélectionner une ville"
+          countryCode="BJ"
         />
       </div>
       
@@ -80,13 +80,12 @@ export function PatientAdditionalInfoForm({
       </div>
       
       <div className="space-y-2">
-        <Label htmlFor="phone_number">Numéro de téléphone</Label>
-        <Input
-          id="phone_number"
-          value={phoneNumber || ""}
-          onChange={(e) => onFieldChange('phone_number', e.target.value || null)}
-          placeholder="Entrez le numéro de téléphone"
-          className="h-10"
+        <SimplePhoneInput
+          value={phoneNumber || null}
+          onChange={(value) => onFieldChange('phone_number', value)}
+          label="Téléphone du patient"
+          placeholder="Entrez le numéro de téléphone du patient"
+          defaultCountryCode="BJ"
         />
       </div>
       
@@ -146,13 +145,12 @@ export function PatientAdditionalInfoForm({
       </div>
       
       <div className="space-y-2">
-        <Label htmlFor="emergency_contact_phone">Téléphone du contact d'urgence</Label>
-        <Input
-          id="emergency_contact_phone"
-          value={emergencyContactPhone || ""}
-          onChange={(e) => onFieldChange('emergency_contact_phone', e.target.value || null)}
+        <SimplePhoneInput
+          value={emergencyContactPhone || null}
+          onChange={(value) => onFieldChange('emergency_contact_phone', value)}
+          label="Téléphone du contact d'urgence"
           placeholder="Entrez le téléphone du contact d'urgence"
-          className="h-10"
+          defaultCountryCode="BJ"
         />
       </div>
     </div>
