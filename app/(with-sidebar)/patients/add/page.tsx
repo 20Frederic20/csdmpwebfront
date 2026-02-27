@@ -87,16 +87,35 @@ export default function AddPatientPage() {
       toast.error("Le prénom est requis");
       return;
     }
+
     if (!formData.family_name.trim()) {
       toast.error("Le nom de famille est requis");
       return;
     }
+
     if (!formData.birth_date) {
       toast.error("La date de naissance est requise");
       return;
     }
+
     if (!formData.location?.trim()) {
       toast.error("La localisation est requise");
+      return;
+    }
+
+    if (!formData.owner_id) {
+      toast.error("Le propriétaire du patient est requis");
+      return;
+    }
+
+    // Validation des champs de contact d'urgence
+    if (!formData.emergency_contact_name?.trim()) {
+      toast.error("Le nom du contact d'urgence est requis");
+      return;
+    }
+
+    if (!formData.emergency_contact_phone?.trim()) {
+      toast.error("Le téléphone du contact d'urgence est requis");
       return;
     }
 
