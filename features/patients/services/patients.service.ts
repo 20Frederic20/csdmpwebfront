@@ -1,4 +1,4 @@
-import { PatientsResponse, PatientsQueryParams, Patient, CreatePatientRequest } from '../types/patients.types';
+import { PatientsResponse, PatientsQueryParams, Patient, CreatePatientRequest, UpdatePatientRequest } from '../types/patients.types';
 import { handleFetchError, createServiceErrorHandler } from '@/lib/error-handler';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL;
@@ -100,7 +100,7 @@ export class PatientService {
     return response.json();
   }
 
-  static async updatePatient(id: string, patientData: Partial<Patient>, token?: string): Promise<Patient> {
+  static async updatePatient(id: string, patientData: UpdatePatientRequest, token?: string): Promise<Patient> {
     const authToken = token || getAuthToken();
     
     const headers: Record<string, string> = {
