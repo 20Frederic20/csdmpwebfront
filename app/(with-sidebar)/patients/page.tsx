@@ -140,7 +140,6 @@ export default function PatientsPage() {
 
       {/* DataTable avec filtres intégrés */}
       <DataTableWithFilters
-        title="Liste des patients"
         columns={patientColumns}
         data={patients}
         loading={loading}

@@ -52,7 +52,6 @@ export function DataTableWithFilters<TData, TValue>({
   manualSorting = true,
   meta,
   enableRowSelection = false,
-  title = "Liste",
   filterComponent: FilterComponent,
   initialFilters = {},
   onPageChange,
@@ -88,45 +87,30 @@ export function DataTableWithFilters<TData, TValue>({
 
   return (
     <div className="space-y-6">
-      {/* Filtres */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Filtres</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <FilterComponent
-            filters={filters}
-            onFiltersChange={handleFiltersChange}
-            onReset={handleFiltersReset}
-          />
-        </CardContent>
-      </Card>
+      <FilterComponent
+        filters={filters}
+        onFiltersChange={handleFiltersChange}
+        onReset={handleFiltersReset}
+      />
 
-      {/* Tableau */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{title}</CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          <EnhancedDataTable
-            columns={columns}
-            data={data}
-            loading={loading}
-            error={error ?? undefined}
-            total={total ?? undefined}
-            currentPage={currentPage}
-            itemsPerPage={itemsPerPage}
-            onPageChange={onPageChange}
-            onItemsPerPageChange={onItemsPerPageChange}
-            onSortingChange={onSortingChange}
-            onRowSelectionChange={onRowSelectionChange}
-            enableRowSelection={enableRowSelection}
-            manualPagination={manualPagination}
-            manualSorting={manualSorting}
-            meta={meta}
-          />
-        </CardContent>
-      </Card>
+
+      <EnhancedDataTable
+        columns={columns}
+        data={data}
+        loading={loading}
+        error={error ?? undefined}
+        total={total ?? undefined}
+        currentPage={currentPage}
+        itemsPerPage={itemsPerPage}
+        onPageChange={onPageChange}
+        onItemsPerPageChange={onItemsPerPageChange}
+        onSortingChange={onSortingChange}
+        onRowSelectionChange={onRowSelectionChange}
+        enableRowSelection={enableRowSelection}
+        manualPagination={manualPagination}
+        manualSorting={manualSorting}
+        meta={meta}
+      />
     </div>
   );
 }
