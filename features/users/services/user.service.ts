@@ -7,13 +7,6 @@ export class UserService {
     : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000');
   private static readonly API_URL = `${this.BASE_URL}/api/v1`;
 
-  private static getAuthToken(): string | null {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('access_token');
-    }
-    return null;
-  }
-
   static async getUsers(params?: ListUsersQueryParams, token?: string): Promise<ListUsersResponse> {
     const queryParams = new URLSearchParams();
     

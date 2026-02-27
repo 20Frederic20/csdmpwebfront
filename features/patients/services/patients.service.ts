@@ -1,14 +1,8 @@
 import { PatientsResponse, PatientsQueryParams, Patient, CreatePatientRequest, UpdatePatientRequest } from '../types/patients.types';
 import { handleFetchError, createServiceErrorHandler } from '@/lib/error-handler';
+import { AuthClientService } from '@/features/core/auth/services/auth-client.service';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL;
-
-function getAuthToken(): string | null {
-  if (typeof window !== 'undefined') {
-    return localStorage.getItem('access_token') || null;
-  }
-  return null;
-}
 
 export class PatientService {
   private static errorHandler = createServiceErrorHandler('patients');
@@ -27,22 +21,11 @@ export class PatientService {
 
     const url = `${API_BASE}/patients${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
     
-    // Obtenir le token d'authentification (priorité au paramètre passé)
-    const authToken = token || getAuthToken();
-    
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-    
-    // Ajouter le token s'il existe
-    if (authToken) {
-      headers['Authorization'] = `Bearer ${authToken}`;
-    }
-    
-    const response = await fetch(url, {
+    const response = await AuthClientService.makeAuthenticatedRequest(url, {
       method: 'GET',
-      headers,
-      cache: 'no-store',
+      headers: {
+        'Content-Type': 'application/json',
+      },
     });
 
     if (!response.ok) {
@@ -53,20 +36,11 @@ export class PatientService {
   }
 
   static async getPatientById(id: string, token?: string): Promise<Patient> {
-    const authToken = token || getAuthToken();
-    
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-    
-    if (authToken) {
-      headers['Authorization'] = `Bearer ${authToken}`;
-    }
-    
-    const response = await fetch(`${API_BASE}/patients/${id}`, {
+    const response = await AuthClientService.makeAuthenticatedRequest(`${API_BASE}/patients/${id}`, {
       method: 'GET',
-      headers,
-      cache: 'no-store',
+      headers: {
+        'Content-Type': 'application/json',
+      },
     });
 
     if (!response.ok) {
@@ -77,19 +51,11 @@ export class PatientService {
   }
 
   static async createPatient(patientData: CreatePatientRequest, token?: string): Promise<Patient> {
-    const authToken = token || getAuthToken();
-    
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-    
-    if (authToken) {
-      headers['Authorization'] = `Bearer ${authToken}`;
-    }
-    
-    const response = await fetch(`${API_BASE}/patients`, {
+    const response = await AuthClientService.makeAuthenticatedRequest(`${API_BASE}/patients`, {
       method: 'POST',
-      headers,
+      headers: {
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify(patientData),
     });
 
@@ -101,19 +67,11 @@ export class PatientService {
   }
 
   static async updatePatient(id: string, patientData: UpdatePatientRequest, token?: string): Promise<Patient> {
-    const authToken = token || getAuthToken();
-    
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-    
-    if (authToken) {
-      headers['Authorization'] = `Bearer ${authToken}`;
-    }
-    
-    const response = await fetch(`${API_BASE}/patients/${id}`, {
+    const response = await AuthClientService.makeAuthenticatedRequest(`${API_BASE}/patients/${id}`, {
       method: 'PUT',
-      headers,
+      headers: {
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify(patientData),
     });
 
@@ -125,17 +83,8 @@ export class PatientService {
   }
 
   static async deletePatient(id: string, token?: string): Promise<void> {
-    const authToken = token || getAuthToken();
-    
-    const headers: Record<string, string> = {};
-    
-    if (authToken) {
-      headers['Authorization'] = `Bearer ${authToken}`;
-    }
-    
-    const response = await fetch(`${API_BASE}/patients/${id}`, {
+    const response = await AuthClientService.makeAuthenticatedRequest(`${API_BASE}/patients/${id}`, {
       method: 'DELETE',
-      headers,
     });
 
     if (!response.ok) {
@@ -144,17 +93,8 @@ export class PatientService {
   }
 
   static async softDeletePatient(id: string, token?: string): Promise<void> {
-    const authToken = token || getAuthToken();
-    
-    const headers: Record<string, string> = {};
-    
-    if (authToken) {
-      headers['Authorization'] = `Bearer ${authToken}`;
-    }
-    
-    const response = await fetch(`${API_BASE}/patients/${id}/soft-delete`, {
+    const response = await AuthClientService.makeAuthenticatedRequest(`${API_BASE}/patients/${id}/soft-delete`, {
       method: 'DELETE',
-      headers,
     });
 
     if (!response.ok) {
@@ -163,17 +103,8 @@ export class PatientService {
   }
 
   static async permanentlyDeletePatient(id: string, token?: string): Promise<void> {
-    const authToken = token || getAuthToken();
-    
-    const headers: Record<string, string> = {};
-    
-    if (authToken) {
-      headers['Authorization'] = `Bearer ${authToken}`;
-    }
-    
-    const response = await fetch(`${API_BASE}/patients/${id}/permanently-delete`, {
+    const response = await AuthClientService.makeAuthenticatedRequest(`${API_BASE}/patients/${id}/permanently-delete`, {
       method: 'DELETE',
-      headers,
     });
 
     if (!response.ok) {
@@ -182,19 +113,11 @@ export class PatientService {
   }
 
   static async restorePatient(id: string, token?: string): Promise<Patient> {
-    const authToken = token || getAuthToken();
-    
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-    
-    if (authToken) {
-      headers['Authorization'] = `Bearer ${authToken}`;
-    }
-    
-    const response = await fetch(`${API_BASE}/patients/${id}/restore`, {
+    const response = await AuthClientService.makeAuthenticatedRequest(`${API_BASE}/patients/${id}/restore`, {
       method: 'PATCH',
-      headers,
+      headers: {
+        'Content-Type': 'application/json',
+      },
     });
 
     if (!response.ok) {
@@ -205,19 +128,11 @@ export class PatientService {
   }
 
   static async togglePatientActivation(id: string, token?: string): Promise<Patient> {
-    const authToken = token || getAuthToken();
-    
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-    
-    if (authToken) {
-      headers['Authorization'] = `Bearer ${authToken}`;
-    }
-    
-    const response = await fetch(`${API_BASE}/patients/${id}/toggle-activation`, {
+    const response = await AuthClientService.makeAuthenticatedRequest(`${API_BASE}/patients/${id}/toggle-activation`, {
       method: 'PATCH',
-      headers,
+      headers: {
+        'Content-Type': 'application/json',
+      },
     });
 
     if (!response.ok) {

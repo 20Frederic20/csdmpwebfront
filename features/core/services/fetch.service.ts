@@ -1,5 +1,7 @@
 // Service générique pour les appels API avec authentification
 
+import { AuthClientService } from '@/features/core/auth/services/auth-client.service';
+
 export interface FetchOptions {
   headers?: Record<string, string>;
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
@@ -23,10 +25,9 @@ export class FetchService {
       
       const url = endpoint.startsWith('http') ? endpoint : `${this.BASE_URL}/${endpoint}`;
       
-      const response = await fetch(url, {
+      const response = await AuthClientService.makeAuthenticatedRequest(url, {
         method: options?.method || 'GET',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
           'Content-Type': 'application/json',
           ...options?.headers
         },
@@ -61,10 +62,9 @@ export class FetchService {
     try {
       const url = endpoint.startsWith('http') ? endpoint : `${this.BASE_URL}/${endpoint}`;
       
-      const response = await fetch(url, {
+      const response = await AuthClientService.makeAuthenticatedRequest(url, {
         method: options.method,
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
           'Content-Type': 'application/json',
           ...options.headers
         },
