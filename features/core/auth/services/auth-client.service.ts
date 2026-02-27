@@ -9,8 +9,6 @@ interface TokenResponse {
 
 interface RefreshTokenResponse {
   access_token: string;
-  refresh_token: string;
-  token_type: string;
   expires_in: number;
 }
 
@@ -82,7 +80,7 @@ export class AuthClientService {
     }
   }
 
-  static async refreshToken(): Promise<string | null> {
+  static async refreshToken(): Promise<RefreshTokenResponse | null> {
     // Utiliser le refresh_token depuis localStorage
     const refreshToken = this.getRefreshToken();
     const refreshExpiration = this.getRefreshTokenExpiration();
@@ -130,7 +128,7 @@ export class AuthClientService {
         this.setExpirationTime(data.expires_in, data.expires_in);
       }
       
-      return data.access_token;
+      return data;
     } catch (error) {
       console.error('Error refreshing token:', error);
       this.clearTokens();
@@ -149,7 +147,8 @@ export class AuthClientService {
     const expirationTime = this.getExpirationTime();
     if (expirationTime && Date.now() > expirationTime) {
       console.log('Token expired, attempting refresh before request...');
-      token = await this.refreshToken();
+      const tokenData = await this.refreshToken();
+      token = tokenData?.access_token || null;
       if (!token) {
         throw new Error('Failed to refresh token');
       }
@@ -174,11 +173,11 @@ export class AuthClientService {
     if (response.status === 401) {
       console.log('Token expired, attempting refresh...');
       
-      const newToken = await this.refreshToken();
+      const tokens = await this.refreshToken();
       
-      if (newToken) {
+      if (tokens && tokens.access_token) {
         // Refaire la requête avec le nouveau token
-        response = await makeRequest(newToken);
+        response = await makeRequest(tokens.access_token);
       }
     }
 

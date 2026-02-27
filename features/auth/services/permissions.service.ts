@@ -9,7 +9,17 @@ export class PermissionsService {
       return result;
     } catch (error) {
       console.error('Failed to fetch user permissions:', error);
-      // Return default user with no permissions if API fails
+      
+      // Si l'erreur est liée à l'authentification, ne pas retourner de faux utilisateur
+      if (error instanceof Error && (
+        error.message.includes('401') || 
+        error.message.includes('Failed to refresh token') ||
+        error.message.includes('Unauthorized')
+      )) {
+        throw error; // Propager l'erreur pour déclencher la redirection vers login
+      }
+      
+      // Pour les autres erreurs, retourner un utilisateur par défaut
       return {
         id: '',
         email: '',
