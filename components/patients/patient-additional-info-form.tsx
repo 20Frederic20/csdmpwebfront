@@ -134,13 +134,16 @@ export function PatientAdditionalInfoForm({
       </div>
       
       <div className="space-y-2">
-        <Label htmlFor="emergency_contact_name">Nom du contact d'urgence</Label>
+        <Label htmlFor="emergency_contact_name">
+          Nom du contact d'urgence <span className="text-red-500">*</span>
+        </Label>
         <Input
           id="emergency_contact_name"
           value={emergencyContactName || ""}
           onChange={(e) => onFieldChange('emergency_contact_name', e.target.value || null)}
           placeholder="Entrez le nom du contact d'urgence"
           className="h-10"
+          required
         />
       </div>
       
@@ -151,6 +154,7 @@ export function PatientAdditionalInfoForm({
           label="Téléphone du contact d'urgence"
           placeholder="Entrez le téléphone du contact d'urgence"
           defaultCountryCode="BJ"
+          required
         />
       </div>
     </div>
