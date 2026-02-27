@@ -29,8 +29,6 @@ import Link from "next/link";
 import { DataPagination } from "@/components/ui/data-pagination";
 import { PatientFilters } from "@/components/patients/patient-filters";
 import { formatPatientName, formatBirthDate, formatGender, getPatientStatusBadge } from "@/features/patients/utils/patients.utils";
-import { ViewPatientModal } from "@/components/patients/view-patient-modal";
-import { EditPatientModal } from "@/components/patients/edit-patient-modal";
 import { DeletePatientModal } from "@/components/patients/delete-patient-modal";
 import {
   DropdownMenu,
@@ -59,35 +57,12 @@ export default function PatientsPage() {
   const { canAccess } = usePermissions();
 
   // États pour les modals
-  const [selectedPatient, setSelectedPatient] = useState<any>(null);
-  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-
-  const handleOpenViewModal = (patient: any) => {
-    setSelectedPatient(patient);
-    setIsViewModalOpen(true);
-  };
-
-  const handleOpenEditModal = (patient: any) => {
-    setSelectedPatient(patient);
-    setIsEditModalOpen(true);
-  };
+  const [selectedPatient, setSelectedPatient] = useState<any>(null);
 
   const handleOpenDeleteModal = (patient: any) => {
     setSelectedPatient(patient);
     setIsDeleteModalOpen(true);
-  };
-
-  const handlePatientUpdated = (updatedPatient: any) => {
-    if (patientsData) {
-      setPatientsData({
-        ...patientsData,
-        data: patientsData.data.map(p =>
-          p.id_ === updatedPatient.id_ ? updatedPatient : p
-        )
-      });
-    }
   };
 
   const handleToggleStatus = async (patientId: string) => {
@@ -413,7 +388,10 @@ export default function PatientsPage() {
                     return (
                       <TableRow key={patient.id_}>
                         <TableCell className="font-medium">
-                          <div className={`flex items-center gap-3 ${patient.deleted_at ? 'opacity-60' : ''}`}>
+                          <Link 
+                            href={`/patients/${patient.id_}`}
+                            className={`flex items-center gap-3 hover:opacity-80 transition-opacity ${patient.deleted_at ? 'opacity-60' : ''}`}
+                          >
                             <div className={`w-8 h-8 rounded-full flex items-center justify-center text-md font-medium ${patient.deleted_at
                               ? 'bg-gray-100 text-gray-500'
                               : !patient.is_active
@@ -438,7 +416,7 @@ export default function PatientsPage() {
                               </div>
                               <div className="text-md text-muted-foreground">ID: {patient.id_?.substring(0, 8) || 'N/A'}</div>
                             </div>
-                          </div>
+                          </Link>
                         </TableCell>
                         <TableCell>{formatBirthDate(patient.birth_date)}</TableCell>
                         <TableCell>{formatGender(patient.gender)}</TableCell>
@@ -458,21 +436,19 @@ export default function PatientsPage() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem
-                                className="cursor-pointer"
-                                onClick={() => handleOpenViewModal(patient)}
-                              >
-                                <Eye className="h-4 w-4 mr-2" />
-                                Voir
-                              </DropdownMenuItem>
-                              {canAccess('patients', 'update') && (
-                                <DropdownMenuItem
-                                  className="cursor-pointer"
-                                  onClick={() => handleOpenEditModal(patient)}
-                                >
-                                  <Edit className="h-4 w-4 mr-2" />
-                                  Modifier
+                              <Link href={`/patients/${patient.id_}`}>
+                                <DropdownMenuItem className="cursor-pointer">
+                                  <Eye className="h-4 w-4 mr-2" />
+                                  Voir
                                 </DropdownMenuItem>
+                              </Link>
+                              {canAccess('patients', 'update') && (
+                                <Link href={`/patients/${patient.id_}/edit`}>
+                                  <DropdownMenuItem className="cursor-pointer">
+                                    <Edit className="h-4 w-4 mr-2" />
+                                    Modifier
+                                  </DropdownMenuItem>
+                                </Link>
                               )}
                               {canAccess('patients', 'soft_delete') && !patient.deleted_at && (
                                 <>
@@ -537,25 +513,12 @@ export default function PatientsPage() {
 
       {/* Modals */}
       {selectedPatient && (
-        <>
-          <ViewPatientModal
-            patient={selectedPatient}
-            isOpen={isViewModalOpen}
-            onClose={() => setIsViewModalOpen(false)}
-          />
-          <EditPatientModal
-            patient={selectedPatient}
-            isOpen={isEditModalOpen}
-            onClose={() => setIsEditModalOpen(false)}
-            onPatientUpdated={handlePatientUpdated}
-          />
-          <DeletePatientModal
-            patient={selectedPatient}
-            isOpen={isDeleteModalOpen}
-            onClose={() => setIsDeleteModalOpen(false)}
-            onPatientDeleted={() => handlePatientSoftDeletedStateUpdate(selectedPatient.id_)}
-          />
-        </>
+        <DeletePatientModal
+          patient={selectedPatient}
+          isOpen={isDeleteModalOpen}
+          onClose={() => setIsDeleteModalOpen(false)}
+          onPatientDeleted={() => handlePatientSoftDeletedStateUpdate(selectedPatient.id_)}
+        />
       )}
     </div>
   );
