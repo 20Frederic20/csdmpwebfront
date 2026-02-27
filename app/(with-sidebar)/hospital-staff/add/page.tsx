@@ -24,7 +24,6 @@ import { HealthFacilitySelector } from "@/components/ui/health-facility-selector
 import { UserSelector } from "@/components/ui/user-selector";
 import { UserCreationForm } from "@/components/hospital-staff/user-creation-form";
 import { StaffInformationForm } from "@/components/hospital-staff/staff-information-form";
-import CustomSelect from "@/components/ui/custom-select";
 
 export default function AddHospitalStaffPage() {
   const router = useRouter();
