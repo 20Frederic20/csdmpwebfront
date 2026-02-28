@@ -52,6 +52,7 @@ import {
   Shield,
   Calendar,
   Link as LinkIcon,
+  Building,
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -254,6 +255,36 @@ export function AppSidebar() {
           icon: UserPlus,
           requiredPermission: {
             resource: "hospital_staffs",
+            action: "create"
+          }
+        }
+      ]
+    },
+    {
+      title: "Départements",
+      url: "/departments",
+      icon: Building,
+      isActive: pathname.startsWith("/departments"),
+      requiredPermission: {
+        resource: "departments",
+        action: "list"
+      },
+      items: [
+        {
+          title: "Liste des départements",
+          url: "/departments",
+          icon: Building,
+          requiredPermission: {
+            resource: "departments",
+            action: "list"
+          }
+        },
+        {
+          title: "Ajouter un département",
+          url: "/departments/add",
+          icon: Plus,
+          requiredPermission: {
+            resource: "departments",
             action: "create"
           }
         }
