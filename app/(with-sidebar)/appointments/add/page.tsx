@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowLeft, Calendar, Clock, User, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { useAuthToken } from "@/hooks/use-auth-token";
-import { CreateAppointmentRequest, AppointmentStatus } from "@/features/appointments/types/appointments.types";
+import { CreateAppointmentRequest, AppointmentStatus, AppointmentType, PaymentMethod } from "@/features/appointments/types/appointments.types";
 import { AppointmentService } from "@/features/appointments/services/appointment.service";
 import { Patient } from "@/features/patients";
 import { PatientService } from "@/features/patients";
@@ -37,6 +37,11 @@ export default function AddAppointmentPage() {
     scheduled_at: "",
     estimated_duration: 30,
     reason: "",
+    health_facility_id: "",
+    department_id: "",
+    appointment_type: AppointmentType.ROUTINE_CONSULTATION,
+    payment_method: PaymentMethod.FREE_OF_CHARGE,
+    insurance_company_id: "",
     status: AppointmentStatus.SCHEDULED,
     is_confirmed_by_patient: false,
     is_active: true,

@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const staffId = params.id;
+    const { id: staffId } = await params;
     
     // TODO: Implémenter la logique réelle avec votre base de données
     // Pour l'instant, nous allons simuler une réponse

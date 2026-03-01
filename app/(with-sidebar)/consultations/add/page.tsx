@@ -17,9 +17,14 @@ import { Patient, PatientsQueryParams } from "@/features/patients";
 import { PatientService } from "@/features/patients";
 import { User, ListUsersQueryParams } from "@/features/users";
 import { UserService } from "@/features/users";
-import { HospitalStaff, ListHospitalStaffQueryParams } from "@/features/hospital-staff";
+import { HospitalStaff, HospitalStaffQueryParams } from "@/features/hospital-staff";
 import { HospitalStaffService } from "@/features/hospital-staff";
 import CustomSelect from '@/components/ui/custom-select';
+import { HealthFacilitySelect } from "@/components/health-facilities/health-facility-select";
+import { DepartmentSelect } from "@/components/departments/department-select";
+import { InsuranceCompanySelect } from "@/components/insurance-companies/insurance-company-select";
+import { HospitalStaffSelect } from "@/components/hospital-staff/hospital-staff-select";
+import { PatientSelect } from "@/components/patients/patient-select";
 
 export default function AddConsultationPage() {
   const router = useRouter();
@@ -35,25 +40,25 @@ export default function AddConsultationPage() {
   const [formData, setFormData] = useState<CreateConsultationRequest>({
     patient_id: "",
     chief_complaint: "",
-    triage_by_id: null,
-    consulted_by_id: null,
-    parent_consultation_id: null,
+    triage_by_id: undefined,
+    consulted_by_id: undefined,
+    parent_consultation_id: undefined,
     other_symptoms: "",
     vital_signs: {
-      temperature: null,
-      pulse: null,
-      systolic_bp: null,
-      diastolic_bp: null,
-      weight: null,
-      height: null,
+      temperature: undefined,
+      pulse: undefined,
+      systolic_bp: undefined,
+      diastolic_bp: undefined,
+      weight: undefined,
+      height: undefined,
     },
     diagnosis: "",
     treatment_plan: "",
     follow_up_notes: "",
-    follow_up_date: null,
+    follow_up_date: undefined,
     status: "scheduled",
     billing_code: "",
-    amount_paid: null,
+    amount_paid: undefined,
     is_confidential: false,
   });
   
@@ -115,11 +120,10 @@ export default function AddConsultationPage() {
     const loadHospitalStaff = async () => {
       setLoadingStaff(true);
       try {
-        const params: ListHospitalStaffQueryParams = {
+        const params: HospitalStaffQueryParams = {
           limit: 50, // Plus de résultats pour la recherche
-          is_active: true,
         };
-        const response = await HospitalStaffService.getHospitalStaff(params, token || undefined);
+        const response = await HospitalStaffService.getHospitalStaff(params);
         setHospitalStaff(response.data || []);
       } catch (error) {
         console.error('Error loading hospital staff:', error);
@@ -158,7 +162,7 @@ export default function AddConsultationPage() {
 
     setLoading(true);
     try {
-      await ConsultationService.createConsultation(formData, token || undefined);
+      await ConsultationService.createConsultation(formData);
       toast.success("Consultation créée avec succès");
       router.push('/consultations');
     } catch (error: any) {
@@ -260,19 +264,19 @@ export default function AddConsultationPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="space-y-2 md:col-span-2">
                 <Label htmlFor="patient_id">Patient <span className="text-red-500">*</span></Label>
-                <CustomSelect
-                  options={patientOptions}
-                  value={formData.patient_id || ""}
+                <PatientSelect
+                  value={formData.patient_id}
                   onChange={(value) => {
-                    handleInputChange('patient_id', value);
+                    handleInputChange('patient_id', value || '');
                     // Effacer l'erreur quand l'utilisateur sélectionne un patient
                     if (errors.patient_id !== undefined) {
                       setErrors(prev => ({ ...prev, patient_id: undefined }));
                     }
                   }}
                   placeholder="Sélectionner un patient"
-                  isLoading={loadingPatients}
-                  className={`w-full h-12 ${errors.patient_id !== undefined ? 'border-red-500 focus:border-red-500' : ''}`}
+                  disabled={loading}
+                  required={true}
+                  className={`w-full ${errors.patient_id !== undefined ? 'border-red-500 focus:border-red-500' : ''}`}
                 />
               </div>
             </div>
@@ -303,6 +307,48 @@ export default function AddConsultationPage() {
                 placeholder="Décrivez d'autres symptômes observés..."
                 rows={5}
               />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Informations de localisation */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Localisation et assurance</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="space-y-2">
+                <Label htmlFor="health_facility_id">Établissement de santé</Label>
+                <HealthFacilitySelect
+                  value={formData.health_facility_id}
+                  onChange={(value) => handleInputChange('health_facility_id', value)}
+                  placeholder="Sélectionner un établissement"
+                  disabled={loading}
+                  className="w-full"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="department_id">Département</Label>
+                <DepartmentSelect
+                  value={formData.department_id}
+                  onChange={(value) => handleInputChange('department_id', value)}
+                  placeholder="Sélectionner un département"
+                  disabled={loading}
+                  healthFacilityId={formData.health_facility_id}
+                  className="w-full"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="insurance_company_id">Compagnie d'assurance</Label>
+                <InsuranceCompanySelect
+                  value={formData.insurance_company_id}
+                  onChange={(value) => handleInputChange('insurance_company_id', value)}
+                  placeholder="Sélectionner une compagnie"
+                  disabled={loading}
+                  className="w-full"
+                />
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -395,24 +441,22 @@ export default function AddConsultationPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <Label htmlFor="triage_by_id">Triage par</Label>
-                <CustomSelect
-                  options={staffOptions}
-                  value={formData.triage_by_id || ""}
+                <HospitalStaffSelect
+                  value={formData.triage_by_id}
                   onChange={(value) => handleInputChange('triage_by_id', value)}
                   placeholder="Sélectionner un membre du personnel"
-                  isLoading={loadingStaff}
-                  className="h-12"
+                  disabled={loading}
+                  className="w-full"
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="consulted_by_id">Consulté par</Label>
-                <CustomSelect
-                  options={staffOptions}
-                  value={formData.consulted_by_id || ""}
+                <HospitalStaffSelect
+                  value={formData.consulted_by_id}
                   onChange={(value) => handleInputChange('consulted_by_id', value)}
                   placeholder="Sélectionner un membre du personnel"
-                  isLoading={loadingStaff}
-                  className="h-12"
+                  disabled={loading}
+                  className="w-full"
                 />
               </div>
             </div>

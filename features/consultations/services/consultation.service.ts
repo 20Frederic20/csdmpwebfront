@@ -1,17 +1,19 @@
 import { 
   Consultation, 
+  ConsultationQM,
   CreateConsultationRequest, 
-  UpdateConsultationRequest, 
-  ConsultationResponse,
+  UpdateConsultationRequest,
+  CompleteConsultationRequest,
   ListConsultationsQM, 
-  ListConsultationsQueryParams 
-} from '../types/consultation.types';
-import { FetchService } from '../../core/services/fetch.service';
+  ConsultationQueryParams,
+  ConsultationStatus
+} from '../types/consultations.types';
+import { FetchService } from '@/features/core/services/fetch.service';
 
 export class ConsultationService {
   // Récupérer toutes les consultations
   static async getConsultations(
-    params?: ListConsultationsQueryParams
+    params?: ConsultationQueryParams
   ): Promise<ListConsultationsQM> {
     console.log('Fetching consultations with params:', params);
     
@@ -31,26 +33,35 @@ export class ConsultationService {
   // Récupérer une consultation par ID
   static async getConsultationById(
     id: string
-  ): Promise<ConsultationResponse> {
+  ): Promise<Consultation> {
     console.log('Fetching consultation by ID:', id);
-    return FetchService.get<ConsultationResponse>(`consultations/${id}`, 'Consultation');
+    return FetchService.get<Consultation>(`consultations/${id}`, 'Consultation');
   }
 
   // Créer une consultation
   static async createConsultation(
     data: CreateConsultationRequest
-  ): Promise<ConsultationResponse> {
+  ): Promise<Consultation> {
     console.log('Creating consultation:', data);
-    return FetchService.post<ConsultationResponse>('consultations', data, 'Consultation');
+    return FetchService.post<Consultation>('consultations', data, 'Consultation');
   }
 
   // Mettre à jour une consultation
   static async updateConsultation(
     id: string,
     data: UpdateConsultationRequest
-  ): Promise<ConsultationResponse> {
+  ): Promise<Consultation> {
     console.log('Updating consultation:', id, data);
-    return FetchService.put<ConsultationResponse>(`consultations/${id}`, data, 'Consultation');
+    return FetchService.put<Consultation>(`consultations/${id}`, data, 'Consultation');
+  }
+
+  // Compléter une consultation
+  static async completeConsultation(
+    id: string,
+    data: CompleteConsultationRequest
+  ): Promise<Consultation> {
+    console.log('Completing consultation:', id, data);
+    return FetchService.put<Consultation>(`consultations/${id}/complete`, data, 'Consultation');
   }
 
   // Supprimer (soft delete) une consultation
@@ -64,9 +75,9 @@ export class ConsultationService {
   // Restaurer une consultation
   static async restoreConsultation(
     id: string
-  ): Promise<ConsultationResponse> {
+  ): Promise<Consultation> {
     console.log('Restoring consultation:', id);
-    return FetchService.patch<ConsultationResponse>(`consultations/${id}/restore`, {}, 'Consultation');
+    return FetchService.patch<Consultation>(`consultations/${id}/restore`, {}, 'Consultation');
   }
 
   // Supprimer définitivement une consultation
@@ -81,8 +92,8 @@ export class ConsultationService {
   static async toggleConsultationStatus(
     id: string,
     token?: string
-  ): Promise<ConsultationResponse> {
+  ): Promise<Consultation> {
     console.log('Toggling consultation status:', id);
-    return FetchService.patch<ConsultationResponse>(`consultations/${id}/toggle-status`, {}, 'Consultation');
+    return FetchService.patch<Consultation>(`consultations/${id}/toggle-status`, {}, 'Consultation');
   }
 }

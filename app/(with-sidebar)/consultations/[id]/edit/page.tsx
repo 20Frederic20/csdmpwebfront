@@ -11,6 +11,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import CustomSelect from "@/components/ui/custom-select";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { HealthFacilitySelect } from "@/components/health-facilities/health-facility-select";
+import { DepartmentSelect } from "@/components/departments/department-select";
+import { InsuranceCompanySelect } from "@/components/insurance-companies/insurance-company-select";
+import { HospitalStaffSelect } from "@/components/hospital-staff/hospital-staff-select";
+import { PatientSelect } from "@/components/patients/patient-select";
 import { 
   ArrowLeft, 
   Save, 
@@ -22,7 +27,7 @@ import {
   Weight,
   Ruler
 } from "lucide-react";
-import { Consultation, ConsultationResponse, UpdateConsultationRequest } from "@/features/consultations";
+import { Consultation, ConsultationStatus, UpdateConsultationRequest } from "@/features/consultations/types/consultations.types";
 import { ConsultationService } from "@/features/consultations";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { 
@@ -49,24 +54,32 @@ export default function EditConsultationPage() {
 
   // Formulaire
   const [formData, setFormData] = useState<UpdateConsultationRequest>({
+    patient_id: undefined,
     chief_complaint: "",
+    insurance_company_id: undefined,
+    health_facility_id: undefined,
+    department_id: undefined,
+    physical_examination: "",
+    triage_by_id: undefined,
+    consulted_by_id: undefined,
+    parent_consultation_id: undefined,
     other_symptoms: "",
+    vital_signs: {
+      temperature: undefined,
+      pulse: undefined,
+      systolic_bp: undefined,
+      diastolic_bp: undefined,
+      weight: undefined,
+      height: undefined,
+    },
     diagnosis: "",
     treatment_plan: "",
     follow_up_notes: "",
     follow_up_date: "",
-    status: "scheduled",
+    status: ConsultationStatus.SCHEDULED,
     billing_code: "",
-    amount_paid: null,
+    amount_paid: undefined,
     is_confidential: false,
-    vital_signs: {
-      temperature: null,
-      pulse: null,
-      systolic_bp: null,
-      diastolic_bp: null,
-      weight: null,
-      height: null,
-    }
   });
 
   const loadConsultation = async () => {
@@ -77,24 +90,32 @@ export default function EditConsultationPage() {
       
       // Pré-remplir le formulaire avec les données existantes
       setFormData({
+        patient_id: data.patient_id,
         chief_complaint: data.chief_complaint || "",
+        insurance_company_id: data.insurance_company_id,
+        health_facility_id: data.health_facility_id,
+        department_id: data.department_id,
+        physical_examination: data.physical_examination || "",
+        triage_by_id: data.triage_by_id,
+        consulted_by_id: data.consulted_by_id,
+        parent_consultation_id: data.parent_consultation_id,
         other_symptoms: data.other_symptoms || "",
+        vital_signs: data.vital_signs || {
+          temperature: undefined,
+          pulse: undefined,
+          systolic_bp: undefined,
+          diastolic_bp: undefined,
+          weight: undefined,
+          height: undefined,
+        },
         diagnosis: data.diagnosis || "",
         treatment_plan: data.treatment_plan || "",
         follow_up_notes: data.follow_up_notes || "",
         follow_up_date: data.follow_up_date || "",
-        status: data.status || "scheduled",
+        status: data.status || ConsultationStatus.SCHEDULED,
         billing_code: data.billing_code || "",
-        amount_paid: data.amount_paid || null,
+        amount_paid: data.amount_paid,
         is_confidential: data.is_confidential || false,
-        vital_signs: data.vital_signs || {
-          temperature: null,
-          pulse: null,
-          systolic_bp: null,
-          diastolic_bp: null,
-          weight: null,
-          height: null,
-        }
       });
     } catch (error) {
       console.error('Error loading consultation:', error);
@@ -157,13 +178,13 @@ export default function EditConsultationPage() {
       setErrors([]);
       
       const updateData: UpdateConsultationRequest = {
-        chief_complaint: formData.chief_complaint || null,
+        chief_complaint: formData.chief_complaint || "",
         other_symptoms: formData.other_symptoms || null,
         diagnosis: formData.diagnosis || null,
         treatment_plan: formData.treatment_plan || null,
         follow_up_notes: formData.follow_up_notes || null,
         follow_up_date: formData.follow_up_date || null,
-        status: formData.status || "scheduled",
+        status: formData.status || ConsultationStatus.SCHEDULED,
         billing_code: formData.billing_code || null,
         amount_paid: formData.amount_paid === null ? null : formData.amount_paid,
         is_confidential: formData.is_confidential || false,
@@ -244,7 +265,7 @@ export default function EditConsultationPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Modifier la consultation</h1>
           <p className="text-muted-foreground">
-            Patient: {consultation.patient_id} | ID: {consultation.id_}
+            Patient: {consultation.patient_id} | ID: {consultation.id}
           </p>
         </div>
       </div>
@@ -261,6 +282,23 @@ export default function EditConsultationPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="patient_id">Patient *</Label>
+                <PatientSelect
+                  value={formData.patient_id}
+                  onChange={(value) => handleInputChange('patient_id', value)}
+                  placeholder="Sélectionner un patient"
+                  disabled={saving}
+                  required={true}
+                  className="w-full"
+                />
+                {fieldErrors['patient_id'] && (
+                  <p className="text-sm text-red-600 mt-1">
+                    {fieldErrors['patient_id']}
+                  </p>
+                )}
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="chief_complaint">Motif principal *</Label>
                 <Textarea
@@ -283,7 +321,7 @@ export default function EditConsultationPage() {
                 <Label htmlFor="other_symptoms">Autres symptômes</Label>
                 <Textarea
                   id="other_symptoms"
-                  value={formData.other_symptoms}
+                  value={formData.other_symptoms || ""}
                   onChange={(e) => handleInputChange('other_symptoms', e.target.value)}
                   placeholder="Autres symptômes ou observations..."
                   rows={2}
@@ -304,13 +342,58 @@ export default function EditConsultationPage() {
               <div className="flex items-center space-x-2">
                 <Switch
                   id="is_confidential"
-                  checked={formData.is_confidential}
+                  checked={formData.is_confidential || false}
                   onCheckedChange={(checked) => handleInputChange('is_confidential', checked)}
                 />
                 <Label htmlFor="is_confidential" className="flex items-center gap-2">
                   <Shield className="h-4 w-4" />
                   Consultation confidentielle
                 </Label>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Localisation et assurance */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Activity className="h-5 w-5" />
+                Localisation et assurance
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="health_facility_id">Établissement de santé</Label>
+                <HealthFacilitySelect
+                  value={formData.health_facility_id}
+                  onChange={(value) => handleInputChange('health_facility_id', value)}
+                  placeholder="Sélectionner un établissement"
+                  disabled={saving}
+                  className="w-full"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="department_id">Département</Label>
+                <DepartmentSelect
+                  value={formData.department_id}
+                  onChange={(value) => handleInputChange('department_id', value)}
+                  placeholder="Sélectionner un département"
+                  disabled={saving}
+                  healthFacilityId={formData.health_facility_id}
+                  className="w-full"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="insurance_company_id">Compagnie d'assurance</Label>
+                <InsuranceCompanySelect
+                  value={formData.insurance_company_id || undefined}
+                  onChange={(value) => handleInputChange('insurance_company_id', value)}
+                  placeholder="Sélectionner une compagnie"
+                  disabled={saving}
+                  className="w-full"
+                />
               </div>
             </CardContent>
           </Card>
@@ -409,6 +492,61 @@ export default function EditConsultationPage() {
             </CardContent>
           </Card>
 
+          {/* Personnel médical */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Activity className="h-5 w-5" />
+                Personnel médical
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="triage_by_id">Triage par</Label>
+                <HospitalStaffSelect
+                  value={formData.triage_by_id || undefined}
+                  onChange={(value) => handleInputChange('triage_by_id', value)}
+                  placeholder="Sélectionner le personnel de triage"
+                  disabled={saving}
+                  className="w-full"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="consulted_by_id">Consulté par</Label>
+                <HospitalStaffSelect
+                  value={formData.consulted_by_id || undefined}
+                  onChange={(value) => handleInputChange('consulted_by_id', value)}
+                  placeholder="Sélectionner le médecin consultant"
+                  disabled={saving}
+                  className="w-full"
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Examen physique */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Activity className="h-5 w-5" />
+                Examen physique
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="physical_examination">Examen physique</Label>
+                <Textarea
+                  id="physical_examination"
+                  value={formData.physical_examination || ""}
+                  onChange={(e) => handleInputChange('physical_examination', e.target.value)}
+                  placeholder="Résultats de l'examen physique..."
+                  rows={4}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Diagnostic et traitement */}
           <Card>
             <CardHeader>
@@ -419,7 +557,7 @@ export default function EditConsultationPage() {
                 <Label htmlFor="diagnosis">Diagnostic</Label>
                 <Textarea
                   id="diagnosis"
-                  value={formData.diagnosis}
+                  value={formData.diagnosis || ""}
                   onChange={(e) => handleInputChange('diagnosis', e.target.value)}
                   placeholder="Diagnostic établi..."
                   rows={3}
@@ -430,7 +568,7 @@ export default function EditConsultationPage() {
                 <Label htmlFor="treatment_plan">Plan de traitement</Label>
                 <Textarea
                   id="treatment_plan"
-                  value={formData.treatment_plan}
+                  value={formData.treatment_plan || ""}
                   onChange={(e) => handleInputChange('treatment_plan', e.target.value)}
                   placeholder="Plan de traitement prescrit..."
                   rows={3}
@@ -441,7 +579,7 @@ export default function EditConsultationPage() {
                 <Label htmlFor="follow_up_notes">Notes de suivi</Label>
                 <Textarea
                   id="follow_up_notes"
-                  value={formData.follow_up_notes}
+                  value={formData.follow_up_notes || ""}
                   onChange={(e) => handleInputChange('follow_up_notes', e.target.value)}
                   placeholder="Instructions pour le suivi..."
                   rows={2}
@@ -453,7 +591,7 @@ export default function EditConsultationPage() {
                 <Input
                   id="follow_up_date"
                   type="date"
-                  value={formData.follow_up_date}
+                  value={formData.follow_up_date || ""}
                   onChange={(e) => handleInputChange('follow_up_date', e.target.value)}
                   className={fieldErrors['follow_up_date'] ? 'border-red-500 focus:ring-red-500' : ''}
                 />
@@ -479,7 +617,7 @@ export default function EditConsultationPage() {
                 <Label htmlFor="billing_code">Code de facturation</Label>
                 <Input
                   id="billing_code"
-                  value={formData.billing_code}
+                  value={formData.billing_code || ""}
                   onChange={(e) => handleInputChange('billing_code', e.target.value)}
                   placeholder="Code de facturation..."
                 />

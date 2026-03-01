@@ -46,7 +46,7 @@ export function AddAppointmentModal({
     doctor_id: null,
     scheduled_at: "",
     estimated_duration: 30,
-    reason: "",
+    reason: null,
     status: AppointmentStatus.SCHEDULED,
     is_confirmed_by_patient: false,
     is_active: true,
@@ -96,7 +96,7 @@ export function AddAppointmentModal({
       return;
     }
     
-    if (!formData.health_facility_id.trim()) {
+    if (!formData.health_facility_id) {
       return;
     }
     
@@ -121,7 +121,7 @@ export function AddAppointmentModal({
         department_id: "",
         appointment_type: AppointmentType.ROUTINE_CONSULTATION,
         payment_method: PaymentMethod.FREE_OF_CHARGE,
-        doctor_id: null,
+        doctor_id: "",
         scheduled_at: "",
         estimated_duration: 30,
         reason: "",
