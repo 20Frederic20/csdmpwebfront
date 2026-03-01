@@ -1,35 +1,32 @@
 import { 
   Appointment, 
-  AppointmentStatusUpdate,
+  AppointmentQM,
   CreateAppointmentRequest, 
-  CreateAppointmentResponse,
   UpdateAppointmentRequest,
-  ListAppointmentQueryParams, 
-  ListAppointmentQM 
-} from '../types/appointment.types';
+  AppointmentFilterParams,
+  ListAppointmentsResponse,
+  AppointmentStatus,
+  AppointmentType,
+  PaymentMethod
+} from '../types/appointments.types';
 import { FetchService } from '@/features/core/services/fetch.service';
 
 export class AppointmentService {
   
-  static async getAppointments(params?: ListAppointmentQueryParams): Promise<ListAppointmentQM> {
+  static async getAppointments(params?: AppointmentFilterParams): Promise<ListAppointmentsResponse> {
+    console.log('Fetching appointments with params:', params);
+    
     const queryParams = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          queryParams.append(key, value.toString());
+        }
+      });
+    }
     
-    if (params?.search) queryParams.append('search', params.search);
-    if (params?.patient_id) queryParams.append('patient_id', params.patient_id);
-    if (params?.doctor_id) queryParams.append('doctor_id', params.doctor_id);
-    if (params?.status) queryParams.append('status', params.status);
-    if (params?.scheduled_at) queryParams.append('scheduled_at', params.scheduled_at);
-    if (params?.start_date) queryParams.append('start_date', params.start_date);
-    if (params?.end_date) queryParams.append('end_date', params.end_date);
-    if (params?.limit) queryParams.append('limit', params.limit.toString());
-    if (params?.offset) queryParams.append('offset', params.offset.toString());
-    if (params?.sort_by) queryParams.append('sort_by', params.sort_by);
-    if (params?.sort_order) queryParams.append('sort_order', params.sort_order);
-
     const endpoint = `appointments${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
-    console.log('Fetching appointments from:', endpoint);
-    
-    return FetchService.get<ListAppointmentQM>(endpoint, 'Appointments');
+    return FetchService.get<ListAppointmentsResponse>(endpoint, 'Appointments');
   }
 
   static async getAppointmentById(id: string): Promise<Appointment> {
@@ -37,9 +34,9 @@ export class AppointmentService {
     return FetchService.get<Appointment>(`appointments/${id}`, 'Appointment');
   }
 
-  static async createAppointment(data: CreateAppointmentRequest): Promise<CreateAppointmentResponse> {
+  static async createAppointment(data: CreateAppointmentRequest): Promise<Appointment> {
     console.log('Creating appointment:', data);
-    return FetchService.post<CreateAppointmentResponse>('appointments', data, 'Appointment');
+    return FetchService.post<Appointment>('appointments', data, 'Appointment');
   }
 
   static async updateAppointment(id: string, data: UpdateAppointmentRequest): Promise<Appointment> {
@@ -62,35 +59,43 @@ export class AppointmentService {
     return FetchService.patch<Appointment>(`appointments/${id}/restore`, {}, 'Appointment');
   }
 
-  static async updateAppointmentStatus(id: string, status: AppointmentStatusUpdate): Promise<Appointment> {
+  static async updateAppointmentStatus(id: string, status: AppointmentStatus): Promise<Appointment> {
     console.log('Updating appointment status:', id, status);
-    return FetchService.patch<Appointment>(`appointments/${id}/${status}`, {}, 'Appointment');
+    return FetchService.patch<Appointment>(`appointments/${id}/status`, { status }, 'Appointment');
   }
 
   // Helper methods
-  static async getAppointmentsByPatientId(patientId: string, params?: Omit<ListAppointmentQueryParams, 'patient_id'>): Promise<ListAppointmentQM> {
+  static async getAppointmentsByPatientId(patientId: string, params?: Omit<AppointmentFilterParams, 'patient_id'>): Promise<ListAppointmentsResponse> {
     return this.getAppointments({ ...params, patient_id: patientId });
   }
 
-  static async getAppointmentsByDoctorId(doctorId: string, params?: Omit<ListAppointmentQueryParams, 'doctor_id'>): Promise<ListAppointmentQM> {
+  static async getAppointmentsByDoctorId(doctorId: string, params?: Omit<AppointmentFilterParams, 'doctor_id'>): Promise<ListAppointmentsResponse> {
     return this.getAppointments({ ...params, doctor_id: doctorId });
   }
 
-  static async getAppointmentsByDate(date: string, params?: Omit<ListAppointmentQueryParams, 'scheduled_at'>): Promise<ListAppointmentQM> {
-    return this.getAppointments({ ...params, scheduled_at: date });
+  static async getAppointmentsByHealthFacilityId(healthFacilityId: string, params?: Omit<AppointmentFilterParams, 'health_facility_id'>): Promise<ListAppointmentsResponse> {
+    return this.getAppointments({ ...params, health_facility_id: healthFacilityId });
   }
 
-  static async getUpcomingAppointments(params?: Omit<ListAppointmentQueryParams, 'status'>): Promise<ListAppointmentQM> {
+  static async getAppointmentsByDepartmentId(departmentId: string, params?: Omit<AppointmentFilterParams, 'department_id'>): Promise<ListAppointmentsResponse> {
+    return this.getAppointments({ ...params, department_id: departmentId });
+  }
+
+  static async getUpcomingAppointments(params?: Omit<AppointmentFilterParams, 'status'>): Promise<ListAppointmentsResponse> {
     return this.getAppointments({ 
       ...params, 
-      status: 'scheduled',
+      status: AppointmentStatus.SCHEDULED,
       sort_by: 'scheduled_at',
       sort_order: 'asc'
     });
   }
 
-  static async getTodayAppointments(params?: Omit<ListAppointmentQueryParams, 'scheduled_at'>): Promise<ListAppointmentQM> {
+  static async getTodayAppointments(params?: AppointmentFilterParams): Promise<ListAppointmentsResponse> {
     const today = new Date().toISOString().split('T')[0];
-    return this.getAppointments({ ...params, scheduled_at: today });
+    return this.getAppointments({ 
+      ...params, 
+      scheduled_from: today,
+      scheduled_to: today
+    });
   }
 }
