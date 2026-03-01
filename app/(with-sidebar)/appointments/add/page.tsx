@@ -12,8 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowLeft, Calendar, Clock, User, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { useAuthToken } from "@/hooks/use-auth-token";
-import { CreateAppointmentRequest } from "@/features/appointments/types/appointments.types";
-import { appointmentsService } from "@/features/appointments/services/appointments.service";
+import { CreateAppointmentRequest, AppointmentStatus } from "@/features/appointments/types/appointments.types";
+import { AppointmentService } from "@/features/appointments/services/appointment.service";
 import { Patient } from "@/features/patients";
 import { PatientService } from "@/features/patients";
 import { HospitalStaff } from "@/features/hospital-staff";
@@ -37,7 +37,7 @@ export default function AddAppointmentPage() {
     scheduled_at: "",
     estimated_duration: 30,
     reason: "",
-    status: "scheduled",
+    status: AppointmentStatus.SCHEDULED,
     is_confirmed_by_patient: false,
     is_active: true,
   });
@@ -128,7 +128,7 @@ export default function AddAppointmentPage() {
         scheduled_at: new Date(formData.scheduled_at).toISOString(),
       };
 
-      await appointmentsService.createAppointment(appointmentData, token || undefined);
+      await AppointmentService.createAppointment(appointmentData);
       toast.success("Rendez-vous créé avec succès");
       router.push('/appointments');
     } catch (error: any) {
