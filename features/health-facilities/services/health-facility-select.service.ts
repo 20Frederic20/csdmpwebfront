@@ -1,4 +1,4 @@
-import { HealthFacility } from '../types/health-facilities.types';
+import { HealthFacility } from '@/features/health-facilities/types/health-facility.types';
 import { FetchService } from '@/features/core/services/fetch.service';
 
 export class HealthFacilitySelectService {
