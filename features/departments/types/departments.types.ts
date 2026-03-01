@@ -47,6 +47,10 @@ export interface DepartmentFilterParams {
   health_facility_id?: string | null;
   code?: HospitalDepartment | null;
   is_active?: boolean | null;
+  sort_by?: string;
+  sort_order?: 'asc' | 'desc';
+  limit?: number;
+  offset?: number;
 }
 
 export interface CreateDepartmentRequest {
