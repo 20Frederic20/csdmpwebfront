@@ -22,7 +22,7 @@ import {
   AlertTriangle,
   CheckSquare
 } from "lucide-react";
-import { Consultation, UpdateConsultationRequest } from "@/features/consultations";
+import { Consultation, UpdateConsultationRequest, ConsultationStatus } from "@/features/consultations";
 import { ConsultationService } from "@/features/consultations";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { 
@@ -150,8 +150,8 @@ export default function ViewConsultationPage() {
     // Validation des champs requis
     const validationErrors = validateConsultationData({
       ...consultation,
-      diagnosis: formData.diagnosis,
-      treatment_plan: formData.treatment_plan,
+      diagnosis: formData.diagnosis || undefined,
+      treatment_plan: formData.treatment_plan || undefined,
     });
     
     if (validationErrors.length > 0) {
@@ -171,7 +171,7 @@ export default function ViewConsultationPage() {
       const updateData = {
         diagnosis: formData.diagnosis || null,
         treatment_plan: formData.treatment_plan || null,
-        status: 'completed' as const,
+        status: ConsultationStatus.COMPLETED,
       };
 
       const updatedConsultation = await ConsultationService.updateConsultation(consultation.id_, updateData);
@@ -243,8 +243,8 @@ export default function ViewConsultationPage() {
   const isActive = isConsultationActive(consultation);
   const canDelete = canDeleteConsultation(consultation);
   const canRestore = canRestoreConsultation(consultation);
-  const canComplete = consultation.status !== 'completed' && isActive && !consultation.deleted_at;
-  const isCompleted = consultation.status === 'completed';
+  const canComplete = consultation.status !== ConsultationStatus.COMPLETED && isActive && !consultation.deleted_at;
+  const isCompleted = consultation.status === ConsultationStatus.COMPLETED;
 
   return (
     <div className="space-y-6">
@@ -482,7 +482,7 @@ export default function ViewConsultationPage() {
               <Label htmlFor="diagnosis">Diagnostic</Label>
               <Textarea
                 id="diagnosis"
-                value={formData.diagnosis}
+                value={formData.diagnosis || ""}
                 onChange={(e) => handleFieldChange('diagnosis', e.target.value)}
                 placeholder="Établir le diagnostic..."
                 rows={3}
@@ -498,7 +498,7 @@ export default function ViewConsultationPage() {
               <Label htmlFor="treatment_plan">Plan de traitement</Label>
               <Textarea
                 id="treatment_plan"
-                value={formData.treatment_plan}
+                value={formData.treatment_plan || ""}
                 onChange={(e) => handleFieldChange('treatment_plan', e.target.value)}
                 placeholder="Définir le plan de traitement..."
                 rows={3}

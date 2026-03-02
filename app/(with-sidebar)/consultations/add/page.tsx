@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft, Save, Loader2, Plus, Minus } from "lucide-react";
 import { toast } from "sonner";
-import { CreateConsultationRequest, VitalSigns } from "@/features/consultations";
+import { CreateConsultationRequest, ConsultationStatus, VitalSigns } from "@/features/consultations/types/consultations.types";
 import { ConsultationService } from "@/features/consultations";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { Patient, PatientsQueryParams } from "@/features/patients";
@@ -20,11 +20,11 @@ import { UserService } from "@/features/users";
 import { HospitalStaff, HospitalStaffQueryParams } from "@/features/hospital-staff";
 import { HospitalStaffService } from "@/features/hospital-staff";
 import CustomSelect from '@/components/ui/custom-select';
-import { HealthFacilitySelect } from "@/components/health-facilities/health-facility-select";
-import { DepartmentSelect } from "@/components/departments/department-select";
-import { InsuranceCompanySelect } from "@/components/insurance-companies/insurance-company-select";
-import { HospitalStaffSelect } from "@/components/hospital-staff/hospital-staff-select";
-import { PatientSelect } from "@/components/patients/patient-select";
+import { HealthFacilitySelect } from "@/features/health-facilities/components/health-facility-select";
+import { DepartmentSelect } from "@/features/departments/components/department-select";
+import { InsuranceCompanySelect } from "@/features/insurance-companies/components/insurance-company-select";
+import { HospitalStaffSelect } from "@/features/hospital-staff/components/hospital-staff-select";
+import { PatientSelect } from "@/features/patients/components/patient-select";
 
 export default function AddConsultationPage() {
   const router = useRouter();
@@ -40,6 +40,10 @@ export default function AddConsultationPage() {
   const [formData, setFormData] = useState<CreateConsultationRequest>({
     patient_id: "",
     chief_complaint: "",
+    health_facility_id: "",
+    department_id: "",
+    insurance_company_id: undefined,
+    physical_examination: "",
     triage_by_id: undefined,
     consulted_by_id: undefined,
     parent_consultation_id: undefined,
@@ -56,7 +60,7 @@ export default function AddConsultationPage() {
     treatment_plan: "",
     follow_up_notes: "",
     follow_up_date: undefined,
-    status: "scheduled",
+    status: ConsultationStatus.SCHEDULED,
     billing_code: "",
     amount_paid: undefined,
     is_confidential: false,
@@ -342,7 +346,7 @@ export default function AddConsultationPage() {
               <div className="space-y-2">
                 <Label htmlFor="insurance_company_id">Compagnie d'assurance</Label>
                 <InsuranceCompanySelect
-                  value={formData.insurance_company_id}
+                  value={formData.insurance_company_id || ""}
                   onChange={(value) => handleInputChange('insurance_company_id', value)}
                   placeholder="Sélectionner une compagnie"
                   disabled={loading}
@@ -442,7 +446,7 @@ export default function AddConsultationPage() {
               <div className="space-y-2">
                 <Label htmlFor="triage_by_id">Triage par</Label>
                 <HospitalStaffSelect
-                  value={formData.triage_by_id}
+                  value={formData.triage_by_id || ""}
                   onChange={(value) => handleInputChange('triage_by_id', value)}
                   placeholder="Sélectionner un membre du personnel"
                   disabled={loading}
@@ -452,7 +456,7 @@ export default function AddConsultationPage() {
               <div className="space-y-2">
                 <Label htmlFor="consulted_by_id">Consulté par</Label>
                 <HospitalStaffSelect
-                  value={formData.consulted_by_id}
+                  value={formData.consulted_by_id || ""}
                   onChange={(value) => handleInputChange('consulted_by_id', value)}
                   placeholder="Sélectionner un membre du personnel"
                   disabled={loading}

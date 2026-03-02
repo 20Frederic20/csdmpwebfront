@@ -111,7 +111,7 @@ export function PhoneInput({
       <CustomSelect
         options={getCountryOptions(countries)}
         value={selectedCountry?.country_code || ''}
-        onChange={handleCountryChange}
+        onChange={(value) => handleCountryChange(Array.isArray(value) ? value[0] : value || '')}
         placeholder="Sélectionner un pays"
         height="h-10"
         className="w-full"

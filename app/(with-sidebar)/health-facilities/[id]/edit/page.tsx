@@ -59,9 +59,6 @@ export default function EditHealthFacilityPage() {
     region: "", // Ville
     district: "", // Département
     health_zone: "",
-    country_code: "BJ", // Bénin par défaut
-    department_code: "", // Code du département (relié à district)
-    city_code: "", // Code de la ville (relié à region)
     snis_code: null,
     tax_id: null,
     authorization_decree_number: null,
@@ -124,9 +121,6 @@ export default function EditHealthFacilityPage() {
           region: facilityData.region || "",
           district: facilityData.district || "",
           health_zone: facilityData.health_zone || "",
-          country_code: "BJ",
-          department_code: deptCode,
-          city_code: cityCode,
           snis_code: facilityData.snis_code,
           tax_id: facilityData.tax_id,
           authorization_decree_number: facilityData.authorization_decree_number,
@@ -385,7 +379,7 @@ export default function EditHealthFacilityPage() {
                 <CustomSelect
                   options={getDepartmentOptions(departments)}
                   value={formData.district}
-                  onChange={(value) => handleDistrictChange(value || '')}
+                  onChange={(value) => handleDistrictChange(Array.isArray(value) ? value[0] : value || '')}
                   placeholder="Sélectionner un département"
                   height="h-12"
                   className="w-full"
@@ -396,7 +390,7 @@ export default function EditHealthFacilityPage() {
                 <CustomSelect
                   options={getCityOptions(getFilteredCities())}
                   value={formData.region}
-                  onChange={(value) => handleRegionChange(value || '')}
+                  onChange={(value) => handleRegionChange(Array.isArray(value) ? value[0] : value || '')}
                   placeholder="Sélectionner une ville"
                   height="h-12"
                   className="w-full"
@@ -528,7 +522,7 @@ export default function EditHealthFacilityPage() {
                   type="number"
                   step="any"
                   value={formData.latitude?.toString() || ""}
-                  onChange={(e) => handleInputChange("latitude", e.target.value ? parseFloat(e.target.value) : null)}
+                  onChange={(e) => handleInputChange("latitude", e.target.value ? parseFloat(e.target.value) : null as any)}
                   placeholder="6.123456"
                 />
               </div>
@@ -539,7 +533,7 @@ export default function EditHealthFacilityPage() {
                   type="number"
                   step="any"
                   value={formData.longitude?.toString() || ""}
-                  onChange={(e) => handleInputChange("longitude", e.target.value ? parseFloat(e.target.value) : null)}
+                  onChange={(e) => handleInputChange("longitude", e.target.value ? parseFloat(e.target.value) : null as any)}
                   placeholder="2.123456"
                 />
               </div>

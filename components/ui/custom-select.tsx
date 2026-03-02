@@ -105,10 +105,10 @@ export default function CustomSelect({
 
     if (isMulti) {
       const vals = (newValue as MultiValue<Option>).map(opt => opt.value);
-      onChange(vals.length ? vals : null);
+      onChange(vals.length ? vals.map(v => String(v)) : null);
     } else {
       const val = (newValue as SingleValue<Option>)?.value ?? null;
-      onChange(val);
+      onChange(val !== null ? String(val) : null);
     }
   };
 

@@ -123,7 +123,7 @@ export default function AddLabResultPage() {
         ...formData,
         date_performed: new Date(formData.date_performed).toISOString(),
         date_reported: new Date(formData.date_reported).toISOString(),
-        extracted_values: formData.extracted_values ? JSON.parse(formData.extracted_values as string) : null
+        extracted_values: formData.extracted_values ? JSON.parse(formData.extracted_values as unknown as string) : null
       };
 
       await LabResultsService.createLabResult(submitData);

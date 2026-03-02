@@ -72,7 +72,7 @@ export interface CompleteConsultationRequest {
 }
 
 export interface Consultation {
-  id: string;
+  id_: string;
   patient_id: string;
   chief_complaint: string;
   insurance_company_id?: string;

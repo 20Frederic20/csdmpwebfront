@@ -19,9 +19,9 @@ import { Appointment, UpdateAppointmentRequest, AppointmentStatus, AppointmentTy
 import { AppointmentService } from "../services/appointment.service";
 import { PatientService } from "@/features/patients";
 import { HospitalStaffService } from "@/features/hospital-staff/services/hospital-staff.service";
-import { HealthFacilitySelect } from "@/components/health-facilities/health-facility-select";
-import { DepartmentSelect } from "@/components/departments/department-select";
-import { InsuranceCompanySelect } from "@/components/insurance-companies/insurance-company-select";
+import { HealthFacilitySelect } from "@/features/health-facilities/components/health-facility-select";
+import { DepartmentSelect } from "@/features/departments/components/department-select";
+import { InsuranceCompanySelect } from "@/features/insurance-companies/components/insurance-company-select";
 import { toast } from "sonner";
 
 interface EditAppointmentModalProps {
@@ -231,7 +231,7 @@ export function EditAppointmentModal({ isOpen, onClose, appointment, onUpdate, o
               <CustomSelect
                 options={doctorOptions}
                 value={formData.doctor_id || null}
-                onChange={(value) => handleInputChange('doctor_id', value)}
+                onChange={(value) => handleInputChange('doctor_id', Array.isArray(value) ? value[0] : value as any)}
                 placeholder="Sélectionner un médecin"
                 isDisabled={loading}
                 className="w-full"

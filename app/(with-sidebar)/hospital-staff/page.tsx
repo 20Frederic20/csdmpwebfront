@@ -43,10 +43,10 @@ import {
   canDeleteHospitalStaff,
   canRestoreHospitalStaff
 } from "@/features/hospital-staff/utils/hospital-staff.utils";
-import { ViewHospitalStaffModal } from "@/components/hospital-staff/view-hospital-staff-modal";
-import { EditHospitalStaffModal } from "@/components/hospital-staff/edit-hospital-staff-modal";
-import { DeleteHospitalStaffModal } from "@/components/hospital-staff/delete-hospital-staff-modal";
-import { HospitalStaffFilters } from "@/components/hospital-staff/hospital-staff-filters";
+import { ViewHospitalStaffModal } from "@/features/hospital-staff/components/view-hospital-staff-modal";
+import { EditHospitalStaffModal } from "@/features/hospital-staff/components/edit-hospital-staff-modal";
+import { DeleteHospitalStaffModal } from "@/features/hospital-staff/components/delete-hospital-staff-modal";
+import { HospitalStaffFilters } from "@/features/hospital-staff/components/hospital-staff-filters";
 import { DataPagination } from "@/components/ui/data-pagination";
 
 export default function HospitalStaffPage() {

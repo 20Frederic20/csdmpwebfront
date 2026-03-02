@@ -13,7 +13,7 @@ import { User, ListUsersQueryParams } from "@/features/users/types/user.types";
 import { UserService } from "@/features/users/services/user.service";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { formatUserRoles, getPrimaryRole, getUserRoleBadge, getUserStatusBadge, getUserFullName, getUserInitials } from "@/features/users/utils/user.utils";
-import { AddUserModal } from "@/components/users/add-user-modal";
+import { AddUserModal } from "@/features/users/components/add-user-modal";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Pagination,

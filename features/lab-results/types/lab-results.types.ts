@@ -60,7 +60,7 @@ export interface ListLabResultQueryParams {
   is_active?: boolean;
   limit?: number;
   offset?: number;
-  sort_by?: string;
+  sort_by?: 'date_performed' | 'date_reported' | 'test_type' | 'issuing_facility';
   sort_order?: 'asc' | 'desc';
   search?: string; // Pour la recherche par nom du patient
 }

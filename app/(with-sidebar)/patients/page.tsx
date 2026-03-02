@@ -10,10 +10,10 @@ import { PatientService } from "@/features/patients";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { usePermissions } from "@/hooks/use-permissions";
 import Link from "next/link";
-import { DeletePatientModal } from "@/components/patients/delete-patient-modal";
+import { DeletePatientModal } from "@/features/patients/components/delete-patient-modal";
 import { DataTableWithFilters } from "@/components/ui/data-table-with-filters";
-import { patientColumns } from "@/components/patients/patient-columns";
-import { PatientFiltersWrapper } from "@/components/patients/patient-filters-wrapper";
+import { patientColumns } from "@/features/patients/components/patient-columns";
+import { PatientFiltersWrapper } from "@/features/patients/components/patient-filters-wrapper";
 
 export default function PatientsPage() {
   const [currentPage, setCurrentPage] = useState(1);

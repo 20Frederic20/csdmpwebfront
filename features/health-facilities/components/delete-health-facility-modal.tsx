@@ -82,7 +82,6 @@ export function DeleteHealthFacilityModal({ facility, onFacilityDeleted }: Delet
                 <span className="text-md font-medium">Statut:</span>
                 <Badge 
                   variant={statusBadge.variant as "default" | "secondary" | "destructive" | "outline"}
-                  className={statusBadge.className}
                 >
                   {statusBadge.label}
                 </Badge>

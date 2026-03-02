@@ -7,7 +7,7 @@ import { PatientAllergy } from "@/features/patients/types/allergies.types";
 import { AllergiesService } from "@/features/patients/services/allergies.service";
 import { formatAllergenType, formatAllergySeverity, getAllergySeverityBadge, getAllergenTypeBadge } from "@/features/patients/utils/allergies.utils";
 import { useAuthToken } from "@/hooks/use-auth-token";
-import { AddAllergyModal } from "./add-allergy-modal";
+// import { AddAllergyModal } from "./add-allergy-modal";
 
 interface PatientAllergiesProps {
   patientId: string;
@@ -63,7 +63,10 @@ export function PatientAllergies({ patientId }: PatientAllergiesProps) {
             <AlertCircle className="h-5 w-5" />
             Allergies ({Array.isArray(allergies) ? allergies.length : 0})
           </CardTitle>
-          <AddAllergyModal patientId={patientId} onAllergyAdded={loadAllergies} />
+          <Button variant="outline" onClick={() => console.log('Add allergy button clicked')}>
+            <Plus className="h-5 w-5" />
+            Ajouter une allergie
+          </Button>
         </div>
       </CardHeader>
       <CardContent>
@@ -73,7 +76,6 @@ export function PatientAllergies({ patientId }: PatientAllergiesProps) {
             <p className="text-muted-foreground mb-4">
               Aucune allergie enregistrée pour ce patient.
             </p>
-            <AddAllergyModal patientId={patientId} onAllergyAdded={loadAllergies} />
           </div>
         ) : (
           <div className="space-y-4 max-h-[300px] overflow-y-auto">

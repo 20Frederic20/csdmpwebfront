@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import CustomSelect from "@/components/ui/custom-select";
 import { InsuranceCompany } from "@/features/insurance-companies/types/insurance-companies.types";
-import { InsuranceCompanySelectService } from "@/features/insurance-companies/services/insurance-company-select.service";
+import { InsuranceCompaniesService } from "@/features/insurance-companies/services/insurance-companies.service";
 
 interface InsuranceCompanySelectProps {
   value?: string;
@@ -35,8 +35,8 @@ export function InsuranceCompanySelect({
       try {
         setLoading(true);
         const companies = onlyActive 
-          ? await InsuranceCompanySelectService.getActiveInsuranceCompanies()
-          : await InsuranceCompanySelectService.getInsuranceCompaniesForSelect();
+          ? (await InsuranceCompaniesService.getInsuranceCompanies({ limit: 100 })).data
+          : (await InsuranceCompaniesService.getInsuranceCompanies({ limit: 100 })).data;
         
         setInsuranceCompanies(companies);
       } catch (error) {
@@ -72,7 +72,6 @@ export function InsuranceCompanySelect({
         placeholder={placeholder}
         isDisabled={disabled || loading}
         height={height}
-        className="w-full"
       />
     </div>
   );

@@ -1,4 +1,4 @@
-import { HealthFacility, CreateHealthFacilityRequest, UpdateHealthFacilityRequest, HealthFacilityResponse } from '../types/health-facility.types';
+import { HealthFacility, CreateHealthFacilityRequest, UpdateHealthFacilityRequest, HealthFacilityResponse, HealthFacilityQueryParams as ServiceQueryParams } from '../types/health-facility.types';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
 
@@ -9,7 +9,7 @@ const getAuthToken = (): string | null => {
   return null;
 };
 
-export interface HealthFacilityQueryParams {
+export interface HealthFacilityServiceQueryParams {
   limit?: number;
   offset?: number;
   sort_by?: string;
@@ -19,7 +19,7 @@ export interface HealthFacilityQueryParams {
 }
 
 export class HealthFacilityService {
-  static async getHealthFacilities(params: HealthFacilityQueryParams = {}, token?: string): Promise<HealthFacilityResponse> {
+  static async getHealthFacilities(params: ServiceQueryParams = {}, token?: string): Promise<HealthFacilityResponse> {
     const authToken = token || getAuthToken();
     
     const headers: Record<string, string> = {

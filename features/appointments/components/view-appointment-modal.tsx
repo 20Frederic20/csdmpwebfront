@@ -151,7 +151,7 @@ export function ViewAppointmentModal({ isOpen, onClose, appointment, onAppointme
                 <FileText className="h-5 w-5 text-gray-400" />
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Type</h3>
-                  <p className="text-lg font-semibold">{getAppointmentTypeLabel(appointment.appointment_type )}</p>
+                  <p className="text-lg font-semibold">{getAppointmentTypeLabel(appointment.appointment_type || AppointmentType.ROUTINE_CONSULTATION)}</p>
                 </div>
               </div>
             </div>
@@ -168,7 +168,7 @@ export function ViewAppointmentModal({ isOpen, onClose, appointment, onAppointme
             
             <div>
               <h3 className="text-sm font-medium text-gray-500 mb-2">Méthode de paiement</h3>
-              <p className="text-lg font-semibold">{getPaymentMethodLabel(appointment.payment_method)}</p>
+              <p className="text-lg font-semibold">{getPaymentMethodLabel(appointment.payment_method || PaymentMethod.CASH)}</p>
             </div>
           </div>
           

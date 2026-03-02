@@ -11,7 +11,7 @@ import {
   getMedicalSeverityBadge,
   sortMedicalHistoryByDate
 } from "@/features/patients/utils/medical-history.utils";
-import { AddMedicalHistoryModal } from "./add-medical-history-modal";
+// import { AddMedicalHistoryModal } from "./add-medical-history-modal";
 
 interface MedicalHistorySectionProps {
   medicalHistory: PatientMedicalHistory[];

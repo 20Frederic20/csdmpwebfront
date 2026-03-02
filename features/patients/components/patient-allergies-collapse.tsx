@@ -7,7 +7,7 @@ import { PatientAllergy } from "@/features/patients/types/allergies.types";
 import { AllergiesService } from "@/features/patients/services/allergies.service";
 import { formatAllergenType, formatAllergySeverity, getAllergySeverityBadge, getAllergenTypeBadge } from "@/features/patients/utils/allergies.utils";
 import { useAuthToken } from "@/hooks/use-auth-token";
-import { AddAllergyModal } from "./add-allergy-modal";
+// import { AddAllergyModal } from "./add-allergy-modal";
 
 interface PatientAllergiesCollapseProps {
   patientId: string;
@@ -76,7 +76,10 @@ export function PatientAllergiesCollapse({ patientId }: PatientAllergiesCollapse
             )}
           </Button>
           {isOpen && (
-            <AddAllergyModal patientId={patientId} onAllergyAdded={handleAllergyAdded} />
+            // {/* <AddAllergyModal patientId={patientId} onAllergyAdded={handleAllergyAdded} /> */}
+            <div className="text-sm text-muted-foreground mt-2">
+              Modal d'ajout d'allergie non disponible
+            </div>
           )}
         </div>
       </CardHeader>
@@ -93,7 +96,7 @@ export function PatientAllergiesCollapse({ patientId }: PatientAllergiesCollapse
               <p className="text-muted-foreground mb-4">
                 Aucune allergie enregistrée pour ce patient.
               </p>
-              <AddAllergyModal patientId={patientId} onAllergyAdded={handleAllergyAdded} />
+              {/* <AddAllergyModal patientId={patientId} onAllergyAdded={handleAllergyAdded} /> */}
             </div>
           ) : (
             <div className="space-y-4 max-h-[300px] overflow-y-auto">

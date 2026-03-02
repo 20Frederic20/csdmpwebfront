@@ -6,6 +6,7 @@ import { useParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 import { 
   ArrowLeft, 
   Edit, 
@@ -58,7 +59,7 @@ export default function InsuranceCompanyDetailPage() {
       setLoading(true);
       setError(null);
       
-      await InsuranceCompaniesService.toggleInsuranceCompanyStatus(company.id, !company.is_active);
+      await InsuranceCompaniesService.toggleInsuranceCompanyStatus(company.id_, !company.is_active);
       await fetchCompany(); // Refresh data
     } catch (err: any) {
       console.error('Failed to toggle status:', err);
@@ -79,7 +80,7 @@ export default function InsuranceCompanyDetailPage() {
       setLoading(true);
       setError(null);
       
-      await InsuranceCompaniesService.deleteInsuranceCompany(company.id);
+      await InsuranceCompaniesService.deleteInsuranceCompany(company.id_);
       router.push('/insurance-companies');
     } catch (err: any) {
       console.error('Failed to delete insurance company:', err);
@@ -141,7 +142,7 @@ export default function InsuranceCompanyDetailPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Link href={`/insurance-companies/${company.id}/edit`}>
+          <Link href={`/insurance-companies/${company.id_}/edit`}>
             <Button variant="outline">
               <Edit className="h-4 w-4 mr-2" />
               Modifier
@@ -214,7 +215,7 @@ export default function InsuranceCompanyDetailPage() {
                 </div>
                 <div>
                   <Label className="text-sm font-medium text-gray-500">ID</Label>
-                  <p className="text-sm font-mono text-gray-600">{company.id}</p>
+                  <p className="text-sm font-mono text-gray-600">{company.id_}</p>
                 </div>
               </div>
             </CardContent>
@@ -247,7 +248,7 @@ export default function InsuranceCompanyDetailPage() {
               <CardTitle>Actions rapides</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Link href={`/insurance-companies/${company.id}/edit`}>
+              <Link href={`/insurance-companies/${company.id_}/edit`}>
                 <Button className="w-full" variant="outline">
                   <Edit className="h-4 w-4 mr-2" />
                   Modifier les informations
@@ -293,7 +294,7 @@ export default function InsuranceCompanyDetailPage() {
             <CardContent className="space-y-3">
               <div>
                 <Label className="text-sm font-medium text-gray-500">ID Unique</Label>
-                <p className="text-xs font-mono text-gray-600 break-all">{company.id}</p>
+                <p className="text-xs font-mono text-gray-600 break-all">{company.id_}</p>
               </div>
               <div>
                 <Label className="text-sm font-medium text-gray-500">Statut actuel</Label>

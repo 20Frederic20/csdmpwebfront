@@ -11,9 +11,9 @@ import { PatientService } from "@/features/patients";
 import { User, ListUsersQueryParams } from "@/features/users";
 import { UserService } from "@/features/users";
 import { useAuthToken } from "@/hooks/use-auth-token";
-import { PatientInformationForm } from "@/components/patients/patient-information-form";
-import { PatientOwnerSelector } from "@/components/patients/patient-owner-selector";
-import { PatientAdditionalInfoForm } from "@/components/patients/patient-additional-info-form";
+import { PatientInformationForm } from "@/features/patients/components/patient-information-form";
+import { PatientOwnerSelector } from "@/features/patients/components/patient-owner-selector";
+import { PatientAdditionalInfoForm } from "@/features/patients/components/patient-additional-info-form";
 
 export default function EditPatientPage() {
   const router = useRouter();

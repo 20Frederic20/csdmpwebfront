@@ -1,39 +1,49 @@
-import { Consultation, ConsultationStatus, VitalSigns } from '../types/consultation.types';
+import { Consultation, ConsultationStatus, VitalSigns } from '../types/consultations.types';
 
 export const getConsultationStatusLabel = (status: ConsultationStatus): string => {
   switch (status) {
-    case 'scheduled':
+    case ConsultationStatus.SCHEDULED:
       return 'Planifiée';
-    case 'completed':
+    case ConsultationStatus.COMPLETED:
       return 'Terminée';
-    case 'pending':
-      return 'En attente';
-    case 'cancelled':
+    case ConsultationStatus.IN_PROGRESS:
+      return 'En cours';
+    case ConsultationStatus.CANCELLED:
       return 'Annulée';
+    case ConsultationStatus.RESCHEDULED:
+      return 'Reportée';
+    case ConsultationStatus.NO_SHOW:
+      return 'Non présenté';
     default:
       return status;
   }
 };
 
 export const getConsultationStatusOptions = () => [
-  { value: 'scheduled', label: 'Planifiée' },
-  { value: 'completed', label: 'Terminée' },
-  { value: 'pending', label: 'En attente' },
-  { value: 'cancelled', label: 'Annulée' },
+  { value: ConsultationStatus.SCHEDULED, label: 'Planifiée' },
+  { value: ConsultationStatus.COMPLETED, label: 'Terminée' },
+  { value: ConsultationStatus.IN_PROGRESS, label: 'En cours' },
+  { value: ConsultationStatus.CANCELLED, label: 'Annulée' },
+  { value: ConsultationStatus.RESCHEDULED, label: 'Reportée' },
+  { value: ConsultationStatus.NO_SHOW, label: 'Non présenté' },
 ];
 
 export const getConsultationStatusBadge = (status: ConsultationStatus) => {
   switch (status) {
-    case 'scheduled':
+    case ConsultationStatus.SCHEDULED:
       return { variant: 'default', className: 'bg-blue-100 text-blue-800' };
-    case 'completed':
+    case ConsultationStatus.COMPLETED:
       return { variant: 'default', className: 'bg-green-100 text-green-800' };
-    case 'pending':
+    case ConsultationStatus.IN_PROGRESS:
       return { variant: 'secondary', className: 'bg-yellow-100 text-yellow-800' };
-    case 'cancelled':
+    case ConsultationStatus.CANCELLED:
       return { variant: 'destructive', className: 'bg-red-100 text-red-800' };
+    case ConsultationStatus.RESCHEDULED:
+      return { variant: 'outline', className: 'bg-purple-100 text-purple-800' };
+    case ConsultationStatus.NO_SHOW:
+      return { variant: 'destructive', className: 'bg-gray-100 text-gray-800' };
     default:
-      return { variant: 'outline', className: '' };
+      return { variant: 'secondary', className: 'bg-gray-100 text-gray-800' };
   }
 };
 

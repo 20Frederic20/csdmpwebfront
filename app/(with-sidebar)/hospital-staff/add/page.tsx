@@ -16,14 +16,14 @@ import { useAuthToken } from "@/hooks/use-auth-token";
 import { toast } from "sonner";
 import { ArrowLeft, Save, X } from "lucide-react";
 import { HealthFacility } from "@/features/health-facilities";
-import { HealthFacilityService, HealthFacilityQueryParams } from "@/features/health-facilities/services/health-facility.service";
+import { HealthFacilityService, HealthFacilityServiceQueryParams } from "@/features/health-facilities/services/health-facility.service";
 import { User as UserType, ListUsersQueryParams } from "@/features/users";
 import { UserService } from "@/features/users/services/user.service";
-import { CreationTypeSelector } from "@/components/hospital-staff/creation-type-selector";
-import { HealthFacilitySelector } from "@/components/ui/health-facility-selector";
+import { CreationTypeSelector } from "@/features/hospital-staff/components/creation-type-selector";
+import { HealthFacilitySelect } from "@/features/health-facilities/components/health-facility-select";
 import { UserSelector } from "@/components/ui/user-selector";
-import { UserCreationForm } from "@/components/hospital-staff/user-creation-form";
-import { StaffInformationForm } from "@/components/hospital-staff/staff-information-form";
+import { UserCreationForm } from "@/features/hospital-staff/components/user-creation-form";
+import { StaffInformationForm } from "@/features/hospital-staff/components/staff-information-form";
 
 export default function AddHospitalStaffPage() {
   const router = useRouter();
@@ -65,7 +65,7 @@ export default function AddHospitalStaffPage() {
         let hasMore = true;
 
         while (hasMore) {
-          const params: HealthFacilityQueryParams = {
+          const params: HealthFacilityServiceQueryParams = {
             limit,
             offset,
           };
@@ -212,7 +212,7 @@ export default function AddHospitalStaffPage() {
     }
   };
 
-  const handleInputChange = (field: keyof CreateHospitalStaffRequest, value: string | number) => {
+  const handleInputChange = (field: keyof CreateHospitalStaffRequest, value: string | number | null) => {
     console.log('handleInputChange:', field, value);
     setFormData(prev => ({
       ...prev,
@@ -305,11 +305,11 @@ export default function AddHospitalStaffPage() {
             <CardTitle>Informations du personnel</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            <HealthFacilitySelector
-              healthFacilities={healthFacilities}
-              selectedFacility={formData.health_facility_id}
-              onFacilityChange={(value) => handleInputChange('health_facility_id', value)}
-              isLoading={loadingFacilities}
+            <HealthFacilitySelect
+              value={formData.health_facility_id}
+              onChange={(value: string | null) => handleInputChange('health_facility_id', value)}
+              disabled={loadingFacilities}
+              placeholder="Sélectionner un établissement"
               required
             />
 

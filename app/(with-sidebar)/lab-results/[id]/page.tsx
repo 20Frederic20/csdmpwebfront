@@ -159,7 +159,7 @@ export default function LabResultDetailPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Link href={`/lab-results/${labResult.id}/edit`}>
+          <Link href={`/lab-results/${labResult.id_}/edit`}>
             <Button variant="outline" size="sm">
               <Edit className="mr-2 h-4 w-4" />
               Modifier
@@ -316,7 +316,7 @@ export default function LabResultDetailPage() {
               <CardTitle>Actions rapides</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              <Link href={`/lab-results/${labResult.id}/edit`}>
+              <Link href={`/lab-results/${labResult.id_}/edit`}>
                 <Button className="w-full" variant="outline">
                   <Edit className="mr-2 h-4 w-4" />
                   Modifier

@@ -28,7 +28,7 @@ import {
   ChevronDown,
   ChevronUp
 } from "lucide-react";
-import { Consultation, ListConsultationsQM, ListConsultationsQueryParams } from "@/features/consultations";
+import { Consultation, ListConsultationsQM, ConsultationQueryParams, ConsultationQM } from "@/features/consultations";
 import { ConsultationService } from "@/features/consultations";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { usePermissions } from "@/hooks/use-permissions";
@@ -88,10 +88,8 @@ export default function ConsultationsPage() {
             c.id_ === consultation.id_ ? { 
               ...c,
               deleted_at: new Date().toISOString(),
-              is_active: false,
-              patient_full_name: consultation.patient_full_name || c.patient_full_name,
-              consulted_by_full_name: consultation.consulted_by_full_name || c.consulted_by_full_name
-            } : c
+              is_active: false
+            } as ConsultationQM : c
           )
         });
       }
@@ -115,10 +113,8 @@ export default function ConsultationsPage() {
             c.id_ === consultation.id_ ? { 
               ...c,
               deleted_at: undefined,
-              ...(restoredConsultation && typeof restoredConsultation === 'object' ? restoredConsultation : {}),
-              patient_full_name: consultation.patient_full_name || restoredConsultation?.patient_full_name,
-              consulted_by_full_name: consultation.consulted_by_full_name || restoredConsultation?.consulted_by_full_name
-            } : c
+              ...(restoredConsultation && typeof restoredConsultation === 'object' ? restoredConsultation : {})
+            } as ConsultationQM : c
           )
         });
       }
@@ -142,10 +138,8 @@ export default function ConsultationsPage() {
             data: consultationsData.data.map(consultation => 
               consultation.id_ === id ? { 
                 ...updatedConsultation, 
-                id_: consultation.id_,
-                patient_full_name: consultation.patient_full_name || updatedConsultation.patient_full_name,
-                consulted_by_full_name: consultation.consulted_by_full_name || updatedConsultation.consulted_by_full_name
-              } : consultation
+                id_: consultation.id_
+              } as ConsultationQM : consultation
             )
           });
         }
@@ -185,11 +179,9 @@ export default function ConsultationsPage() {
 
       const offset = (currentPage - 1) * itemsPerPage;
 
-      const params: ListConsultationsQueryParams = {
+      const params: ConsultationQueryParams = {
         limit: itemsPerPage,
         offset,
-        sort_by: sortingField as any,
-        sort_order: sortingOrder,
       };
 
       // Ajouter les filtres de recherche

@@ -19,7 +19,7 @@ export function useAuthRefresh() {
     try {
       const newToken = await AuthClientService.refreshToken();
       setAuthState(prev => ({ ...prev, isLoading: false }));
-      return newToken;
+      return newToken?.access_token || null;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Erreur lors du rafraîchissement du token';
       setAuthState(prev => ({ ...prev, isLoading: false, error: errorMessage }));

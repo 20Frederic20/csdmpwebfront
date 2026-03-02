@@ -10,7 +10,7 @@ import {
   getAlcoholConsumptionBadge,
   getPhysicalActivityBadge
 } from "@/features/patients/utils/lifestyle.utils";
-import { AddLifestyleModal } from "./add-lifestyle-modal";
+// import { AddLifestyleModal } from "./lifestyle-modals/add-lifestyle-modal";
 
 interface LifestyleSectionProps {
   lifestyle: PatientLifestyle[];
@@ -159,7 +159,7 @@ export function LifestyleSection({ lifestyle, loading, patientId, onLifestyleAdd
         {/* Métadonnées */}
         <div className="flex items-center gap-4 text-xs text-muted-foreground pt-2 border-t">
           <span>Actif: {currentLifestyle.is_active ? 'Oui' : 'Non'}</span>
-          <span>ID: {currentLifestyle.id}</span>
+          <span>ID: {currentLifestyle.id || 'N/A'}</span>
         </div>
       </div>
     </div>

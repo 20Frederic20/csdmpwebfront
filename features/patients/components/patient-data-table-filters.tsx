@@ -8,12 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Search, RotateCcw, ChevronDown, ChevronUp } from "lucide-react";
 
 interface PatientDataTableFiltersProps {
-  filters: {
-    search: string;
-    birth_date_from: string;
-    genders: 'male' | 'female' | 'other' | 'unknown' | 'all';
-  };
-  onFiltersChange: (filters: any) => void;
+  filters: Record<string, any>;
+  onFiltersChange: (filters: Record<string, any>) => void;
   onReset: () => void;
 }
 

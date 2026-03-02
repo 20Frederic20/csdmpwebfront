@@ -152,7 +152,7 @@ export const appointmentColumns: ColumnDef<Appointment>[] = [
       return (
         <div className="flex items-center gap-2">
           <User className="h-4 w-4 text-muted-foreground" />
-          <span>{doctorName || 'Non assigné'}</span>
+          <span>{String(doctorName) || 'Non assigné'}</span>
         </div>
       );
     },
@@ -167,7 +167,7 @@ export const appointmentColumns: ColumnDef<Appointment>[] = [
       return (
         <div className="flex items-center gap-2">
           <Building className="h-4 w-4 text-muted-foreground" />
-          <span>{facilityName || 'Non spécifié'}</span>
+          <span>{String(facilityName) || 'Non spécifié'}</span>
         </div>
       );
     },

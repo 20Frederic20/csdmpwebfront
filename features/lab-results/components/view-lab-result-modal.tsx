@@ -22,11 +22,8 @@ export function ViewLabResultModal({ isOpen, onClose, labResult }: ViewLabResult
       [TestType.MICROBIOLOGY]: 'Microbiologie',
       [TestType.PATHOLOGY]: 'Pathologie',
       [TestType.IMMUNOLOGY]: 'Immunologie',
-      [TestType.SEROLOGY]: 'Sérologie',
-      [TestType.COAGULATION]: 'Coagulation',
-      [TestType.MOLECULAR]: 'Moléculaire',
-      [TestType.CYTOGENETICS]: 'Cytogénétique',
-      [TestType.HISTOCOMPATIBILITY]: 'Histocompatibilité',
+      [TestType.GENETICS]: 'Génétique',
+      [TestType.TOXICOLOGY]: 'Toxicologie',
       [TestType.ENDOCRINOLOGY]: 'Endocrinologie',
       [TestType.CARDIOLOGY]: 'Cardiologie',
       [TestType.URINALYSIS]: 'Urinanalyse',
@@ -151,7 +148,7 @@ export function ViewLabResultModal({ isOpen, onClose, labResult }: ViewLabResult
           </div>
           <div>
             <label className="text-sm font-medium text-gray-500">ID Unique</label>
-            <p className="text-xs font-mono text-gray-600 break-all">{labResult.id}</p>
+            <p className="text-xs font-mono text-gray-600 break-all">{labResult.id_}</p>
           </div>
         </div>
       </div>

@@ -93,7 +93,7 @@ export function StaffInformationForm({
         <Input
           id="order_number"
           value={orderNumber || ""}
-          onChange={(e) => onFieldChange('order_number', e.target.value || null)}
+          onChange={(e) => onFieldChange('order_number', e.target.value ? parseInt(e.target.value) : null as any)}
           placeholder="Entrez le numéro d'ordre"
           className="h-10"
         />

@@ -11,11 +11,11 @@ import { usePermissions } from "@/hooks/use-permissions";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { ViewAppointmentModal } from "@/features/appointments/components/view-appointment-modal";
 import { EditAppointmentModal } from "@/features/appointments/components/edit-appointment-modal";
-import { AddAppointmentModal } from "@/components/appointments/add-appointment-modal";
+import { AddAppointmentModal } from "@/features/appointments/components/add-appointment-modal";
 import { ConfirmModal } from "@/components/ui/modal";
 import { DataTableWithFilters } from "@/components/ui/data-table-with-filters";
-import { appointmentColumns } from "@/components/appointments/appointment-columns";
-import { AppointmentFiltersWrapper } from "@/components/appointments/appointment-filters-wrapper";
+import { appointmentColumns } from "@/features/appointments/components/appointment-columns";
+import { AppointmentFiltersWrapper } from "@/features/appointments/components/appointment-filters-wrapper";
 import { toast } from "sonner";
 
 export default function AppointmentsPage() {

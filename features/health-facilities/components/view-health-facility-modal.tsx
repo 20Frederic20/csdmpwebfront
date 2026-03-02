@@ -56,7 +56,6 @@ export function ViewHealthFacilityModal({ facility }: ViewHealthFacilityModalPro
               <div className="mt-1">
                 <Badge 
                   variant={statusBadge.variant as "default" | "secondary" | "destructive" | "outline"}
-                  className={statusBadge.className}
                 >
                   {statusBadge.label}
                 </Badge>

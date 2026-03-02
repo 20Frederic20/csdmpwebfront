@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Badge } from "@/components/ui/badge";
 import { Edit } from "lucide-react";
 import { toast } from "sonner";
-import { HospitalStaff, HospitalStaffSpecialty, HospitalStaffDepartment } from "@/features/hospital-staff";
+import { HospitalStaff, MedicalSpecialty, HospitalDepartment } from "@/features/hospital-staff";
 import { HospitalStaffService } from "@/features/hospital-staff";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { 

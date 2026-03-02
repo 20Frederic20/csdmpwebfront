@@ -18,33 +18,33 @@ interface AddUserModalProps {
 }
 
 const userRoles: UserRole[] = [
-  "user",
-  "parent", 
-  "patient",
-  "health_pro",
-  "doctor",
-  "nurse",
-  "midwife",
-  "lab_technician",
-  "pharmacist",
-  "community_agent",
-  "admin",
-  "super_admin"
+  "USER",
+  "PARENT", 
+  "PATIENT",
+  "HEALTH_PRO",
+  "DOCTOR",
+  "NURSE",
+  "MIDWIFE",
+  "LAB_TECHNICIAN",
+  "PHARMACIST",
+  "COMMUNITY_AGENT",
+  "ADMIN",
+  "SUPER_ADMIN"
 ];
 
 const roleLabels: Record<UserRole, string> = {
-  "user": "Utilisateur",
-  "parent": "Parent",
-  "patient": "Patient", 
-  "health_pro": "Professionnel de santé",
-  "doctor": "Médecin",
-  "nurse": "Infirmier",
-  "midwife": "Sage-femme",
-  "lab_technician": "Technicien de labo",
-  "pharmacist": "Pharmacien",
-  "community_agent": "Agent communautaire",
-  "admin": "Administrateur",
-  "super_admin": "Super administrateur"
+  "USER": "Utilisateur",
+  "PARENT": "Parent",
+  "PATIENT": "Patient", 
+  "HEALTH_PRO": "Professionnel de santé",
+  "DOCTOR": "Médecin",
+  "NURSE": "Infirmier",
+  "MIDWIFE": "Sage-femme",
+  "LAB_TECHNICIAN": "Technicien de labo",
+  "PHARMACIST": "Pharmacien",
+  "COMMUNITY_AGENT": "Agent communautaire",
+  "ADMIN": "Administrateur",
+  "SUPER_ADMIN": "Super administrateur"
 };
 
 export function AddUserModal({ onUserAdded }: AddUserModalProps) {

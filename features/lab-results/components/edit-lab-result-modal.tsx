@@ -43,11 +43,8 @@ export function EditLabResultModal({ isOpen, onClose, labResult, onUpdate }: Edi
       [TestType.MICROBIOLOGY]: 'Microbiologie',
       [TestType.PATHOLOGY]: 'Pathologie',
       [TestType.IMMUNOLOGY]: 'Immunologie',
-      [TestType.SEROLOGY]: 'Sérologie',
-      [TestType.COAGULATION]: 'Coagulation',
-      [TestType.MOLECULAR]: 'Moléculaire',
-      [TestType.CYTOGENETICS]: 'Cytogénétique',
-      [TestType.HISTOCOMPATIBILITY]: 'Histocompatibilité',
+      [TestType.GENETICS]: 'Génétique',
+      [TestType.TOXICOLOGY]: 'Toxicologie',
       [TestType.ENDOCRINOLOGY]: 'Endocrinologie',
       [TestType.CARDIOLOGY]: 'Cardiologie',
       [TestType.URINALYSIS]: 'Urinanalyse',
@@ -106,7 +103,7 @@ export function EditLabResultModal({ isOpen, onClose, labResult, onUpdate }: Edi
       setLoading(true);
       setError(null);
       
-      const updatedLabResult = await LabResultsService.updateLabResult(labResult.id, formData);
+      const updatedLabResult = await LabResultsService.updateLabResult(labResult.id_, formData);
       onUpdate(updatedLabResult);
       onClose();
     } catch (err: any) {

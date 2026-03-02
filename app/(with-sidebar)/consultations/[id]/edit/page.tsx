@@ -11,11 +11,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import CustomSelect from "@/components/ui/custom-select";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { HealthFacilitySelect } from "@/components/health-facilities/health-facility-select";
-import { DepartmentSelect } from "@/components/departments/department-select";
-import { InsuranceCompanySelect } from "@/components/insurance-companies/insurance-company-select";
-import { HospitalStaffSelect } from "@/components/hospital-staff/hospital-staff-select";
-import { PatientSelect } from "@/components/patients/patient-select";
+import { HealthFacilitySelect } from "@/features/health-facilities/components/health-facility-select";
+import { DepartmentSelect } from "@/features/departments/components/department-select";
+import { InsuranceCompanySelect } from "@/features/insurance-companies/components/insurance-company-select";
+import { HospitalStaffSelect } from "@/features/hospital-staff/components/hospital-staff-select";
+import { PatientSelect } from "@/features/patients/components/patient-select";
 import { 
   ArrowLeft, 
   Save, 
@@ -265,7 +265,7 @@ export default function EditConsultationPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Modifier la consultation</h1>
           <p className="text-muted-foreground">
-            Patient: {consultation.patient_id} | ID: {consultation.id}
+            Patient: {consultation.patient_id} | ID: {consultation.id_}
           </p>
         </div>
       </div>

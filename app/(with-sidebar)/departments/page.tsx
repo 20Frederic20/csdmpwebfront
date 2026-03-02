@@ -11,10 +11,10 @@ import { useAuthToken } from "@/hooks/use-auth-token";
 import { usePermissions } from "@/hooks/use-permissions";
 import Link from "next/link";
 import { DataTableWithFilters } from "@/components/ui/data-table-with-filters";
-import { DeleteDepartmentModal } from "@/components/departments/delete-department-modal";
-import { AddDepartmentModal } from "@/components/departments/add-department-modal";
-import { departmentColumns } from "@/components/departments/department-columns";
-import { DepartmentFiltersWrapper } from "@/components/departments/department-filters-wrapper";
+import { DeleteDepartmentModal } from "@/features/departments/components/delete-department-modal";
+import { AddDepartmentModal } from "@/features/departments/components/add-department-modal";
+import { departmentColumns } from "@/features/departments/components/department-columns";
+import { DepartmentFiltersWrapper } from "@/features/departments/components/department-filters-wrapper";
 
 export default function DepartmentsPage() {
   const [currentPage, setCurrentPage] = useState(1);

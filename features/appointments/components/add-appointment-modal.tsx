@@ -17,10 +17,10 @@ import { Save, X } from "lucide-react";
 import { CreateAppointmentRequest, AppointmentType, PaymentMethod, AppointmentStatus } from "@/features/appointments/types/appointments.types";
 import { AppointmentService } from "@/features/appointments/services/appointment.service";
 import { useAuthToken } from "@/hooks/use-auth-token";
-import { HealthFacilitySelect } from "@/components/health-facilities/health-facility-select";
-import { DepartmentSelect } from "@/components/departments/department-select";
-import { HospitalStaffSelect } from "@/components/hospital-staff/hospital-staff-select";
-import { PatientSelect } from "@/components/patients/patient-select";
+import { HealthFacilitySelect } from "@/features/health-facilities/components/health-facility-select";
+import { DepartmentSelect } from "@/features/departments/components/department-select";
+import { HospitalStaffSelect } from "@/features/hospital-staff/components/hospital-staff-select";
+import { PatientSelect } from "@/features/patients/components/patient-select";
 
 interface AddAppointmentModalProps {
   isOpen: boolean;

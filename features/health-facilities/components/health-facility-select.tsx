@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import CustomSelect from "@/components/ui/custom-select";
-import { HealthFacility } from "@/features/health-facilities/types/health-facilities.types";
-import { HealthFacilitySelectService } from "@/features/health-facilities/services/health-facility-select.service";
+import { HealthFacility } from "@/features/health-facilities/types/health-facility.types";
+import { HealthFacilityService, HealthFacilityServiceQueryParams } from "@/features/health-facilities/services/health-facility.service";
 
 interface HealthFacilitySelectProps {
   value?: string;
@@ -35,8 +35,8 @@ export function HealthFacilitySelect({
       try {
         setLoading(true);
         const facilities = onlyActive 
-          ? await HealthFacilitySelectService.getActiveHealthFacilities()
-          : await HealthFacilitySelectService.getHealthFacilitiesForSelect();
+          ? (await HealthFacilityService.getHealthFacilities({ limit: 100, deleted_at: null } as HealthFacilityServiceQueryParams)).data
+          : (await HealthFacilityService.getHealthFacilities({ limit: 100 } as HealthFacilityServiceQueryParams)).data;
         
         setHealthFacilities(facilities);
       } catch (error) {
@@ -68,13 +68,12 @@ export function HealthFacilitySelect({
         </Label>
       )}
       <CustomSelect
-        id="health-facility-select"
         options={options}
         value={value || ""}
         onChange={handleChange}
         placeholder={placeholder}
         height={height}
-        disabled={disabled || loading}
+        isDisabled={disabled || loading}
       />
       {loading && (
         <p className="text-sm text-muted-foreground">

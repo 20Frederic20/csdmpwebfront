@@ -15,8 +15,8 @@ import { useAuthToken } from "@/hooks/use-auth-token";
 import { usePermissions } from "@/hooks/use-permissions";
 import { toast } from "sonner";
 import Link from "next/link";
-import { ViewHealthFacilityModal } from "@/components/health-facilities/view-health-facility-modal";
-import { DeleteHealthFacilityModal } from "@/components/health-facilities/delete-health-facility-modal";
+import { ViewHealthFacilityModal } from "@/features/health-facilities/components/view-health-facility-modal";
+import { DeleteHealthFacilityModal } from "@/features/health-facilities/components/delete-health-facility-modal";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Pagination,

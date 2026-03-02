@@ -18,7 +18,7 @@ import { Save, X } from "lucide-react";
 import { CreateDepartmentRequest, HospitalDepartment } from "@/features/departments/types/departments.types";
 import { DepartmentService } from "@/features/departments/services/departments.service";
 import { useAuthToken } from "@/hooks/use-auth-token";
-import { HealthFacilitySelect } from "@/components/health-facilities/health-facility-select";
+import { HealthFacilitySelect } from "@/features/health-facilities/components/health-facility-select";
 
 interface AddDepartmentModalProps {
   isOpen: boolean;
@@ -188,7 +188,7 @@ export function AddDepartmentModal({
                 onChange={handleCodeChange}
                 placeholder="Sélectionner le code du département"
                 height="h-10"
-                disabled={loading}
+                isDisabled={loading}
               />
             </div>
 

@@ -175,7 +175,7 @@ export function createStatusColumn<T>(
       return (
         <Switch
           checked={checked}
-          onCheckedChange={() => onToggle?.(item.id_)}
+          onCheckedChange={() => onToggle?.((item as any).id_ || (item as any).id)}
           className="data-[state=checked]:bg-green-500"
         />
       );

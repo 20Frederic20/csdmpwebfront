@@ -10,8 +10,8 @@ import CustomSelect from "@/components/ui/custom-select";
 import { 
   getSpecialtyOptions, 
   getDepartmentOptions,
-  HospitalStaffSpecialty,
-  HospitalStaffDepartment 
+  MedicalSpecialty,
+  HospitalDepartment 
 } from "@/features/hospital-staff";
 
 // Fonction debounce personnalisée
@@ -28,8 +28,8 @@ function debounce<T extends (...args: any[]) => any>(
 
 export interface HospitalStaffFilters {
   search: string;
-  specialty: HospitalStaffSpecialty | "";
-  department: HospitalStaffDepartment | "";
+  specialty: MedicalSpecialty | "";
+  department: HospitalDepartment | "";
 }
 
 interface HospitalStaffFiltersProps {
