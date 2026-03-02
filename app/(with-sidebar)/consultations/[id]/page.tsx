@@ -360,6 +360,68 @@ export default function ViewConsultationPage() {
           </CardContent>
         </Card>
 
+        {/* Localisation et assurance */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Activity className="h-5 w-5" />
+              Localisation et assurance
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <h4 className="font-medium text-sm text-muted-foreground">Établissement</h4>
+              <p className="mt-1 text-sm">{consultation.health_facility_id || 'Non spécifié'}</p>
+            </div>
+            
+            <div>
+              <h4 className="font-medium text-sm text-muted-foreground">Département</h4>
+              <p className="mt-1 text-sm">{consultation.department_id || 'Non spécifié'}</p>
+            </div>
+            
+            <div>
+              <h4 className="font-medium text-sm text-muted-foreground">Compagnie d'assurance</h4>
+              <p className="mt-1 text-sm">{consultation.insurance_company_id || 'Non spécifié'}</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Personnel médical */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Activity className="h-5 w-5" />
+              Personnel médical
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <h4 className="font-medium text-sm text-muted-foreground">Triage par</h4>
+              <p className="mt-1 text-sm">{consultation.triage_by_id || 'Non spécifié'}</p>
+            </div>
+            
+            <div>
+              <h4 className="font-medium text-sm text-muted-foreground">Consulté par</h4>
+              <p className="mt-1 text-sm">{consultation.consulted_by_id || 'Non spécifié'}</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Examen physique */}
+        {consultation.physical_examination && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Activity className="h-5 w-5" />
+                Examen physique
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm">{consultation.physical_examination}</p>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Signes vitaux */}
         <Card>
           <CardHeader>
