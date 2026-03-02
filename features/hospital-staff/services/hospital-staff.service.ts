@@ -53,8 +53,8 @@ export class HospitalStaffService {
       queryParams.append('health_facility_id', params.health_facility_id);
     }
     
-    if (params.department) {
-      queryParams.append('department', params.department);
+    if (params.department_id) {
+      queryParams.append('department_id', params.department_id);
     }
     
     if (params.specialty) {
@@ -65,8 +65,8 @@ export class HospitalStaffService {
       queryParams.append('employment_status', params.employment_status);
     }
     
-    if (params.deleted_at !== undefined) {
-      queryParams.append('deleted_at', params.deleted_at || '');
+    if (params.order_number) {
+      queryParams.append('order_number', params.order_number);
     }
     
     const url = `${API_BASE}/hospital-staff?${queryParams.toString()}`;

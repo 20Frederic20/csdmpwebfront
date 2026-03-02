@@ -29,7 +29,7 @@ export function EditHospitalStaffModal({ staff, onStaffUpdated }: EditHospitalSt
     matricule: staff.matricule,
     year_of_exp: staff.year_of_exp,
     specialty: staff.specialty,
-    department: staff.department,
+    department_id: staff.department_id,
   });
   const { token } = useAuthToken();
 
@@ -129,10 +129,10 @@ export function EditHospitalStaffModal({ staff, onStaffUpdated }: EditHospitalSt
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="department">Département *</Label>
+              <Label htmlFor="department_id">Département *</Label>
               <Select 
-                value={formData.department} 
-                onValueChange={(value) => handleInputChange('department', value)}
+                value={formData.department_id} 
+                onValueChange={(value) => handleInputChange('department_id', value)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Sélectionner un département" />

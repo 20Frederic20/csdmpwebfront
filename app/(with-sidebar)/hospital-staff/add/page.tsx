@@ -13,6 +13,7 @@ import {
   getEmploymentStatusOptions
 } from "@/features/hospital-staff/utils/hospital-staff.utils";
 import { useAuthToken } from "@/hooks/use-auth-token";
+import { UserRole } from "@/features/users/types/user.types";
 import { toast } from "sonner";
 import { ArrowLeft, Save, X } from "lucide-react";
 import { HealthFacility } from "@/features/health-facilities";
@@ -38,7 +39,7 @@ export default function AddHospitalStaffPage() {
     matricule: "",
     year_of_exp: 0,
     specialty: MedicalSpecialty.GENERAL_PRACTITIONER,
-    department: HospitalDepartment.EMERGENCY,
+    department_id: "",
     user_id: "",
     order_number: null,
     employment_status: EmploymentStatus.STATE_PERMANENT,
@@ -51,7 +52,7 @@ export default function AddHospitalStaffPage() {
       roles: [],
     },
   });
-  const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
+  const [selectedRoles, setSelectedRoles] = useState<UserRole[]>([]);
   const { token } = useAuthToken();
 
   // Charger les établissements de santé
@@ -185,7 +186,7 @@ export default function AddHospitalStaffPage() {
         matricule: formData.matricule,
         year_of_exp: formData.year_of_exp,
         specialty: formData.specialty,
-        department: formData.department,
+        department_id: formData.department_id,
         user_id: createUser ? null : (formData.user_id || null),
         order_number: formData.order_number,
         employment_status: formData.employment_status,
@@ -196,7 +197,7 @@ export default function AddHospitalStaffPage() {
           health_id: formData.user_data?.health_id || "",
           password: formData.user_data?.password || "",
           roles: selectedRoles,
-        } : null,
+        } : undefined,
       };
 
       await HospitalStaffService.createHospitalStaff(staffData, token || undefined);
@@ -236,7 +237,7 @@ export default function AddHospitalStaffPage() {
       matricule: "",
       year_of_exp: 0,
       specialty: MedicalSpecialty.GENERAL_PRACTITIONER,
-      department: HospitalDepartment.EMERGENCY,
+      department_id: "",
       user_id: "",
       order_number: null,
       employment_status: EmploymentStatus.STATE_PERMANENT,
@@ -317,7 +318,7 @@ export default function AddHospitalStaffPage() {
               matricule={formData.matricule}
               yearOfExp={formData.year_of_exp}
               specialty={formData.specialty}
-              department={formData.department}
+              departmentId={formData.department_id}
               orderNumber={formData.order_number ? Number(formData.order_number) : null}
               employmentStatus={formData.employment_status || undefined}
               onFieldChange={handleInputChange}

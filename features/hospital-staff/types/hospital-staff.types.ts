@@ -1,3 +1,7 @@
+import { CreateUserRequest } from '@/features/users/types/user.types';
+
+export type UUID = string;
+
 export enum EmploymentStatus {
   STATE_PERMANENT = "STATE_PERMANENT",
   STATE_CONTRACTUAL = "STATE_CONTRACTUAL",
@@ -53,36 +57,27 @@ export enum HospitalDepartment {
 }
 
 export interface CreateHospitalStaffRequest {
-  health_facility_id: string;
+  health_facility_id: UUID;
   matricule: string;
   year_of_exp: number;
   specialty: MedicalSpecialty;
-  department: HospitalDepartment;
-  user_id?: string | null;
-  user_data?: {
-    given_name: string;
-    family_name: string;
-    email?: string;
-    phone?: string;
-    health_id?: string;
-    password?: string;
-    roles?: string[];
-  } | null;
+  department_id: UUID;
+  user_id?: UUID | null;
+  user_data?: CreateUserRequest | null;
   order_number?: string | null;
   employment_status?: EmploymentStatus | null;
   is_active: boolean;
 }
 
 export interface UpdateHospitalStaffRequest {
-  health_facility_id?: string | null;
-  user_id?: string | null;
+  health_facility_id?: UUID | null;
+  user_id?: UUID | null;
   matricule?: string | null;
   year_of_exp?: number | null;
   specialty?: MedicalSpecialty | null;
-  department?: HospitalDepartment | null;
+  department_id?: UUID | null;
   order_number?: string | null;
   employment_status?: EmploymentStatus | null;
-  is_active?: boolean | null;
 }
 
 export interface HospitalStaff {
@@ -95,7 +90,8 @@ export interface HospitalStaff {
   matricule: string;
   year_of_exp: number;
   specialty: MedicalSpecialty;
-  department: HospitalDepartment;
+  department_id: string;
+  department_name: string;
   order_number?: string | null;
   employment_status?: EmploymentStatus | null;
   is_active: boolean;
@@ -111,14 +107,14 @@ export interface HospitalStaffResponse {
 }
 
 export interface HospitalStaffQueryParams {
+  health_facility_id?: UUID | null;
+  search?: string | null;
+  specialty?: MedicalSpecialty | null;
+  department_id?: UUID | null;
+  order_number?: string | null;
+  employment_status?: EmploymentStatus | null;
   limit?: number;
   offset?: number;
   sort_by?: string;
   sort_order?: 'asc' | 'desc';
-  search?: string;
-  health_facility_id?: string;
-  department?: string;
-  specialty?: string;
-  employment_status?: string;
-  deleted_at?: string | null;
 }

@@ -13,6 +13,7 @@ import {
   MedicalSpecialty,
   HospitalDepartment 
 } from "@/features/hospital-staff";
+import { HealthFacility } from "@/features/health-facilities/types/health-facility.types";
 
 // Fonction debounce personnalisée
 function debounce<T extends (...args: any[]) => any>(
@@ -29,7 +30,7 @@ function debounce<T extends (...args: any[]) => any>(
 export interface HospitalStaffFilters {
   search: string;
   specialty: MedicalSpecialty | "";
-  department: HospitalDepartment | "";
+  department_id: string;
 }
 
 interface HospitalStaffFiltersProps {
@@ -82,7 +83,7 @@ export function HospitalStaffFilters({
   const hasActiveFilters = !!(
     filters.search || 
     filters.specialty || 
-    filters.department
+    filters.department_id
   );
 
   return (
@@ -142,8 +143,8 @@ export function HospitalStaffFilters({
                   { value: '', label: 'Tous les départements' },
                   ...getDepartmentOptions()
                 ]}
-                value={filters.department || ''}
-                onChange={(value) => handleFilterChange('department', value as string)}
+                value={filters.department_id || ''}
+                onChange={(value) => handleFilterChange('department_id', value as string)}
                 placeholder="Tous les départements"
                 height="h-10"
               />
@@ -186,13 +187,13 @@ export function HospitalStaffFilters({
                     />
                   </Badge>
                 )}
-                {filters.department && (
+                {filters.department_id && (
                   <Badge variant="secondary" className="flex items-center gap-1">
                     <Building2 className="h-3 w-3" />
-                    Département: {getDepartmentOptions().find(opt => opt.value === filters.department)?.label || filters.department}
+                    Département: {getDepartmentOptions().find(opt => opt.value === filters.department_id)?.label || filters.department_id}
                     <X 
                       className="h-3 w-3 cursor-pointer" 
-                      onClick={() => handleFilterChange('department', '')}
+                      onClick={() => handleFilterChange('department_id', '')}
                     />
                   </Badge>
                 )}

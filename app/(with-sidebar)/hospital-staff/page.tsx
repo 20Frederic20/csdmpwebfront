@@ -65,7 +65,7 @@ export default function HospitalStaffPage() {
   const [filters, setFilters] = useState({
     search: "",
     specialty: "" as MedicalSpecialty | "",
-    department: "" as HospitalDepartment | "",
+    department_id: "" as string | "",
   });
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
@@ -96,9 +96,9 @@ export default function HospitalStaffPage() {
       sort_by: sortingColumn,
       sort_order: sortingOrder,
       specialty: filters.specialty as MedicalSpecialty || undefined,
-      department: filters.department as HospitalDepartment || undefined,
+      department_id: filters.department_id || undefined,
     };
-  }, [currentPage, itemsPerPage, sortingColumn, sortingOrder, filters.search, filters.specialty, filters.department]);
+  }, [currentPage, itemsPerPage, sortingColumn, sortingOrder, filters.search, filters.specialty, filters.department_id]);
 
   useEffect(() => {
     if (token) {
@@ -141,7 +141,7 @@ export default function HospitalStaffPage() {
     setFilters({
       search: "",
       specialty: "" as MedicalSpecialty | "",
-      department: "" as HospitalDepartment | "",
+      department_id: "" as string | "",
     });
     setCurrentPage(1);
   };
@@ -345,13 +345,13 @@ export default function HospitalStaffPage() {
                         <div className="text-center">
                           <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                           <h3 className="text-lg font-semibold mb-2">
-                            {filters.search || filters.specialty || filters.department
+                            {filters.search || filters.specialty || filters.department_id
                               ? 'Aucun membre du personnel trouvé pour cette recherche.' 
                               : 'Aucun membre du personnel enregistré.'
                             }
                           </h3>
                           <p className="text-muted-foreground mb-4">
-                            {filters.search || filters.specialty || filters.department
+                            {filters.search || filters.specialty || filters.department_id
                               ? 'Essayez de modifier vos critères de recherche.'
                               : 'Commencez par ajouter le premier membre du personnel.'
                             }
@@ -397,7 +397,7 @@ export default function HospitalStaffPage() {
                         </TableCell>
                         <TableCell>
                           <Badge variant="outline">
-                            {formatDepartment(member.department)}
+                            {formatDepartment(member.department_id)}
                           </Badge>
                         </TableCell>
                         <TableCell>

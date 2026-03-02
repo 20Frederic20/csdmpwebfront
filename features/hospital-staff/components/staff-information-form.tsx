@@ -14,7 +14,7 @@ interface StaffInformationFormProps {
   matricule: string;
   yearOfExp: number;
   specialty: MedicalSpecialty;
-  department: HospitalDepartment;
+  departmentId: string;
   orderNumber?: number | null;
   employmentStatus?: EmploymentStatus;
   onFieldChange: (field: keyof CreateHospitalStaffRequest, value: string | number) => void;
@@ -24,7 +24,7 @@ export function StaffInformationForm({
   matricule,
   yearOfExp,
   specialty,
-  department,
+  departmentId,
   orderNumber,
   employmentStatus,
   onFieldChange
@@ -81,8 +81,8 @@ export function StaffInformationForm({
         </Label>
         <CustomSelect
           options={getDepartmentOptions()}
-          value={department}
-          onChange={(value) => onFieldChange('department', value as HospitalDepartment)}
+          value={departmentId}
+          onChange={(value) => onFieldChange('department_id', value as string)}
           placeholder="Sélectionner un département"
           height="h-10"
         />

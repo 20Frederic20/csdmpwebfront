@@ -210,7 +210,7 @@ export default function HospitalStaffDetailPage() {
                   <label className="text-md font-medium text-muted-foreground">Département</label>
                   <div className="mt-1">
                     <Badge variant="outline">
-                      {formatDepartment(staff.department)}
+                      {formatDepartment(staff.department_id)}
                     </Badge>
                   </div>
                 </div>

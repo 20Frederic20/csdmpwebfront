@@ -15,9 +15,9 @@ interface UserCreationFormProps {
     health_id?: string;
     password?: string;
   };
-  selectedRoles: string[];
+  selectedRoles: UserRole[];
   onUserDataChange: (field: string, value: string) => void;
-  onRolesChange: (roles: string[]) => void;
+  onRolesChange: (roles: UserRole[]) => void;
 }
 
 export function UserCreationForm({
@@ -26,14 +26,14 @@ export function UserCreationForm({
   onUserDataChange,
   onRolesChange
 }: UserCreationFormProps) {
-  const toggleRole = (role: string) => {
+  const toggleRole = (role: UserRole) => {
     const newRoles = selectedRoles.includes(role)
       ? selectedRoles.filter(r => r !== role)
       : [...selectedRoles, role];
     onRolesChange(newRoles);
   };
 
-  const removeRole = (role: string) => {
+  const removeRole = (role: UserRole) => {
     onRolesChange(selectedRoles.filter(r => r !== role));
   };
 

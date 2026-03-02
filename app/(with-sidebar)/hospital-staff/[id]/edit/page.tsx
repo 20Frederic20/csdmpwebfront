@@ -42,10 +42,9 @@ export default function EditHospitalStaffPage() {
     matricule: null,
     year_of_exp: null,
     specialty: null,
-    department: null,
+    department_id: null,
     order_number: null,
     employment_status: null,
-    is_active: null, // Gardé mais non affiché dans le formulaire
   });
 
   const staffId = params.id as string;
@@ -65,10 +64,9 @@ export default function EditHospitalStaffPage() {
           matricule: staffData.matricule,
           year_of_exp: staffData.year_of_exp,
           specialty: staffData.specialty,
-          department: staffData.department,
+          department_id: staffData.department_id,
           order_number: staffData.order_number,
           employment_status: staffData.employment_status,
-          is_active: staffData.is_active,
         });
       } catch (error: any) {
         console.error('Error loading staff:', error);
@@ -190,8 +188,8 @@ export default function EditHospitalStaffPage() {
       if (formData.specialty !== staff?.specialty) {
         updateData.specialty = formData.specialty;
       }
-      if (formData.department !== staff?.department) {
-        updateData.department = formData.department;
+      if (formData.department_id !== staff?.department_id) {
+        updateData.department_id = formData.department_id;
       }
       if (formData.order_number !== staff?.order_number) {
         updateData.order_number = formData.order_number;
@@ -230,10 +228,9 @@ export default function EditHospitalStaffPage() {
         matricule: staff.matricule,
         year_of_exp: staff.year_of_exp,
         specialty: staff.specialty,
-        department: staff.department,
+        department_id: staff.department_id,
         order_number: staff.order_number,
         employment_status: staff.employment_status,
-        is_active: staff.is_active,
       });
     }
   };
@@ -329,7 +326,7 @@ export default function EditHospitalStaffPage() {
               matricule={formData.matricule || ""}
               yearOfExp={formData.year_of_exp || 0}
               specialty={formData.specialty || MedicalSpecialty.GENERAL_PRACTITIONER}
-              department={formData.department || HospitalDepartment.EMERGENCY}
+              departmentId={formData.department_id || HospitalDepartment.EMERGENCY}
               orderNumber={formData.order_number ? Number(formData.order_number) : null}
               employmentStatus={formData.employment_status || undefined}
               onFieldChange={handleInputChange}

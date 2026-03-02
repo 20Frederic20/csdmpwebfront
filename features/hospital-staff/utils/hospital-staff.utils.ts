@@ -99,8 +99,15 @@ export function getSpecialtyOptions(): { value: MedicalSpecialty; label: string 
   ];
 }
 
-export function formatDepartment(department: HospitalDepartment): string {
-  switch (department) {
+export function formatDepartment(departmentOrId: HospitalDepartment | string): string {
+  // Si c'est un ID de département (string), on ne peut pas formater
+  // On retourne l'ID directement ou on essaie de trouver le département correspondant
+  if (typeof departmentOrId === 'string') {
+    return departmentOrId; // Retourner l'ID tel quel
+  }
+  
+  // Si c'est une énumération HospitalDepartment, utiliser le switch existant
+  switch (departmentOrId) {
     case HospitalDepartment.EMERGENCY:
       return 'Urgences';
     case HospitalDepartment.INTERNAL_MEDICINE:
@@ -142,7 +149,7 @@ export function formatDepartment(department: HospitalDepartment): string {
     case HospitalDepartment.OTHER:
       return 'Autre';
     default:
-      return department;
+      return departmentOrId;
   }
 }
 
