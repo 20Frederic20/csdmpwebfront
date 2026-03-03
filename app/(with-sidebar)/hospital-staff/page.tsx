@@ -4,24 +4,14 @@ import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search, Plus, Filter, Users, MoreHorizontal, Eye, Edit, Trash2, RotateCcw, AlertTriangle, UserPlus, ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react";
-import { HospitalStaff, CreateHospitalStaffRequest, UpdateHospitalStaffRequest, EmploymentStatus, MedicalSpecialty, HospitalDepartment, HospitalStaffResponse, HospitalStaffQueryParams } from "@/features/hospital-staff";
+import { Plus, Users, MoreHorizontal, Eye, Edit, Trash2, RotateCcw, AlertTriangle, ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react";
+import { HospitalStaff, MedicalSpecialty, HospitalStaffQueryParams } from "@/features/hospital-staff";
 import { HospitalStaffService } from "@/features/hospital-staff/services/hospital-staff.service";
 import { toast } from "sonner";
 import Link from "next/link";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-  PaginationEllipsis,
-} from "@/components/ui/pagination";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,19 +19,11 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import CustomSelect from "@/components/ui/custom-select";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { usePermissions } from "@/hooks/use-permissions";
-import { 
-  formatEmploymentStatus, 
-  getEmploymentStatusOptions, 
+import {  
   formatSpecialty, 
-  getSpecialtyOptions, 
   formatDepartment, 
-  getDepartmentOptions,
-  getEmploymentStatusBadge,
-  canDeleteHospitalStaff,
-  canRestoreHospitalStaff
 } from "@/features/hospital-staff/utils/hospital-staff.utils";
 import { ViewHospitalStaffModal } from "@/features/hospital-staff/components/view-hospital-staff-modal";
 import { EditHospitalStaffModal } from "@/features/hospital-staff/components/edit-hospital-staff-modal";
@@ -397,7 +379,7 @@ export default function HospitalStaffPage() {
                         </TableCell>
                         <TableCell>
                           <Badge variant="outline">
-                            {formatDepartment(member.department_id)}
+                            {formatDepartment(member.department_name)}
                           </Badge>
                         </TableCell>
                         <TableCell>
