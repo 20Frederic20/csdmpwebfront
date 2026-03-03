@@ -69,6 +69,10 @@ export class HospitalStaffService {
       queryParams.append('order_number', params.order_number);
     }
     
+    if (params.include_deleted !== undefined) {
+      queryParams.append('include_deleted', params.include_deleted.toString());
+    }
+    
     const url = `${API_BASE}/hospital-staff?${queryParams.toString()}`;
     
     const response = await fetch(url, {

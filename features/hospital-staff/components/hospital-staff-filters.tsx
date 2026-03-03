@@ -6,14 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Search, Filter, X, Building2 } from "lucide-react";
-import CustomSelect from "@/components/ui/custom-select";
 import { 
   getSpecialtyOptions, 
-  getDepartmentOptions,
-  MedicalSpecialty,
-  HospitalDepartment 
+  MedicalSpecialty
 } from "@/features/hospital-staff";
-import { HealthFacility } from "@/features/health-facilities/types/health-facility.types";
+import CustomSelect from "@/components/ui/custom-select";
+import { DepartmentSelect } from "@/features/departments/components/department-select";
 
 // Fonction debounce personnalisée
 function debounce<T extends (...args: any[]) => any>(
@@ -49,11 +47,28 @@ export function HospitalStaffFilters({
   onToggle 
 }: HospitalStaffFiltersProps) {
   const [localSearch, setLocalSearch] = useState(filters.search || '');
+  const [departments, setDepartments] = useState<any[]>([]);
 
   // Synchroniser localSearch avec filters.search quand il change de l'extérieur
   useEffect(() => {
     setLocalSearch(filters.search || '');
   }, [filters.search]);
+
+  // Charger les départements pour afficher les noms dans les badges
+  useEffect(() => {
+    const loadDepartments = async () => {
+      try {
+        const { DepartmentService } = await import('@/features/departments/services/departments.service');
+        const response = await DepartmentService.getDepartments({ limit: 100 });
+        setDepartments(response.data || []);
+      } catch (error) {
+        console.error('Error loading departments:', error);
+        setDepartments([]);
+      }
+    };
+
+    loadDepartments();
+  }, []);
 
   // Fonction debounce pour la recherche
   const debouncedSearchChange = useCallback(
@@ -138,15 +153,13 @@ export function HospitalStaffFilters({
             
             <div className="space-y-2">
               <label className="text-sm font-medium">Département</label>
-              <CustomSelect
-                options={[
-                  { value: '', label: 'Tous les départements' },
-                  ...getDepartmentOptions()
-                ]}
-                value={filters.department_id || ''}
-                onChange={(value) => handleFilterChange('department_id', value as string)}
+              <DepartmentSelect
+                value={filters.department_id}
+                onChange={(value) => handleFilterChange('department_id', value || '')}
                 placeholder="Tous les départements"
                 height="h-10"
+                onlyActive={true}
+                healthFacilityId={null}
               />
             </div>
             
@@ -190,7 +203,7 @@ export function HospitalStaffFilters({
                 {filters.department_id && (
                   <Badge variant="secondary" className="flex items-center gap-1">
                     <Building2 className="h-3 w-3" />
-                    Département: {getDepartmentOptions().find(opt => opt.value === filters.department_id)?.label || filters.department_id}
+                    Département: {departments.find(dept => dept.id_ === filters.department_id)?.name || filters.department_id}
                     <X 
                       className="h-3 w-3 cursor-pointer" 
                       onClick={() => handleFilterChange('department_id', '')}

@@ -15,25 +15,14 @@ import {
 
 interface ViewHospitalStaffModalProps {
   staff: HospitalStaff;
+  isOpen: boolean;
+  onClose: () => void;
 }
 
-export function ViewHospitalStaffModal({ staff }: ViewHospitalStaffModalProps) {
-  const [open, setOpen] = useState(false);
-
+export function ViewHospitalStaffModal({ staff, isOpen, onClose }: ViewHospitalStaffModalProps) {
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          className="w-full justify-start cursor-pointer"
-          data-hospital-staff-view={staff.id_}
-        >
-          <Eye className="h-4 w-4 mr-2" />
-          Voir
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[600px]">
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Détails du membre du personnel</DialogTitle>
         </DialogHeader>

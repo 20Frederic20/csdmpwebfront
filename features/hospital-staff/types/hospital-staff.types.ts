@@ -117,4 +117,5 @@ export interface HospitalStaffQueryParams {
   offset?: number;
   sort_by?: string;
   sort_order?: 'asc' | 'desc';
+  include_deleted?: boolean;
 }

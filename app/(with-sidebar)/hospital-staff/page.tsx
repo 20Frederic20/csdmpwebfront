@@ -2,34 +2,19 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Users, MoreHorizontal, Eye, Edit, Trash2, RotateCcw, AlertTriangle, ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react";
+import { Plus, ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react";
 import { HospitalStaff, MedicalSpecialty, HospitalStaffQueryParams } from "@/features/hospital-staff";
 import { HospitalStaffService } from "@/features/hospital-staff/services/hospital-staff.service";
 import { toast } from "sonner";
 import Link from "next/link";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { usePermissions } from "@/hooks/use-permissions";
-import {  
-  formatSpecialty, 
-  formatDepartment, 
-} from "@/features/hospital-staff/utils/hospital-staff.utils";
-import { ViewHospitalStaffModal } from "@/features/hospital-staff/components/view-hospital-staff-modal";
-import { EditHospitalStaffModal } from "@/features/hospital-staff/components/edit-hospital-staff-modal";
 import { DeleteHospitalStaffModal } from "@/features/hospital-staff/components/delete-hospital-staff-modal";
-import { HospitalStaffFilters } from "@/features/hospital-staff/components/hospital-staff-filters";
-import { DataPagination } from "@/components/ui/data-pagination";
+import { PermanentDeleteHospitalStaffModal } from "@/features/hospital-staff/components/permanent-delete-hospital-staff-modal";
+import { DataTableWithFilters } from "@/components/ui/data-table-with-filters";
+import { hospitalStaffColumns } from "@/features/hospital-staff/components/hospital-staff-columns";
+import { HospitalStaffFiltersWrapper } from "@/features/hospital-staff/components/hospital-staff-filters-wrapper";
 
 export default function HospitalStaffPage() {
   const router = useRouter();
@@ -42,6 +27,9 @@ export default function HospitalStaffPage() {
   const [sortingOrder, setSortingOrder] = useState<'asc' | 'desc'>('asc');
   const { token } = useAuthToken();
   const { canAccess } = usePermissions();
+  
+  // Mémoriser les permissions pour éviter les rechargements infinis
+  const canDeleteStaff = useMemo(() => canAccess('hospital_staffs', 'delete'), [canAccess]);
 
   // États pour les filtres
   const [filters, setFilters] = useState({
@@ -49,13 +37,17 @@ export default function HospitalStaffPage() {
     specialty: "" as MedicalSpecialty | "",
     department_id: "" as string | "",
   });
-  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [selectedRows, setSelectedRows] = useState<Record<string, boolean>>({});
+  const [error, setError] = useState<string | null>(null);
+
+  // États pour les modals
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isPermanentDeleteModalOpen, setIsPermanentDeleteModalOpen] = useState(false);
+  const [selectedStaff, setSelectedStaff] = useState<HospitalStaff | null>(null);
 
   const loadStaff = async () => {
     setLoading(true);
     try {
-      const offset = (currentPage - 1) * itemsPerPage;
-      
       const response = await HospitalStaffService.getHospitalStaff(params, token || undefined);
       setStaff(response.data || []);
       setTotal(response.total || 0);
@@ -79,6 +71,8 @@ export default function HospitalStaffPage() {
       sort_order: sortingOrder,
       specialty: filters.specialty as MedicalSpecialty || undefined,
       department_id: filters.department_id || undefined,
+      // Inclure les éléments supprimés si on a le droit de restaurer
+      include_deleted: canDeleteStaff,
     };
   }, [currentPage, itemsPerPage, sortingColumn, sortingOrder, filters.search, filters.specialty, filters.department_id]);
 
@@ -88,35 +82,42 @@ export default function HospitalStaffPage() {
     }
   }, [params, token]);
 
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handleItemsPerPageChange = (newItemsPerPage: number) => {
+    setItemsPerPage(newItemsPerPage);
+    setCurrentPage(1);
+  };
+
+  const handleFiltersChange = (newFilters: Record<string, any>) => {
+    setFilters({
+      search: newFilters.search || "",
+      specialty: newFilters.specialty || "",
+      department_id: newFilters.department_id || "",
+    });
+  };
+
+  const handleRowSelectionChange = (selection: Record<string, boolean>) => {
+    setSelectedRows(selection);
+  };
+
+  const handleOpenDeleteModal = (staff: HospitalStaff) => {
+    setSelectedStaff(staff);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleOpenPermanentDeleteModal = (staff: HospitalStaff) => {
+    setSelectedStaff(staff);
+    setIsPermanentDeleteModalOpen(true);
+  };
+
   const getStaffDisplayName = (member: HospitalStaff) => {
     if (member.user_given_name && member.user_family_name) {
       return `${member.user_given_name} ${member.user_family_name}`;
     }
     return member.matricule || 'Personnel non identifié';
-  };
-
-  const handleItemsPerPageChange = (value: string) => {
-    setItemsPerPage(parseInt(value));
-    setCurrentPage(1);
-  };
-
-  // Handlers pour DataPagination
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
-
-  const handleDataItemsPerPageChange = (newItemsPerPage: number) => {
-    setItemsPerPage(newItemsPerPage);
-    setCurrentPage(1);
-  };
-
-  // Calculer le nombre total de pages
-  const totalPages = Math.ceil(total / itemsPerPage);
-
-  // Handlers pour les filtres avancés (comme dans patients)
-  const handleFiltersChange = (newFilters: typeof filters) => {
-    setFilters(newFilters);
-    setCurrentPage(1);
   };
 
   const handleFiltersReset = () => {
@@ -149,10 +150,6 @@ export default function HospitalStaffPage() {
       : <ChevronDown className="h-4 w-4" />;
   };
 
-  const handleStaffUpdated = () => {
-    loadStaff();
-  };
-
   const handleStaffDeleted = () => {
     loadStaff();
   };
@@ -161,16 +158,30 @@ export default function HospitalStaffPage() {
     try {
       await HospitalStaffService.deleteHospitalStaff(id, token || undefined);
       
-      // Mettre à jour l'état localement
-      setStaff(prevStaff => 
-        prevStaff.map(member => 
-          member.id_ === id ? { ...member, deleted_at: new Date().toISOString() } : member
-        )
-      );
+      const canViewDeleted = canAccess('hospital_staffs', 'delete');
       
-      toast.success('Personnel supprimé avec succès');
+      if (canViewDeleted) {
+        setStaff(prevStaff => {
+          const updated = prevStaff.map(member => 
+            member.id_ === id ? { 
+              ...member, 
+              deleted_at: new Date().toISOString(),
+              is_active: false 
+            } : member
+          );
+          return updated;
+        });
+        toast.success('Personnel supprimé avec succès');
+      } else {
+        setStaff(prevStaff => {
+          const filtered = prevStaff.filter(member => member.id_ !== id);
+          console.log('Staff après filtrage:', filtered);
+          return filtered;
+        });
+        setTotal(prevTotal => prevTotal - 1);
+        toast.success('Personnel supprimé avec succès');
+      }
     } catch (error: any) {
-      console.error('Error deleting staff:', error);
       toast.error(error.message || "Erreur lors de la suppression");
     }
   };
@@ -194,10 +205,15 @@ export default function HospitalStaffPage() {
     try {
       const restoredStaff = await HospitalStaffService.restoreHospitalStaff(id, token || undefined);
       
-      // Mettre à jour l'état localement
+      // Mettre à jour l'état localement sans recharger
       setStaff(prevStaff => 
         prevStaff.map(member => 
-          member.id_ === id ? restoredStaff : member
+          member.id_ === id ? { 
+            ...member, 
+            ...restoredStaff,
+            deleted_at: null,
+            is_active: true 
+          } : member
         )
       );
       
@@ -249,249 +265,64 @@ export default function HospitalStaffPage() {
         )}
       </div>
 
-      {/* Filtres et recherche */}
-      <HospitalStaffFilters
-        filters={filters}
-        onFiltersChange={handleFiltersChange}
-        onReset={handleFiltersReset}
-        isOpen={showAdvancedFilters}
-        onToggle={() => setShowAdvancedFilters(!showAdvancedFilters)}
-      />
-
-      {/* Tableau du personnel */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5" />
-            Liste du personnel ({total})
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
-                <p className="text-muted-foreground">Chargement du personnel...</p>
-              </div>
-            </div>
-          ) : (
-            <>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead 
-                      className="cursor-pointer hover:bg-muted/50 transition-colors"
-                      onClick={() => handleSort('user_given_name')}
-                    >
-                      <div className="flex items-center gap-2">
-                        Personnel
-                        {getSortIcon('user_given_name')}
-                      </div>
-                    </TableHead>
-                    <TableHead>Spécialité</TableHead>
-                    <TableHead 
-                      className="cursor-pointer hover:bg-muted/50 transition-colors"
-                      onClick={() => handleSort('department')}
-                    >
-                      <div className="flex items-center gap-2">
-                        Département
-                        {getSortIcon('department')}
-                      </div>
-                    </TableHead>
-                    <TableHead 
-                      className="cursor-pointer hover:bg-muted/50 transition-colors"
-                      onClick={() => handleSort('health_facility_id')}
-                    >
-                      <div className="flex items-center gap-2">
-                        Établissement
-                        {getSortIcon('health_facility_id')}
-                      </div>
-                    </TableHead>
-                    <TableHead>Expérience</TableHead>
-                    <TableHead 
-                      className="cursor-pointer hover:bg-muted/50 transition-colors"
-                      onClick={() => handleSort('is_active')}
-                    >
-                      <div className="flex items-center gap-2">
-                        Statut
-                        {getSortIcon('is_active')}
-                      </div>
-                    </TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {staff.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8">
-                        <div className="text-center">
-                          <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                          <h3 className="text-lg font-semibold mb-2">
-                            {filters.search || filters.specialty || filters.department_id
-                              ? 'Aucun membre du personnel trouvé pour cette recherche.' 
-                              : 'Aucun membre du personnel enregistré.'
-                            }
-                          </h3>
-                          <p className="text-muted-foreground mb-4">
-                            {filters.search || filters.specialty || filters.department_id
-                              ? 'Essayez de modifier vos critères de recherche.'
-                              : 'Commencez par ajouter le premier membre du personnel.'
-                            }
-                          </p>
-                          <Link href="/hospital-staff/add">
-                            <Button>
-                              <Plus className="h-4 w-4 mr-2" />
-                              Ajouter le premier membre
-                            </Button>
-                          </Link>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    staff.map((member) => (
-                      <TableRow key={member.id_}>
-                        <TableCell className="font-medium">
-                          <div className={`flex items-center gap-3 ${member.deleted_at ? 'opacity-60' : ''}`}>
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-md font-medium ${
-                              member.deleted_at 
-                                ? 'bg-gray-100 text-gray-500' 
-                                : 'bg-blue-100 text-blue-700'
-                            }`}>
-                              {getStaffDisplayName(member).substring(0, 2).toUpperCase() || 'ST'}
-                            </div>
-                            <div>
-                              <div className="font-medium flex items-center gap-2">
-                                {getStaffDisplayName(member)}
-                                {member.deleted_at && (
-                                  <Badge variant="secondary" className="text-xs">
-                                    Supprimé
-                                  </Badge>
-                                )}
-                              </div>
-                              <div className="text-md text-muted-foreground">Matricule: {member.matricule}</div>
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="secondary">
-                            {formatSpecialty(member.specialty)}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline">
-                            {formatDepartment(member.department_name)}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <span className="text-md">
-                            {member.health_facility_name}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <span className="text-md">
-                            {member.year_of_exp} an{member.year_of_exp > 1 ? 's' : ''}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          {canAccess('hospital_staffs', 'toggle') ? (
-                            <Switch 
-                              checked={member.is_active}
-                              onCheckedChange={() => handleToggleStatus(member.id_)}
-                              className="data-[state=checked]:bg-green-500"
-                            />
-                          ) : (
-                            <Badge variant={member.is_active ? "default" : "secondary"}>
-                              {member.is_active ? 'Actif' : 'Inactif'}
-                            </Badge>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm" className="cursor-pointer">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem 
-                                className="cursor-pointer"
-                                onClick={() => {
-                                  const modalButton = document.querySelector(`[data-hospital-staff-view="${member.id_}"]`) as HTMLButtonElement;
-                                  if (modalButton) modalButton.click();
-                                }}
-                              >
-                                <Eye className="h-4 w-4 mr-2" />
-                                Voir
-                              </DropdownMenuItem>
-                              {canAccess('hospital_staffs', 'update') && (
-                                <DropdownMenuItem 
-                                  className="cursor-pointer"
-                                  onClick={() => router.push(`/hospital-staff/${member.id_}/edit`)}
-                                >
-                                  <Edit className="h-4 w-4 mr-2" />
-                                  Modifier
-                                </DropdownMenuItem>
-                              )}
-                              {canAccess('hospital_staffs', 'soft_delete') && !member.deleted_at && (
-                                <>
-                                  <DropdownMenuSeparator />
-                                  <DropdownMenuItem 
-                                    className="cursor-pointer text-red-600"
-                                    onClick={() => handleStaffSoftDeleted(member.id_)}
-                                  >
-                                    <Trash2 className="h-4 w-4 mr-2" />
-                                    Supprimer
-                                  </DropdownMenuItem>
-                                </>
-                              )}
-                              {member.deleted_at && canAccess('hospital_staffs', 'delete') && (
-                                <>
-                                  <DropdownMenuSeparator />
-                                  <DropdownMenuItem 
-                                    className="cursor-pointer text-green-600"
-                                    onClick={() => handleStaffRestored(member.id_)}
-                                  >
-                                    <RotateCcw className="h-4 w-4 mr-2" />
-                                    Restaurer
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem 
-                                    className="cursor-pointer text-red-600"
-                                    onClick={() => handleStaffPermanentlyDeleted(member.id_)}
-                                  >
-                                    <AlertTriangle className="h-4 w-4 mr-2" />
-                                    Supprimer définitivement
-                                  </DropdownMenuItem>
-                                </>
-                              )}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                          
-                          {/* Boutons cachés pour déclencher les modals */}
-                          <div className="hidden">
-                            <ViewHospitalStaffModal staff={member} />
-                            <EditHospitalStaffModal staff={member} onStaffUpdated={handleStaffUpdated} />
-                            <DeleteHospitalStaffModal staff={member} onStaffDeleted={handleStaffDeleted} />
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Pagination */}
-      <DataPagination
+      {/* DataTable avec filtres intégrés */}
+      <DataTableWithFilters
+        columns={hospitalStaffColumns}
+        data={staff}
+        loading={loading}
+        error={error}
+        total={total}
         currentPage={currentPage}
-        totalPages={totalPages}
-        totalItems={total}
         itemsPerPage={itemsPerPage}
         onPageChange={handlePageChange}
-        onItemsPerPageChange={handleDataItemsPerPageChange}
+        onItemsPerPageChange={handleItemsPerPageChange}
+        enableRowSelection={true}
+        onRowSelectionChange={handleRowSelectionChange}
+        filterComponent={HospitalStaffFiltersWrapper}
+        initialFilters={filters}
+        onFiltersChange={handleFiltersChange}
+        meta={{
+          onToggleStatus: handleToggleStatus,
+          onOpenDeleteModal: handleOpenDeleteModal,
+          onOpenPermanentDeleteModal: handleOpenPermanentDeleteModal,
+          onStaffRestored: handleStaffRestored,
+          canAccess: canAccess,
+        }}
       />
+
+      {/* Modal de suppression */}
+      {selectedStaff && (
+        <DeleteHospitalStaffModal
+          staff={selectedStaff}
+          isOpen={isDeleteModalOpen}
+          onClose={() => setIsDeleteModalOpen(false)}
+          onStaffDeleted={() => {
+            // Recharger les données après suppression
+            setStaff(prevStaff => 
+              prevStaff.filter(member => member.id_ !== selectedStaff.id_)
+            );
+            setTotal(prev => prev - 1);
+            setIsDeleteModalOpen(false);
+          }}
+        />
+      )}
+
+      {/* Modal de suppression définitive */}
+      {selectedStaff && (
+        <PermanentDeleteHospitalStaffModal
+          staff={selectedStaff}
+          isOpen={isPermanentDeleteModalOpen}
+          onClose={() => setIsPermanentDeleteModalOpen(false)}
+          onStaffDeleted={() => {
+            // Recharger les données après suppression définitive
+            setStaff(prevStaff => 
+              prevStaff.filter(member => member.id_ !== selectedStaff.id_)
+            );
+            setTotal(prev => prev - 1);
+            setIsPermanentDeleteModalOpen(false);
+          }}
+        />
+      )}
     </div>
   );
 }

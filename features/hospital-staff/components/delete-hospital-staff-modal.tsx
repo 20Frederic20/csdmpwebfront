@@ -13,11 +13,12 @@ import { useAuthToken } from "@/hooks/use-auth-token";
 
 interface DeleteHospitalStaffModalProps {
   staff: HospitalStaff;
+  isOpen: boolean;
+  onClose: () => void;
   onStaffDeleted: () => void;
 }
 
-export function DeleteHospitalStaffModal({ staff, onStaffDeleted }: DeleteHospitalStaffModalProps) {
-  const [open, setOpen] = useState(false);
+export function DeleteHospitalStaffModal({ staff, isOpen, onClose, onStaffDeleted }: DeleteHospitalStaffModalProps) {
   const [loading, setLoading] = useState(false);
   const { token } = useAuthToken();
 
@@ -26,7 +27,7 @@ export function DeleteHospitalStaffModal({ staff, onStaffDeleted }: DeleteHospit
     try {
       await HospitalStaffService.deleteHospitalStaff(staff.id_, token || undefined);
       toast.success("Membre du personnel supprimé avec succès");
-      setOpen(false);
+      onClose();
       onStaffDeleted();
     } catch (error: any) {
       console.error('Error deleting hospital staff:', error);
@@ -37,18 +38,7 @@ export function DeleteHospitalStaffModal({ staff, onStaffDeleted }: DeleteHospit
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          className="w-full justify-start cursor-pointer text-red-600 hover:text-red-700"
-          data-hospital-staff-delete={staff.id_}
-        >
-          <Trash2 className="h-4 w-4 mr-2" />
-          Supprimer
-        </Button>
-      </DialogTrigger>
+    <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-red-600">
@@ -83,11 +73,11 @@ export function DeleteHospitalStaffModal({ staff, onStaffDeleted }: DeleteHospit
             </div>
           </div>
           
-          <div className="flex justify-end gap-3">
+          <div className="flex justify-end gap-3 pt-4 border-t">
             <Button
               variant="outline"
-              onClick={() => setOpen(false)}
-              className="cursor-pointer"
+              onClick={onClose}
+              disabled={loading}
             >
               Annuler
             </Button>
@@ -95,9 +85,18 @@ export function DeleteHospitalStaffModal({ staff, onStaffDeleted }: DeleteHospit
               variant="destructive"
               onClick={handleDelete}
               disabled={loading}
-              className="cursor-pointer"
             >
-              {loading ? "Suppression..." : "Supprimer définitivement"}
+              {loading ? (
+                <>
+                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  Suppression...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Supprimer
+                </>
+              )}
             </Button>
           </div>
         </div>

@@ -19,11 +19,12 @@ import {
 
 interface EditHospitalStaffModalProps {
   staff: HospitalStaff;
+  isOpen: boolean;
+  onClose: () => void;
   onStaffUpdated: () => void;
 }
 
-export function EditHospitalStaffModal({ staff, onStaffUpdated }: EditHospitalStaffModalProps) {
-  const [open, setOpen] = useState(false);
+export function EditHospitalStaffModal({ staff, isOpen, onClose, onStaffUpdated }: EditHospitalStaffModalProps) {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     matricule: staff.matricule,
@@ -50,7 +51,7 @@ export function EditHospitalStaffModal({ staff, onStaffUpdated }: EditHospitalSt
     try {
       await HospitalStaffService.updateHospitalStaff(staff.id_, formData, token || undefined);
       toast.success("Informations du personnel mises à jour avec succès");
-      setOpen(false);
+      onClose();
       onStaffUpdated();
     } catch (error: any) {
       console.error('Error updating hospital staff:', error);
@@ -68,18 +69,7 @@ export function EditHospitalStaffModal({ staff, onStaffUpdated }: EditHospitalSt
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          className="w-full justify-start cursor-pointer"
-          data-hospital-staff-edit={staff.id_}
-        >
-          <Edit className="h-4 w-4 mr-2" />
-          Modifier
-        </Button>
-      </DialogTrigger>
+    <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Modifier le membre du personnel</DialogTitle>
@@ -152,7 +142,7 @@ export function EditHospitalStaffModal({ staff, onStaffUpdated }: EditHospitalSt
             <Button
               type="button"
               variant="outline"
-              onClick={() => setOpen(false)}
+              onClick={() => onClose()}
               className="cursor-pointer"
             >
               Annuler
