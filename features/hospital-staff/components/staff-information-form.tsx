@@ -15,7 +15,7 @@ interface StaffInformationFormProps {
   yearOfExp: number;
   specialty: MedicalSpecialty;
   departmentId: string;
-  orderNumber?: number | null;
+  orderNumber?: string | null;
   employmentStatus?: EmploymentStatus;
   healthFacilityId?: string;
   onFieldChange: (field: keyof CreateHospitalStaffRequest, value: string | number) => void;
@@ -96,7 +96,7 @@ export function StaffInformationForm({
         <Input
           id="order_number"
           value={orderNumber || ""}
-          onChange={(e) => onFieldChange('order_number', e.target.value ? parseInt(e.target.value) : null as any)}
+          onChange={(e) => onFieldChange('order_number', e.target.value)}
           placeholder="Entrez le numéro d'ordre"
           className="h-10"
         />

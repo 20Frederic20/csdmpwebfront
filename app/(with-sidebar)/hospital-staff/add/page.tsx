@@ -328,7 +328,7 @@ export default function AddHospitalStaffPage() {
               yearOfExp={formData.year_of_exp}
               specialty={formData.specialty}
               departmentId={formData.department_id}
-              orderNumber={formData.order_number ? Number(formData.order_number) : null}
+              orderNumber={formData.order_number}
               employmentStatus={formData.employment_status || undefined}
               healthFacilityId={formData.health_facility_id}
               onFieldChange={handleInputChange}
