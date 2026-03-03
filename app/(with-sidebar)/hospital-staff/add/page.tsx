@@ -221,6 +221,15 @@ export default function AddHospitalStaffPage() {
     }));
   };
 
+  const handleHealthFacilityChange = (healthFacilityId: string) => {
+    // Réinitialiser le département quand on change de facility
+    setFormData(prev => ({
+      ...prev,
+      health_facility_id: healthFacilityId,
+      department_id: "" // Réinitialiser le département
+    }));
+  };
+
   const handleUserDataChange = (field: string, value: string) => {
     setFormData(prev => ({
       ...prev,
@@ -308,7 +317,7 @@ export default function AddHospitalStaffPage() {
           <CardContent className="space-y-6">
             <HealthFacilitySelect
               value={formData.health_facility_id}
-              onChange={(value: string | null) => handleInputChange('health_facility_id', value)}
+              onChange={(value: string | null) => handleHealthFacilityChange(value || '')}
               disabled={loadingFacilities}
               placeholder="Sélectionner un établissement"
               required
@@ -321,6 +330,7 @@ export default function AddHospitalStaffPage() {
               departmentId={formData.department_id}
               orderNumber={formData.order_number ? Number(formData.order_number) : null}
               employmentStatus={formData.employment_status || undefined}
+              healthFacilityId={formData.health_facility_id}
               onFieldChange={handleInputChange}
             />
 

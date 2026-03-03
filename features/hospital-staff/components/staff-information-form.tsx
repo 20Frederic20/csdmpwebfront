@@ -3,10 +3,10 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import CustomSelect from "@/components/ui/custom-select";
-import { MedicalSpecialty, HospitalDepartment, CreateHospitalStaffRequest, EmploymentStatus } from "@/features/hospital-staff";
+import { DepartmentSelect } from "@/features/departments/components/department-select";
+import { MedicalSpecialty, CreateHospitalStaffRequest, EmploymentStatus } from "@/features/hospital-staff";
 import { 
   getSpecialtyOptions, 
-  getDepartmentOptions,
   getEmploymentStatusOptions
 } from "@/features/hospital-staff/utils/hospital-staff.utils";
 
@@ -17,6 +17,7 @@ interface StaffInformationFormProps {
   departmentId: string;
   orderNumber?: number | null;
   employmentStatus?: EmploymentStatus;
+  healthFacilityId?: string;
   onFieldChange: (field: keyof CreateHospitalStaffRequest, value: string | number) => void;
 }
 
@@ -27,6 +28,7 @@ export function StaffInformationForm({
   departmentId,
   orderNumber,
   employmentStatus,
+  healthFacilityId,
   onFieldChange
 }: StaffInformationFormProps) {
   return (
@@ -79,12 +81,13 @@ export function StaffInformationForm({
         <Label htmlFor="department">
           Département <span className="text-red-500">*</span>
         </Label>
-        <CustomSelect
-          options={getDepartmentOptions()}
+        <DepartmentSelect
           value={departmentId}
-          onChange={(value) => onFieldChange('department_id', value as string)}
+          onChange={(value) => onFieldChange('department_id', value || '')}
           placeholder="Sélectionner un département"
+          healthFacilityId={healthFacilityId}
           height="h-10"
+          disabled={!healthFacilityId}
         />
       </div>
       
