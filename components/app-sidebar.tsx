@@ -53,6 +53,7 @@ import {
   Calendar,
   Link as LinkIcon,
   Building,
+  FileText as PrescriptionIcon,
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -495,6 +496,36 @@ export function AppSidebar() {
           icon: Plus,
           requiredPermission: {
             resource: "lab_results",
+            action: "create"
+          }
+        }
+      ]
+    },
+    {
+      title: "Prescriptions",
+      url: "/prescriptions",
+      icon: PrescriptionIcon,
+      isActive: pathname.startsWith("/prescriptions"),
+      requiredPermission: {
+        resource: "prescriptions",
+        action: "list"
+      },
+      items: [
+        {
+          title: "Liste des prescriptions",
+          url: "/prescriptions",
+          icon: PrescriptionIcon,
+          requiredPermission: {
+            resource: "prescriptions",
+            action: "list"
+          }
+        },
+        {
+          title: "Ajouter une prescription",
+          url: "/prescriptions/add",
+          icon: Plus,
+          requiredPermission: {
+            resource: "prescriptions",
             action: "create"
           }
         }
