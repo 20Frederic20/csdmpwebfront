@@ -1,3 +1,16 @@
+import { UUID } from "@/features/hospital-staff/types/hospital-staff.types";
+
+export interface Prescription {
+  medication_name: string;
+  dosage_instructions: string;
+  form?: string;
+  strength?: string;
+  duration_days?: number;
+  special_instructions?: string;
+  is_confidential: boolean;
+  is_active: boolean;
+}
+
 export enum ConsultationStatus {
   SCHEDULED = 'SCHEDULED',
   IN_PROGRESS = 'IN_PROGRESS',
@@ -36,6 +49,7 @@ export interface CreateConsultationRequest {
   billing_code?: string | null;
   amount_paid?: number | null;
   is_confidential?: boolean | null;
+  prescriptions?: Prescription[];
 }
 
 export interface UpdateConsultationRequest {
@@ -58,6 +72,7 @@ export interface UpdateConsultationRequest {
   billing_code?: string | null;
   amount_paid?: number | null;
   is_confidential?: boolean | null;
+  prescriptions?: Prescription[];
 }
 
 export interface CompleteConsultationRequest {
