@@ -20,7 +20,7 @@ interface PrescriptionFormProps {
   specialInstructions?: string;
   isConfidential: boolean;
   isActive: boolean;
-  onFieldChange: (field: keyof CreatePrescriptionRequest, value: string | number | boolean) => void;
+  onFieldChange: (field: keyof CreatePrescriptionRequest, value: string | number | boolean | string[]) => void;
 }
 
 export function PrescriptionForm({
@@ -143,22 +143,27 @@ export function PrescriptionForm({
       </div>
       
       <div className="flex items-center space-x-4">
-        <Switch
-          id="is_active"
-          checked={isActive}
-          onCheckedChange={(checked) => onFieldChange('is_active', checked)}
-          label="Active"
-        />
+        <div className="flex items-center space-x-2">
+          <Switch
+            id="is_active"
+            checked={isActive}
+            onCheckedChange={(checked) => onFieldChange('is_active', checked)}
+          />
+          <Label htmlFor="is_active">
+            Active
+          </Label>
+        </div>
         
-        <Label htmlFor="is_confidential">
-          Confidentiel
-        </Label>
-        <Switch
-          id="is_confidential"
-          checked={isConfidential}
-          onCheckedChange={(checked) => onFieldChange('is_confidential', checked)}
-          label="Confidentiel"
-        />
+        <div className="flex items-center space-x-2">
+          <Switch
+            id="is_confidential"
+            checked={isConfidential}
+            onCheckedChange={(checked) => onFieldChange('is_confidential', checked)}
+          />
+          <Label htmlFor="is_confidential">
+            Confidentiel
+          </Label>
+        </div>
       </div>
     </div>
   );

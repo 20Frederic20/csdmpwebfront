@@ -1,3 +1,4 @@
+import { UUID } from "@/features/hospital-staff/types/hospital-staff.types";
 import { 
   CreatePrescriptionRequest, 
   CreatePrescriptionResponse, 

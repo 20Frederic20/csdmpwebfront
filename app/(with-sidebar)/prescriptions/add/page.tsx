@@ -50,7 +50,7 @@ export default function AddPrescriptionPage() {
     }
   };
 
-  const handleFieldChange = (field: keyof CreatePrescriptionRequest, value: string | number | boolean) => {
+  const handleFieldChange = (field: keyof CreatePrescriptionRequest, value: string | number | boolean | string[]) => {
     setFormData(prev => ({
       ...prev,
       [field]: value,
