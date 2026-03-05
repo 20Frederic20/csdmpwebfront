@@ -65,13 +65,13 @@ export default function PrescriptionsPage() {
     setCurrentPage(page);
   };
 
-  const handleItemsPerPageChange = (value: string) => {
-    setItemsPerPage(parseInt(value));
+  const handleItemsPerPageChange = (value: number) => {
+    setItemsPerPage(value);
     setCurrentPage(1);
   };
 
-  const handleFiltersChange = (newFilters: typeof filters) => {
-    setFilters(newFilters);
+  const handleFiltersChange = (newFilters: Record<string, any>) => {
+    setFilters(newFilters as typeof filters);
     setCurrentPage(1);
   };
 
