@@ -16,6 +16,7 @@ import { DepartmentSelect } from "@/features/departments/components/department-s
 import { InsuranceCompanySelect } from "@/features/insurance-companies/components/insurance-company-select";
 import { HospitalStaffSelect } from "@/features/hospital-staff/components/hospital-staff-select";
 import { PatientSelect } from "@/features/patients/components/patient-select";
+import { PrescriptionsTable } from "@/features/consultations/components/prescriptions-table";
 import { 
   ArrowLeft, 
   Save, 
@@ -27,7 +28,7 @@ import {
   Weight,
   Ruler
 } from "lucide-react";
-import { Consultation, ConsultationStatus, UpdateConsultationRequest } from "@/features/consultations/types/consultations.types";
+import { Consultation, ConsultationStatus, UpdateConsultationRequest, Prescription } from "@/features/consultations/types/consultations.types";
 import { ConsultationService } from "@/features/consultations";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { 
@@ -80,6 +81,7 @@ export default function EditConsultationPage() {
     billing_code: "",
     amount_paid: undefined,
     is_confidential: false,
+    prescriptions: [],
   });
 
   const loadConsultation = async () => {
@@ -188,6 +190,7 @@ export default function EditConsultationPage() {
         billing_code: formData.billing_code || null,
         amount_paid: formData.amount_paid === null ? null : formData.amount_paid,
         is_confidential: formData.is_confidential || false,
+        prescriptions: formData.prescriptions || [],
         vital_signs: {
           temperature: formData.vital_signs?.temperature || null,
           pulse: formData.vital_signs?.pulse || null,
@@ -603,6 +606,13 @@ export default function EditConsultationPage() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Prescriptions médicales */}
+          <PrescriptionsTable
+            prescriptions={formData.prescriptions || []}
+            onChange={(prescriptions) => handleInputChange('prescriptions', prescriptions)}
+            disabled={saving}
+          />
 
           {/* Facturation */}
           <Card>
