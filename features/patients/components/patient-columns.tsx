@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/generic-columns";
 import Link from "next/link";
 
-export function getPatientActions(patient: Patient, canAccess: (resource: string, action: string) => boolean): ActionConfig[] {
+export function getPatientActions(patient: Patient, canAccess: (resource: string, action: string) => boolean, table?: any): ActionConfig[] {
   const actions: ActionConfig[] = [
     {
       label: "Voir",
@@ -39,7 +39,12 @@ export function getPatientActions(patient: Patient, canAccess: (resource: string
         label: "Supprimer",
         icon: <Trash2 className="h-4 w-4" />,
         onClick: () => {
-          // Sera géré par le meta de la table
+          if (table) {
+            const meta = (table.options.meta as any);
+            if (meta?.onOpenDeleteModal) {
+              meta.onOpenDeleteModal(patient);
+            }
+          }
         },
         variant: 'destructive',
       }
@@ -53,9 +58,32 @@ export function getPatientActions(patient: Patient, canAccess: (resource: string
         label: "Restaurer",
         icon: <RotateCcw className="h-4 w-4" />,
         onClick: () => {
-          // TODO: Implement restore functionality
+          if (table) {
+            const meta = (table.options.meta as any);
+            if (meta?.onRestorePatient) {
+              meta.onRestorePatient(patient);
+            }
+          }
         },
         variant: 'success',
+      }
+    );
+  }
+
+  if (patient.deleted_at && canAccess('patients', 'delete')) {
+    actions.push(
+      {
+        label: "Supprimer définitivement",
+        icon: <Trash2 className="h-4 w-4" />,
+        onClick: () => {
+          if (table) {
+            const meta = (table.options.meta as any);
+            if (meta?.onPermanentlyDeletePatient) {
+              meta.onPermanentlyDeletePatient(patient);
+            }
+          }
+        },
+        variant: 'destructive',
       }
     );
   }
@@ -149,7 +177,7 @@ export const patientColumns: ColumnDef<Patient>[] = [
       return (
         <DataTableActions
           row={row}
-          actions={getPatientActions(patient, meta?.canAccess || (() => true))}
+          actions={getPatientActions(patient, meta?.canAccess || (() => true), table)}
           canAccess={meta?.canAccess}
           resourceName="patients"
         />

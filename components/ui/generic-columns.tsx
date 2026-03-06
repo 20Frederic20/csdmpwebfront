@@ -70,7 +70,7 @@ export function DataTableActions({ row, actions, canAccess, resourceName = "reso
                 action.variant === 'success' ? 'text-green-600' :
                 action.variant === 'warning' ? 'text-yellow-600' : ''
               }`}
-              onClick={action.onClick ? () => action.onClick!(row.original) : undefined}
+              onClick={action.onClick ? () => action.onClick!() : undefined}
               disabled={action.disabled}
             >
               {action.icon && <span className="mr-2 h-4 w-4">{action.icon}</span>}
