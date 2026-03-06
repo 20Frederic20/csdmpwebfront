@@ -153,6 +153,15 @@ export function PatientForm({
     }
   }, [cities, patient]);
 
+  useEffect(() => {
+    if (users.length > 0 && patient?.owner_id) {
+      setFormData(prev => ({
+        ...prev,
+        owner_id: patient.owner_id,
+      }));
+    }
+  }, [users, patient]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -270,6 +279,19 @@ export function PatientForm({
         await PatientService.updatePatient(patient.id_, patientData, token || undefined);
         toast.success("Patient modifié avec succès");
       } else {
+        if (createUser && !patient) {
+          
+          (patientData as any).main_user = {
+            given_name: userData.given_name,
+            family_name: userData.family_name,
+            health_id: userData.health_id,
+            password: userData.password,
+            roles: selectedRoles,
+          };
+
+          patientData.is_main = true;
+        }
+        
         await PatientService.createPatient(patientData, token || undefined);
         toast.success("Patient créé avec succès");
       }
