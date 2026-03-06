@@ -79,7 +79,7 @@ export function PrescriptionForm({
           rows={3}
           required
           className="h-10"
-        />
+        />  
       </div>
       
       <div className="space-y-2">

@@ -10,6 +10,7 @@ interface PatientOwnerSelectorProps {
   required?: boolean;
   label?: string;
   placeholder?: string;
+  showSelector?: boolean; // Nouvelle prop pour contrôler l'affichage
 }
 
 export function PatientOwnerSelector({
@@ -19,8 +20,14 @@ export function PatientOwnerSelector({
   isLoading,
   required = false,
   label = "Propriétaire du patient",
-  placeholder = "Sélectionner un propriétaire"
+  placeholder = "Sélectionner un propriétaire",
+  showSelector = true // Par défaut, affiche le sélecteur
 }: PatientOwnerSelectorProps) {
+  // Si showSelector est false, ne rien afficher
+  if (!showSelector) {
+    return null;
+  }
+
   return (
     <UserSelector
       users={users}
