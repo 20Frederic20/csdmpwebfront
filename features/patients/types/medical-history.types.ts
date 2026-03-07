@@ -1,15 +1,15 @@
 export interface PatientMedicalHistory {
-  id: string;
-  patient_id: string;
-  category: 'medical' | 'surgical' | 'obstetric';
+  id_: string;
+  category: string;
   description: string;
   onset_date: string;
-  status: 'active' | 'resolved' | 'chronic';
-  code: string | null;
-  severity: 'mild' | 'moderate' | 'severe';
-  notes: string | null;
-  resolution_date: string | null;
+  status: string;
+  code?: string;
+  severity?: string;
+  notes?: string;
+  resolution_date?: string;
   is_active: boolean;
+  deleted_at?: string;
 }
 
 export interface CreateMedicalHistoryRequest {

@@ -1,16 +1,16 @@
 export interface PatientLifestyle {
   id: string;
-  patient_id: string;
-  tobacco_status: 'never' | 'former' | 'current';
-  alcohol_consumption: 'none' | 'occasional' | 'frequent';
+  tobacco_status: 'non-smoker' | 'smoker' | 'former-smoker';
+  alcohol_consumption: 'none' | 'moderate' | 'heavy';
   physical_activity: 'sedentary' | 'moderate' | 'active';
-  assessment_date: string | null;
-  tobacco_per_week: number | null;
-  alcohol_units_per_week: number | null;
-  dietary_regime: string | null;
-  occupational_risks: string | null;
-  notes: string | null;
+  assessment_date?: string;
+  tobacco_per_week?: number;
+  alcohol_units_per_week?: number;
+  dietary_regime?: string;
+  occupational_risks?: string;
+  notes?: string;
   is_active: boolean;
+  deleted_at?: string;
 }
 
 export interface CreateLifestyleRequest {
