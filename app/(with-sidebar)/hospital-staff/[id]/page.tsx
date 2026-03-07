@@ -5,23 +5,23 @@ import { useParams, useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { 
-  ArrowLeft, 
-  Edit, 
-  Trash2, 
-  UserCheck, 
-  Building2, 
-  Calendar, 
+import {
+  ArrowLeft,
+  Edit,
+  Trash2,
+  UserCheck,
+  Building2,
+  Calendar,
   Award,
   MapPin,
   Stethoscope
 } from "lucide-react";
 import { toast } from "sonner";
-import { HospitalStaff } from "@/features/hospital-staff";
-import { HospitalStaffService } from "@/features/hospital-staff";
+import { HospitalStaff, HospitalStaffService } from "@/features/hospital-staff";
+import { useHospitalStaffMutations } from "@/features/hospital-staff/hooks/use-hospital-staff-mutations";
 import { useAuthToken } from "@/hooks/use-auth-token";
-import { 
-  formatSpecialty, 
+import {
+  formatSpecialty,
   formatDepartment
 } from "@/features/hospital-staff/utils/hospital-staff.utils";
 
@@ -33,21 +33,22 @@ export default function HospitalStaffDetailPage() {
   const [loading, setLoading] = useState(true);
 
   const staffId = params.id as string;
+  const { toggleStatus, deleteStaff } = useHospitalStaffMutations();
+
+  const loadStaff = async () => {
+    try {
+      const staffData = await HospitalStaffService.getHospitalStaffById(staffId, token || undefined);
+      setStaff(staffData);
+    } catch (error: any) {
+      console.error('Error loading staff:', error);
+      toast.error(error.message || "Erreur lors du chargement du personnel");
+      router.push('/hospital-staff');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const loadStaff = async () => {
-      try {
-        const staffData = await HospitalStaffService.getHospitalStaffById(staffId, token || undefined);
-        setStaff(staffData);
-      } catch (error: any) {
-        console.error('Error loading staff:', error);
-        toast.error(error.message || "Erreur lors du chargement du personnel");
-        router.push('/hospital-staff');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     if (staffId) {
       loadStaff();
     }
@@ -55,28 +56,25 @@ export default function HospitalStaffDetailPage() {
 
   const handleToggleStatus = async () => {
     if (!staff) return;
-    
+
     try {
-      const updatedStaff = await HospitalStaffService.toggleHospitalStaffStatus(staff.id_, token || undefined);
-      setStaff(updatedStaff);
-      toast.success(`Personnel ${updatedStaff.is_active ? 'activé' : 'désactivé'} avec succès`);
+      await toggleStatus(staff.id_);
+      // Recharger les données pour mettre à jour l'affichage local
+      await loadStaff();
     } catch (error: any) {
-      console.error('Error toggling status:', error);
-      toast.error(error.message || "Erreur lors du changement de statut");
+      // Erreur gérée dans le hook
     }
   };
 
   const handleDelete = async () => {
     if (!staff) return;
-    
+
     if (window.confirm('Êtes-vous sûr de vouloir supprimer ce membre du personnel ?')) {
       try {
-        await HospitalStaffService.deleteHospitalStaff(staff.id_, token || undefined);
-        toast.success('Personnel supprimé avec succès');
+        await deleteStaff(staff.id_);
         router.push('/hospital-staff');
       } catch (error: any) {
-        console.error('Error deleting staff:', error);
-        toast.error(error.message || "Erreur lors de la suppression");
+        // Erreur gérée dans le hook
       }
     }
   };
@@ -114,8 +112,8 @@ export default function HospitalStaffDetailPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={() => router.push('/hospital-staff')}
             className="cursor-pointer"
           >
@@ -134,16 +132,16 @@ export default function HospitalStaffDetailPage() {
             <Edit className="mr-2 h-4 w-4" />
             Modifier
           </Button>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={handleToggleStatus}
             className="cursor-pointer"
           >
             <UserCheck className="mr-2 h-4 w-4" />
             {staff.is_active ? 'Désactiver' : 'Activer'}
           </Button>
-          <Button 
-            variant="destructive" 
+          <Button
+            variant="destructive"
             onClick={handleDelete}
             className="cursor-pointer"
           >
@@ -183,7 +181,7 @@ export default function HospitalStaffDetailPage() {
                 <div>
                   <label className="text-md font-medium text-muted-foreground">Statut</label>
                   <div>
-                    <Badge 
+                    <Badge
                       variant={staff.is_active ? "default" : "secondary"}
                       className={staff.is_active ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}
                     >
@@ -246,23 +244,22 @@ export default function HospitalStaffDetailPage() {
             <CardContent>
               <div className="space-y-4">
                 <div className="text-center">
-                  <div className={`w-16 h-16 rounded-full mx-auto mb-2 flex items-center justify-center ${
-                    staff.is_active ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
-                  }`}>
+                  <div className={`w-16 h-16 rounded-full mx-auto mb-2 flex items-center justify-center ${staff.is_active ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+                    }`}>
                     {staff.is_active ? (
                       <UserCheck className="h-8 w-8" />
                     ) : (
                       <UserCheck className="h-8 w-8" />
                     )}
                   </div>
-                  <Badge 
+                  <Badge
                     variant={staff.is_active ? "default" : "secondary"}
                     className={staff.is_active ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}
                   >
                     {staff.is_active ? 'Actif' : 'Inactif'}
                   </Badge>
                 </div>
-                <Button 
+                <Button
                   onClick={handleToggleStatus}
                   className="w-full cursor-pointer"
                   variant={staff.is_active ? "destructive" : "default"}
@@ -287,8 +284,8 @@ export default function HospitalStaffDetailPage() {
                 <MapPin className="mr-2 h-4 w-4" />
                 Voir l'établissement
               </Button>
-              <Button 
-                variant="destructive" 
+              <Button
+                variant="destructive"
                 className="w-full cursor-pointer"
                 onClick={handleDelete}
               >

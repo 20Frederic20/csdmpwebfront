@@ -9,9 +9,10 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { CreateHospitalStaffRequest, EmploymentStatus, MedicalSpecialty, HospitalDepartment } from "@/features/hospital-staff";
 import { HospitalStaffService } from "@/features/hospital-staff/services/hospital-staff.service";
-import { 
+import {
   getEmploymentStatusOptions
 } from "@/features/hospital-staff/utils/hospital-staff.utils";
+import { useHospitalStaffMutations } from "@/features/hospital-staff/hooks/use-hospital-staff-mutations";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { UserRole } from "@/features/users/types/user.types";
 import { toast } from "sonner";
@@ -28,7 +29,6 @@ import { StaffInformationForm } from "@/features/hospital-staff/components/staff
 
 export default function AddHospitalStaffPage() {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
   const [createUser, setCreateUser] = useState(true);
   const [healthFacilities, setHealthFacilities] = useState<HealthFacility[]>([]);
   const [users, setUsers] = useState<UserType[]>([]);
@@ -72,14 +72,14 @@ export default function AddHospitalStaffPage() {
           };
           const response = await HealthFacilityService.getHealthFacilities(params, token || undefined);
           allFacilities = [...allFacilities, ...(response.data || [])];
-          
+
           if (response.data && response.data.length < limit) {
             hasMore = false;
           } else {
             offset += limit;
           }
         }
-        
+
         setHealthFacilities(allFacilities);
         console.log('Health facilities loaded:', allFacilities.length);
       } catch (error) {
@@ -111,14 +111,14 @@ export default function AddHospitalStaffPage() {
           };
           const response = await UserService.getUsers(params, token || undefined);
           allUsers = [...allUsers, ...(response.data || [])];
-          
+
           if (response.data && response.data.length < limit) {
             hasMore = false;
           } else {
             offset += limit;
           }
         }
-        
+
         setUsers(allUsers);
         console.log('Users loaded:', allUsers.length);
       } catch (error) {
@@ -132,9 +132,11 @@ export default function AddHospitalStaffPage() {
     loadUsers();
   }, [token]);
 
+  const { createStaff, isCreating } = useHospitalStaffMutations();
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validation
     if (!formData.health_facility_id.trim()) {
       toast.error("L'établissement de santé est requis");
@@ -148,7 +150,7 @@ export default function AddHospitalStaffPage() {
       toast.error("L'expérience doit être entre 0 et 70 ans");
       return;
     }
-    
+
     if (createUser) {
       if (!formData.user_data?.given_name?.trim()) {
         toast.error("Le prénom est requis");
@@ -179,7 +181,6 @@ export default function AddHospitalStaffPage() {
       return;
     }
 
-    setLoading(true);
     try {
       const staffData: CreateHospitalStaffRequest = {
         health_facility_id: formData.health_facility_id,
@@ -200,16 +201,13 @@ export default function AddHospitalStaffPage() {
         } : undefined,
       };
 
-      await HospitalStaffService.createHospitalStaff(staffData, token || undefined);
-      toast.success("Membre du personnel créé avec succès");
-      
-      // Rediriger vers la liste
+      await createStaff(staffData);
+
+      // La redirection se fait après le succès (mutateAsync)
       router.push('/hospital-staff');
-    } catch (error: any) {
-      console.error('Error creating hospital staff:', error);
-      toast.error(error.message || "Erreur lors de la création du personnel");
-    } finally {
-      setLoading(false);
+    } catch (error) {
+      // Les erreurs et les toasts sont gérés dans le hook
+      console.error('Submission failed:', error);
     }
   };
 
@@ -268,8 +266,8 @@ export default function AddHospitalStaffPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={() => router.push('/hospital-staff')}
             className="cursor-pointer"
           >
@@ -284,8 +282,8 @@ export default function AddHospitalStaffPage() {
           </div>
         </div>
         <div className="flex gap-2">
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={resetForm}
             className="cursor-pointer"
           >
@@ -302,9 +300,9 @@ export default function AddHospitalStaffPage() {
             <CardTitle>Type de création</CardTitle>
           </CardHeader>
           <CardContent>
-            <CreationTypeSelector 
-              createUser={createUser} 
-              onCreateUserChange={setCreateUser} 
+            <CreationTypeSelector
+              createUser={createUser}
+              onCreateUserChange={setCreateUser}
             />
           </CardContent>
         </Card>
@@ -334,7 +332,7 @@ export default function AddHospitalStaffPage() {
               onFieldChange={handleInputChange}
             />
 
-            </CardContent>
+          </CardContent>
         </Card>
 
         {/* Utilisateur existant */}
@@ -386,11 +384,11 @@ export default function AddHospitalStaffPage() {
               </Button>
               <Button
                 type="submit"
-                disabled={loading}
+                disabled={isCreating}
                 className="cursor-pointer"
               >
                 <Save className="mr-2 h-4 w-4" />
-                {loading ? "Création en cours..." : "Créer le membre"}
+                {isCreating ? "Création en cours..." : "Créer le membre"}
               </Button>
             </div>
           </CardContent>

@@ -8,11 +8,12 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { HospitalStaff, UpdateHospitalStaffRequest, MedicalSpecialty, HospitalDepartment, EmploymentStatus } from "@/features/hospital-staff";
 import { HospitalStaffService } from "@/features/hospital-staff/services/hospital-staff.service";
-import { 
+import {
   getEmploymentStatusOptions,
   formatSpecialty,
   formatDepartment
 } from "@/features/hospital-staff/utils/hospital-staff.utils";
+import { useHospitalStaffMutations } from "@/features/hospital-staff/hooks/use-hospital-staff-mutations";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { toast } from "sonner";
 import { ArrowLeft, Save, X } from "lucide-react";
@@ -29,7 +30,6 @@ export default function EditHospitalStaffPage() {
   const params = useParams();
   const router = useRouter();
   const { token } = useAuthToken();
-  const [loading, setLoading] = useState(false);
   const [loadingStaff, setLoadingStaff] = useState(true);
   const [healthFacilities, setHealthFacilities] = useState<HealthFacility[]>([]);
   const [users, setUsers] = useState<UserType[]>([]);
@@ -56,7 +56,7 @@ export default function EditHospitalStaffPage() {
       try {
         const staffData = await HospitalStaffService.getHospitalStaffById(staffId, token || undefined);
         setStaff(staffData);
-        
+
         // Initialiser le formulaire avec les données existantes
         setFormData({
           health_facility_id: staffData.health_facility_id,
@@ -97,14 +97,14 @@ export default function EditHospitalStaffPage() {
           };
           const response = await HealthFacilityService.getHealthFacilities(params, token || undefined);
           allFacilities = [...allFacilities, ...(response.data || [])];
-          
+
           if (response.data && response.data.length < limit) {
             hasMore = false;
           } else {
             offset += limit;
           }
         }
-        
+
         setHealthFacilities(allFacilities);
       } catch (error) {
         console.error('Error loading health facilities:', error);
@@ -135,14 +135,14 @@ export default function EditHospitalStaffPage() {
           };
           const response = await UserService.getUsers(params, token || undefined);
           allUsers = [...allUsers, ...(response.data || [])];
-          
+
           if (response.data && response.data.length < limit) {
             hasMore = false;
           } else {
             offset += limit;
           }
         }
-        
+
         setUsers(allUsers);
       } catch (error) {
         console.error('Error loading users:', error);
@@ -155,9 +155,11 @@ export default function EditHospitalStaffPage() {
     loadUsers();
   }, [token]);
 
+  const { updateStaff, isUpdating } = useHospitalStaffMutations();
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validation
     if (formData.matricule && !formData.matricule.trim()) {
       toast.error("Le matricule ne peut pas être vide");
@@ -168,11 +170,10 @@ export default function EditHospitalStaffPage() {
       return;
     }
 
-    setLoading(true);
     try {
       // Filtrer les valeurs null pour n'envoyer que les champs modifiés
       const updateData: UpdateHospitalStaffRequest = {};
-      
+
       if (formData.health_facility_id !== staff?.health_facility_id) {
         updateData.health_facility_id = formData.health_facility_id;
       }
@@ -197,18 +198,14 @@ export default function EditHospitalStaffPage() {
       if (formData.employment_status !== staff?.employment_status) {
         updateData.employment_status = formData.employment_status;
       }
-      // is_active n'est pas inclus dans le formulaire, donc pas de modification
-      
-      await HospitalStaffService.updateHospitalStaff(staffId, updateData, token || undefined);
-      toast.success("Membre du personnel mis à jour avec succès");
-      
-      // Rediriger vers la page de détail
+
+      await updateStaff({ id: staffId, data: updateData });
+
+      // La redirection se fait après le succès (mutateAsync)
       router.push(`/hospital-staff/${staffId}`);
-    } catch (error: any) {
-      console.error('Error updating hospital staff:', error);
-      toast.error(error.message || "Erreur lors de la mise à jour du personnel");
-    } finally {
-      setLoading(false);
+    } catch (error) {
+      // Les erreurs et les toasts sont gérés dans le hook
+      console.error('Update failed:', error);
     }
   };
 
@@ -260,8 +257,8 @@ export default function EditHospitalStaffPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={() => router.push(`/hospital-staff/${staffId}`)}
             className="cursor-pointer"
           >
@@ -276,8 +273,8 @@ export default function EditHospitalStaffPage() {
           </div>
         </div>
         <div className="flex gap-2">
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={resetForm}
             className="cursor-pointer"
           >
@@ -348,11 +345,11 @@ export default function EditHospitalStaffPage() {
               </Button>
               <Button
                 type="submit"
-                disabled={loading}
+                disabled={isUpdating}
                 className="cursor-pointer"
               >
                 <Save className="mr-2 h-4 w-4" />
-                {loading ? "Mise à jour en cours..." : "Mettre à jour"}
+                {isUpdating ? "Mise à jour en cours..." : "Mettre à jour"}
               </Button>
             </div>
           </CardContent>

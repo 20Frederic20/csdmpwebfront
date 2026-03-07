@@ -11,6 +11,7 @@ import Link from "next/link";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { usePermissionsContext } from "@/contexts/permissions-context";
 import { useHospitalStaffs } from "@/features/hospital-staff/hooks/use-hospital-staffs";
+import { useHospitalStaffMutations } from "@/features/hospital-staff/hooks/use-hospital-staff-mutations";
 import { DeleteHospitalStaffModal } from "@/features/hospital-staff/components/delete-hospital-staff-modal";
 import { PermanentDeleteHospitalStaffModal } from "@/features/hospital-staff/components/permanent-delete-hospital-staff-modal";
 import { DataTableWithFilters } from "@/components/ui/data-table-with-filters";
@@ -66,7 +67,15 @@ export default function HospitalStaffPage() {
     refetch
   } = useHospitalStaffs(params);
 
+  const {
+    deleteStaff,
+    permanentDeleteStaff,
+    restoreStaff,
+    toggleStatus
+  } = useHospitalStaffMutations();
+
   const staff = staffData?.data || [];
+
   const total = staffData?.total || 0;
   const error = fetchError ? (fetchError as Error).message : null;
 
@@ -145,49 +154,33 @@ export default function HospitalStaffPage() {
 
   const handleStaffSoftDeleted = async (id: string) => {
     try {
-      await HospitalStaffService.deleteHospitalStaff(id, token || undefined);
-      toast.success('Personnel supprimé avec succès');
-      refetch();
-    } catch (error: any) {
-      toast.error(error.message || "Erreur lors de la suppression");
+      await deleteStaff(id);
+    } catch (error) {
+      // Les toasts sont gérés dans le hook
     }
   };
 
   const handleStaffPermanentlyDeleted = async (id: string) => {
     try {
-      await HospitalStaffService.permanentlyDeleteHospitalStaff(id, token || undefined);
-      toast.success('Personnel supprimé définitivement');
-      refetch();
-    } catch (error: any) {
-      console.error('Error permanently deleting staff:', error);
-      toast.error(error.message || "Erreur lors de la suppression définitive");
+      await permanentDeleteStaff(id);
+    } catch (error) {
+      // Les toasts sont gérés dans le hook
     }
   };
 
   const handleStaffRestored = async (id: string) => {
     try {
-      await HospitalStaffService.restoreHospitalStaff(id, token || undefined);
-      toast.success('Personnel restauré avec succès');
-      refetch();
-    } catch (error: any) {
-      console.error('Error restoring staff:', error);
-      toast.error(error.message || "Erreur lors de la restauration");
+      await restoreStaff(id);
+    } catch (error) {
+      // Les toasts sont gérés dans le hook
     }
   };
 
   const handleToggleStatus = async (id: string) => {
     try {
-      const updatedStaff = await HospitalStaffService.toggleHospitalStaffStatus(id, token || undefined);
-
-      if (updatedStaff && typeof updatedStaff.is_active === 'boolean') {
-        toast.success(`Personnel ${updatedStaff.is_active ? 'activé' : 'désactivé'} avec succès`);
-        refetch();
-      } else {
-        throw new Error('Réponse invalide du serveur');
-      }
-    } catch (error: any) {
-      console.error('Error toggling staff status:', error);
-      toast.error(error.message || "Erreur lors du changement de statut");
+      await toggleStatus(id);
+    } catch (error) {
+      // Les toasts sont gérés dans le hook
     }
   };
 
