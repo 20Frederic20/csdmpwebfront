@@ -146,30 +146,8 @@ export default function HospitalStaffPage() {
   const handleStaffSoftDeleted = async (id: string) => {
     try {
       await HospitalStaffService.deleteHospitalStaff(id, token || undefined);
-
-      const canViewDeleted = canAccess('hospital_staffs', 'delete');
-
-      if (canViewDeleted) {
-        setStaff(prevStaff => {
-          const updated = prevStaff.map(member =>
-            member.id_ === id ? {
-              ...member,
-              deleted_at: new Date().toISOString(),
-              is_active: false
-            } : member
-          );
-          return updated;
-        });
-        toast.success('Personnel supprimé avec succès');
-      } else {
-        setStaff(prevStaff => {
-          const filtered = prevStaff.filter(member => member.id_ !== id);
-          console.log('Staff après filtrage:', filtered);
-          return filtered;
-        });
-        setTotal(prevTotal => prevTotal - 1);
-        toast.success('Personnel supprimé avec succès');
-      }
+      toast.success('Personnel supprimé avec succès');
+      refetch();
     } catch (error: any) {
       toast.error(error.message || "Erreur lors de la suppression");
     }
@@ -178,12 +156,8 @@ export default function HospitalStaffPage() {
   const handleStaffPermanentlyDeleted = async (id: string) => {
     try {
       await HospitalStaffService.permanentlyDeleteHospitalStaff(id, token || undefined);
-
-      // Retirer de la liste
-      setStaff(prevStaff => prevStaff.filter(member => member.id_ !== id));
-      setTotal(prevTotal => prevTotal - 1);
-
       toast.success('Personnel supprimé définitivement');
+      refetch();
     } catch (error: any) {
       console.error('Error permanently deleting staff:', error);
       toast.error(error.message || "Erreur lors de la suppression définitive");
@@ -192,21 +166,9 @@ export default function HospitalStaffPage() {
 
   const handleStaffRestored = async (id: string) => {
     try {
-      const restoredStaff = await HospitalStaffService.restoreHospitalStaff(id, token || undefined);
-
-      // Mettre à jour l'état localement sans recharger
-      setStaff(prevStaff =>
-        prevStaff.map(member =>
-          member.id_ === id ? {
-            ...member,
-            ...restoredStaff,
-            deleted_at: null,
-            is_active: true
-          } : member
-        )
-      );
-
+      await HospitalStaffService.restoreHospitalStaff(id, token || undefined);
       toast.success('Personnel restauré avec succès');
+      refetch();
     } catch (error: any) {
       console.error('Error restoring staff:', error);
       toast.error(error.message || "Erreur lors de la restauration");
@@ -218,14 +180,8 @@ export default function HospitalStaffPage() {
       const updatedStaff = await HospitalStaffService.toggleHospitalStaffStatus(id, token || undefined);
 
       if (updatedStaff && typeof updatedStaff.is_active === 'boolean') {
-        // Mettre à jour l'état localement sans recharger toute la liste
-        setStaff(prevStaff =>
-          prevStaff.map(member =>
-            member.id_ === id ? { ...updatedStaff, id_: member.id_ } : member
-          )
-        );
-
         toast.success(`Personnel ${updatedStaff.is_active ? 'activé' : 'désactivé'} avec succès`);
+        refetch();
       } else {
         throw new Error('Réponse invalide du serveur');
       }
