@@ -3,6 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { FileText, Calendar, AlertCircle } from "lucide-react";
+import { TabActionsButton } from "./tab-actions-button";
 
 interface MedicalHistoryItem {
   id_: string;
@@ -17,9 +18,10 @@ interface MedicalHistoryItem {
 interface MedicalHistoryTabProps {
   medicalHistory?: MedicalHistoryItem[];
   loading?: boolean;
+  onAdd?: () => void;
 }
 
-export function MedicalHistoryTab({ medicalHistory = [], loading = false }: MedicalHistoryTabProps) {
+export function MedicalHistoryTab({ medicalHistory = [], loading = false, onAdd = () => {} }: MedicalHistoryTabProps) {
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
       case 'active':
@@ -89,51 +91,56 @@ export function MedicalHistoryTab({ medicalHistory = [], loading = false }: Medi
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <FileText className="h-5 w-5" />
-          Historique médical ({medicalHistory.length})
+        <CardTitle className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <FileText className="h-5 w-5" />
+            Historique médical ({medicalHistory.length})
+          </div>
+          <TabActionsButton onAdd={onAdd || (() => {})} label="Ajouter un antécédent" />
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
-          {medicalHistory.map((item) => (
-            <div
-              key={item.id_}
-              className="p-4 rounded-lg border border-gray-200"
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <h4 className="font-semibold text-lg">{item.condition}</h4>
-                    <Badge variant="outline" className={getStatusColor(item.status)}>
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse border border-gray-200">
+            <thead>
+              <tr className="bg-gray-50">
+                <th className="border border-gray-200 px-4 py-3 text-left font-semibold text-sm">Condition</th>
+                <th className="border border-gray-200 px-4 py-3 text-left font-semibold text-sm">Date de diagnostic</th>
+                <th className="border border-gray-200 px-4 py-3 text-left font-semibold text-sm">Statut</th>
+                <th className="border border-gray-200 px-4 py-3 text-left font-semibold text-sm">Sévérité</th>
+                <th className="border border-gray-200 px-4 py-3 text-left font-semibold text-sm">Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              {medicalHistory.map((item) => (
+                <tr key={item.id_} className="hover:bg-gray-50">
+                  <td className="border border-gray-200 px-4 py-3">
+                    <div className="font-medium">{item.condition}</div>
+                  </td>
+                  <td className="border border-gray-200 px-4 py-3">
+                    {item.diagnosis_date ? new Date(item.diagnosis_date).toLocaleDateString('fr-FR') : '-'}
+                  </td>
+                  <td className="border border-gray-200 px-4 py-3">
+                    <Badge className={getStatusColor(item.status)}>
                       {item.status}
                     </Badge>
+                  </td>
+                  <td className="border border-gray-200 px-4 py-3">
                     {item.severity && (
                       <Badge className={getSeverityColor(item.severity)}>
                         {item.severity}
                       </Badge>
                     )}
-                  </div>
-                  
-                  <div className="space-y-2">
-                    {item.diagnosis_date && (
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Calendar className="h-4 w-4" />
-                        <span>Diagnostic: {new Date(item.diagnosis_date).toLocaleDateString('fr-FR')}</span>
-                      </div>
-                    )}
-                    
-                    {item.description && (
-                      <div>
-                        <p className="text-sm font-medium">Description:</p>
-                        <p className="text-sm">{item.description}</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
+                  </td>
+                  <td className="border border-gray-200 px-4 py-3">
+                    <div className="max-w-xs truncate" title={item.description}>
+                      {item.description || '-'}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </CardContent>
     </Card>
