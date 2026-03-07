@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { DepartmentsResponse, Department, DepartmentFilterParams } from "@/features/departments/types/departments.types";
 import { DepartmentService } from "@/features/departments/services/departments.service";
 import { useAuthToken } from "@/hooks/use-auth-token";
-import { usePermissions } from "@/hooks/use-permissions";
+import { usePermissionsContext } from "@/contexts/permissions-context";
 import Link from "next/link";
 import { DataTableWithFilters } from "@/components/ui/data-table-with-filters";
 import { DeleteDepartmentModal } from "@/features/departments/components/delete-department-modal";
@@ -30,7 +30,7 @@ export default function DepartmentsPage() {
   });
   const [selectedRows, setSelectedRows] = useState<Record<string, boolean>>({});
   const { token } = useAuthToken();
-  const { canAccess } = usePermissions();
+  const { canAccess } = usePermissionsContext();
 
   // États pour les modals
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
