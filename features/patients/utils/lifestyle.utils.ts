@@ -82,7 +82,7 @@ export function getPhysicalActivityBadge(activity: string): { label: string; var
 export function getLifestyleSummary(lifestyle: PatientLifestyle): string[] {
   const summary: string[] = [];
   
-  if (lifestyle.tobacco_status !== 'never') {
+  if (lifestyle.tobacco_status !== 'non-smoker') {
     summary.push(formatTobaccoStatus(lifestyle.tobacco_status));
   }
   

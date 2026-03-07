@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { PatientsResponse, Patient } from "@/features/patients";
 import { PatientService } from "@/features/patients";
 import { useAuthToken } from "@/hooks/use-auth-token";
-import { usePermissions } from "@/hooks/use-permissions";
+import { usePermissionsContext } from "@/contexts/permissions-context";
 import Link from "next/link";
 import { DeletePatientModal } from "@/features/patients/components/delete-patient-modal";
 import { RestorePatientModal } from "@/features/patients/components/restore-patient-modal";
@@ -30,7 +30,7 @@ export default function PatientsPage() {
   });
   const [selectedRows, setSelectedRows] = useState<Record<string, boolean>>({});
   const { token } = useAuthToken();
-  const { canAccess } = usePermissions();
+  const { canAccess } = usePermissionsContext();
 
   // États pour les modals
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);

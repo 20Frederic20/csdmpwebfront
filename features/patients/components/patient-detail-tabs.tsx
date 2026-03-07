@@ -54,7 +54,10 @@ export function PatientDetailTabs({ patient }: PatientDetailTabsProps) {
       count: patient.medical_histories?.length || 0,
       component: (
         <MedicalHistoryTab 
-          medicalHistory={patient.medical_histories}
+          medicalHistory={patient.medical_histories?.map(h => ({
+            ...h,
+            condition: h.description || h.category
+          }))}
           loading={false}
           onAdd={handleAddMedicalHistory}
         />

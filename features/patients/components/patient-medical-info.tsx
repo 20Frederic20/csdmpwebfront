@@ -18,7 +18,7 @@ import { useAuthToken } from "@/hooks/use-auth-token";
 // import { AddVaccinationModal } from "./add-vaccination-modal";
 // import { AddFamilyHistoryModal } from "./add-family-history-modal";
 import { LifestyleSection } from "./lifestyle-section";
-import { MedicalHistorySection } from "./medical-history-section";
+// import { MedicalHistorySection } from "./medical-history-section";
 
 interface PatientMedicalInfoProps {
   patientId: string;
@@ -83,12 +83,9 @@ export function PatientMedicalInfo({ patientId }: PatientMedicalInfoProps) {
       icon: <FileText className="h-5 w-5" />,
       key: 'medicalHistory',
       component: (
-        <MedicalHistorySection 
-          medicalHistory={medicalHistory}
-          loading={loading}
-          patientId={patientId}
-          onMedicalHistoryAdded={() => loadMedicalHistory()}
-        />
+        <div className="text-center py-8">
+          <p className="text-gray-500">Section antécédents médicaux en cours de développement</p>
+        </div>
       )
     },
     {

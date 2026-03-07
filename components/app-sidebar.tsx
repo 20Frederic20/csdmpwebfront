@@ -57,11 +57,12 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { usePermissions } from "@/hooks/use-permissions"
+import { usePermissionsContext } from "@/contexts/permissions-context"
 
 function NavMain({
   items,
-  loading
+  loading,
+  canAccess
 }: {
   items: {
     title: string
@@ -83,8 +84,8 @@ function NavMain({
     }
   }[]
   loading?: boolean
+  canAccess?: (resource: string, action: string) => boolean
 }) {
-  const { canAccess } = usePermissions()
   const pathname = usePathname();
   
   // Afficher le menu même pendant le chargement, mais sans filtrer les permissions
@@ -138,13 +139,13 @@ function NavMain({
       <SidebarMenu>
         {items.map((item) => {
           // Filter menu items based on permissions
-          if (item.requiredPermission && !canAccess(item.requiredPermission.resource, item.requiredPermission.action)) {
+          if (item.requiredPermission && canAccess && !canAccess(item.requiredPermission.resource, item.requiredPermission.action)) {
             return null;
           }
           
           // Filter sub-items based on permissions
           const filteredSubItems = item.items ? item.items.filter(subItem => {
-            if (subItem.requiredPermission && !canAccess(subItem.requiredPermission.resource, subItem.requiredPermission.action)) {
+            if (subItem.requiredPermission && canAccess && !canAccess(subItem.requiredPermission.resource, subItem.requiredPermission.action)) {
               return false;
             }
             return true;
@@ -197,8 +198,7 @@ function NavMain({
 
 export function AppSidebar() {
   const pathname = usePathname()
-  const { loading } = usePermissions()
-  const { canAccess } = usePermissions()
+  const { loading, canAccess } = usePermissionsContext()
 
   const menuItems = [
     {
@@ -574,7 +574,7 @@ export function AppSidebar() {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={menuItems} loading={loading} />
+        <NavMain items={menuItems} loading={loading} canAccess={canAccess} />
       </SidebarContent>
       <SidebarFooter />
     </Sidebar>

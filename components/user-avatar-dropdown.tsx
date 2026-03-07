@@ -18,49 +18,14 @@ import {
   ChevronDown 
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { PermissionsService } from "@/features/auth/services/permissions.service";
 import { useAuthToken } from "@/hooks/use-auth-token";
-import { usePermissions } from "@/hooks/use-permissions";
+import { usePermissionsContext } from "@/contexts/permissions-context";
 
-interface User {
-  id: string;
-  given_name: string;
-  family_name: string;
-  email: string;
-  roles: any[];
-  permissions: any[];
-}
 
 export function UserAvatarDropdown() {
   const { clearToken } = useAuthToken();
-  const { clearPermissionsCache } = usePermissions();
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { clearPermissionsCache, user, loading } = usePermissionsContext();
   const router = useRouter();
-
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        console.log('UserAvatarDropdown: Fetching user permissions');
-        
-        const userData = await PermissionsService.getUserPermissions();
-        console.log('UserAvatarDropdown: User data received:', userData);
-        
-        // Vérifier si l'utilisateur a des données valides
-        if (userData && userData.id && userData.given_name) {
-          setUser(userData);
-        } else {
-          console.log('UserAvatarDropdown: No valid user data received');
-        }
-      } catch (error) {
-        console.error('UserAvatarDropdown: Error fetching user:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUser();
-  }, []);
 
   const handleLogout = () => {
     // Supprimer le token du localStorage
@@ -81,12 +46,6 @@ export function UserAvatarDropdown() {
     router.push('/settings');
   };
 
-  if (loading) {
-    return (
-      <div className="h-8 w-8 rounded-full bg-gray-200 animate-pulse" />
-    );
-  }
-
   if (!user) {
     return (
       <Button 
@@ -96,6 +55,12 @@ export function UserAvatarDropdown() {
       >
         Se connecter
       </Button>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="h-8 w-8 rounded-full bg-gray-200 animate-pulse" />
     );
   }
 

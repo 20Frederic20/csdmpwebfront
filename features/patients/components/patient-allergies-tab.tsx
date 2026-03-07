@@ -154,7 +154,7 @@ export function PatientAllergiesTab({ allergies = [], loading = false, onAdd }: 
               </thead>
               <tbody>
                 {allergies.map((allergy) => (
-                  <tr key={allergy.id_} className="hover:bg-gray-50">
+                  <tr key={allergy.id_ || allergy.id} className="hover:bg-gray-50">
                     <td className="border border-gray-200 px-4 py-3">
                       <div className="font-medium">{allergy.allergen}</div>
                     </td>
@@ -178,9 +178,9 @@ export function PatientAllergiesTab({ allergies = [], loading = false, onAdd }: 
                     </td>
                     <td className="border border-gray-200 px-4 py-3">
                       <div className="flex items-center gap-2">
-                        {getStatusIcon(allergy.is_active)}
+                        {getStatusIcon(allergy.is_active !== false)}
                         <span className="text-sm">
-                          {allergy.is_active ? 'Actif' : 'Inactif'}
+                          {allergy.is_active !== false ? 'Actif' : 'Inactif'}
                         </span>
                       </div>
                     </td>

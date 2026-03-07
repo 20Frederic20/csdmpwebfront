@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { AuthClientService } from "@/features/core/auth/services/auth-client.service";
 import { useAuthToken } from "@/hooks/use-auth-token";
-import { usePermissions } from "@/hooks/use-permissions";
+import { usePermissionsContext } from "@/contexts/permissions-context";
 import { useAuthRefresh } from "@/hooks/use-auth-refresh";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -25,7 +25,7 @@ import { usePathname } from "next/navigation";
 export function MainNavbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const pathname = usePathname();
-  const { clearPermissionsCache } = usePermissions();
+  const { clearPermissionsCache } = usePermissionsContext();
   const { isLoading } = useAuthRefresh();
 
   const handleLogout = () => {

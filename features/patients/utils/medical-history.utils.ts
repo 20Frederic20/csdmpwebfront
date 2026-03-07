@@ -84,7 +84,9 @@ export function getMedicalHistorySummary(medicalHistory: PatientMedicalHistory):
   
   summary.push(formatMedicalCategory(medicalHistory.category));
   summary.push(formatMedicalStatus(medicalHistory.status));
-  summary.push(formatMedicalSeverity(medicalHistory.severity));
+  if (medicalHistory.severity) {
+    summary.push(formatMedicalSeverity(medicalHistory.severity));
+  }
   
   if (medicalHistory.code) {
     summary.push(`Code: ${medicalHistory.code}`);

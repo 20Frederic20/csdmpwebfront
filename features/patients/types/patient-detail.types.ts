@@ -3,6 +3,8 @@ import { PatientLifestyle } from './lifestyle.types';
 import { PatientMedicalHistory } from './medical-history.types';
 import { PatientFamilyHistory } from './family-history.types';
 
+export type { PatientAllergy };
+
 export interface PatientResponse {
   id_: string;
   given_name: string;

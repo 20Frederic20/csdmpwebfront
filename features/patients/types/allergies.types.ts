@@ -1,5 +1,6 @@
 export interface PatientAllergy {
   id: string;
+  id_?: string; // Pour compatibilité avec données existantes
   patient_id: string;
   allergen: string;
   allergen_type: 'food' | 'medication' | 'environmental' | 'other';
@@ -7,6 +8,7 @@ export interface PatientAllergy {
   reaction: string;
   notes?: string;
   source: 'manual' | 'ocr' | 'prev_cons';
+  is_active?: boolean; // Pour compatibilité avec données existantes
   created_at?: string;
   updated_at?: string;
 }
