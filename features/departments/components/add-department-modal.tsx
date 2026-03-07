@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -16,14 +16,13 @@ import { Switch } from "@/components/ui/switch";
 import CustomSelect from "@/components/ui/custom-select";
 import { Save, X } from "lucide-react";
 import { CreateDepartmentRequest, HospitalDepartment } from "@/features/departments/types/departments.types";
-import { DepartmentService } from "@/features/departments/services/departments.service";
-import { useAuthToken } from "@/hooks/use-auth-token";
+import { useDepartmentMutations } from "@/features/departments/hooks/use-department-mutations";
 import { HealthFacilitySelect } from "@/features/health-facilities/components/health-facility-select";
 
 interface AddDepartmentModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onDepartmentCreated?: (department: any) => void;
+  onDepartmentCreated?: () => void;
   defaultHealthFacilityId?: string;
 }
 
@@ -33,14 +32,24 @@ export function AddDepartmentModal({
   onDepartmentCreated,
   defaultHealthFacilityId = "",
 }: AddDepartmentModalProps) {
-  const { token } = useAuthToken();
-  const [loading, setLoading] = useState(false);
+  const { createDepartment, isCreating: loading } = useDepartmentMutations();
   const [formData, setFormData] = useState<CreateDepartmentRequest>({
     health_facility_id: defaultHealthFacilityId,
     name: "",
     code: HospitalDepartment.EMERGENCY,
     is_active: true,
   });
+
+  const isFacilityFixed = !!defaultHealthFacilityId;
+
+  useEffect(() => {
+    if (defaultHealthFacilityId) {
+      setFormData(prev => ({
+        ...prev,
+        health_facility_id: defaultHealthFacilityId
+      }));
+    }
+  }, [defaultHealthFacilityId]);
 
   // Options pour le CustomSelect
   const departmentOptions = [
@@ -94,21 +103,19 @@ export function AddDepartmentModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.health_facility_id.trim()) {
-      return; // Gérer l'erreur avec un toast si nécessaire
-    }
-    
-    if (!formData.name.trim()) {
-      return; // Gérer l'erreur avec un toast si nécessaire
+      return;
     }
 
-    setLoading(true);
-    
+    if (!formData.name.trim()) {
+      return;
+    }
+
     try {
-      const newDepartment = await DepartmentService.createDepartment(formData, token || undefined);
-      onDepartmentCreated?.(newDepartment);
-      
+      await createDepartment(formData);
+      onDepartmentCreated?.();
+
       // Reset du formulaire
       setFormData({
         health_facility_id: defaultHealthFacilityId,
@@ -116,13 +123,10 @@ export function AddDepartmentModal({
         code: HospitalDepartment.EMERGENCY,
         is_active: true,
       });
-      
+
       onClose();
     } catch (error: any) {
       console.error('Error creating department:', error);
-      // Gérer l'erreur avec un toast si nécessaire
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -152,7 +156,7 @@ export function AddDepartmentModal({
             Créer un nouveau département dans le système
           </DialogDescription>
         </DialogHeader>
-        
+
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Établissement de santé */}
@@ -162,7 +166,7 @@ export function AddDepartmentModal({
                 onChange={handleHealthFacilityChange}
                 placeholder="Sélectionner un établissement de santé"
                 required={true}
-                disabled={loading}
+                disabled={loading || isFacilityFixed}
               />
             </div>
 
