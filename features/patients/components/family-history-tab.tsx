@@ -3,6 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Users, Calendar, AlertCircle } from "lucide-react";
+import { TabActionsButton } from "./tab-actions-button";
 
 interface FamilyHistoryItem {
   id_: string;
@@ -16,9 +17,10 @@ interface FamilyHistoryItem {
 interface FamilyHistoryTabProps {
   familyHistory?: FamilyHistoryItem[];
   loading?: boolean;
+  onAdd?: () => void;
 }
 
-export function FamilyHistoryTab({ familyHistory = [], loading = false }: FamilyHistoryTabProps) {
+export function FamilyHistoryTab({ familyHistory = [], loading = false, onAdd = () => {} }: FamilyHistoryTabProps) {
   const getRelationshipColor = (relationship: string) => {
     switch (relationship?.toLowerCase()) {
       case 'father':
@@ -76,46 +78,64 @@ export function FamilyHistoryTab({ familyHistory = [], loading = false }: Family
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Users className="h-5 w-5" />
-          Historique familial ({familyHistory.length})
+        <CardTitle className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            Historique familial ({familyHistory.length})
+          </div>
+          <TabActionsButton onAdd={onAdd || (() => {})} label="Ajouter un antécédent familial" />
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
-          {familyHistory.map((item) => (
-            <div
-              key={item.id_}
-              className="p-4 rounded-lg border border-gray-200"
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <h4 className="font-semibold text-lg">{item.condition}</h4>
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse border border-gray-200">
+            <thead>
+              <tr className="bg-gray-50">
+                <th className="border border-gray-200 px-4 py-3 text-left font-semibold text-sm">Relation</th>
+                <th className="border border-gray-200 px-4 py-3 text-left font-semibold text-sm">Condition</th>
+                <th className="border border-gray-200 px-4 py-3 text-left font-semibold text-sm">Âge d'apparition</th>
+                <th className="border border-gray-200 px-4 py-3 text-left font-semibold text-sm">Statut</th>
+                <th className="border border-gray-200 px-4 py-3 text-left font-semibold text-sm">Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              {familyHistory.map((item) => (
+                <tr key={item.id_} className="hover:bg-gray-50">
+                  <td className="border border-gray-200 px-4 py-3">
                     <Badge variant="outline" className={getRelationshipColor(item.relationship)}>
                       {item.relationship}
                     </Badge>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    {item.age_of_onset && (
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Calendar className="h-4 w-4" />
-                        <span>Âge d'apparition: {item.age_of_onset} ans</span>
-                      </div>
-                    )}
-                    
-                    {item.notes && (
-                      <div>
-                        <p className="text-sm font-medium">Notes:</p>
-                        <p className="text-sm">{item.notes}</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
+                  </td>
+                  <td className="border border-gray-200 px-4 py-3">
+                    <div className="font-medium">{item.condition}</div>
+                  </td>
+                  <td className="border border-gray-200 px-4 py-3">
+                    {item.age_of_onset ? `${item.age_of_onset} ans` : '-'}
+                  </td>
+                  <td className="border border-gray-200 px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      {item.is_active ? (
+                        <>
+                          <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                          <span className="text-sm">Actif</span>
+                        </>
+                      ) : (
+                        <>
+                          <div className="w-2 h-2 rounded-full bg-gray-400"></div>
+                          <span className="text-sm">Inactif</span>
+                        </>
+                      )}
+                    </div>
+                  </td>
+                  <td className="border border-gray-200 px-4 py-3">
+                    <div className="max-w-xs truncate" title={item.notes}>
+                      {item.notes || '-'}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </CardContent>
     </Card>
