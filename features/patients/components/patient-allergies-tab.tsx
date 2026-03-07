@@ -4,6 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, CheckCircle, Clock, Info } from "lucide-react";
 import { PatientAllergy } from "@/features/patients/types/patient-detail.types";
 import { TabActionsButton } from "./tab-actions-button";
+import { ActionButtons } from "./action-buttons";
+import { AllergyModal } from "./allergy-modal";
 
 interface PatientAllergiesTabProps {
   allergies?: PatientAllergy[];
@@ -11,11 +13,49 @@ interface PatientAllergiesTabProps {
   onAdd?: () => void;
 }
 
+// Fonctions de traduction pour les enums
+const translateAllergenType = (value: string) => {
+  const translations: Record<string, string> = {
+    "FOOD": "Alimentaire",
+    "MEDICATION": "Médicamenteuse", 
+    "ENVIRONMENTAL": "Environnementale",
+    "OTHER": "Autre"
+  };
+  return translations[value] || value;
+};
+
+const translateAllergySeverity = (value: string) => {
+  const translations: Record<string, string> = {
+    "MILD": "Léger",
+    "MODERATE": "Modéré",
+    "SEVERE": "Grave",
+    "ABSOLUTELY_CONTRAINDICATED": "Contre-indiqué absolu"
+  };
+  return translations[value] || value;
+};
+
+const translateAllergySource = (value: string) => {
+  const translations: Record<string, string> = {
+    "MANUAL": "Manuel",
+    "OCR": "OCR",
+    "PREVIOUS_CONSULTATION": "Consultation précédente"
+  };
+  return translations[value] || value;
+};
+
 export function PatientAllergiesTab({ allergies = [], loading = false, onAdd }: PatientAllergiesTabProps) {
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingAllergy, setEditingAllergy] = useState<PatientAllergy | undefined>(undefined);
+
+  const handleAddNew = () => {
+    setEditingAllergy(undefined);
+    setModalOpen(true);
+  };
   const getSeverityColor = (severity?: string) => {
     switch (severity?.toLowerCase()) {
       case 'severe':
       case 'grave':
+      case 'absolutely_contraindicated':
         return 'bg-red-100 text-red-800 border-red-200';
       case 'moderate':
       case 'modéré':
@@ -34,6 +74,21 @@ export function PatientAllergiesTab({ allergies = [], loading = false, onAdd }: 
     ) : (
       <Clock className="h-4 w-4 text-gray-400" />
     );
+  };
+
+  const handleEdit = (allergy: PatientAllergy) => {
+    setEditingAllergy(allergy);
+    setModalOpen(true);
+  };
+
+  const handleDelete = (allergy: PatientAllergy) => {
+    console.log("Supprimer l'allergie:", allergy);
+    // TODO: Implémenter la logique de suppression
+  };
+
+  const handleSubmit = (data: any) => {
+    console.log("Soumettre les données:", data);
+    // TODO: Implémenter la logique de sauvegarde
   };
 
   if (loading) {
@@ -71,73 +126,88 @@ export function PatientAllergiesTab({ allergies = [], loading = false, onAdd }: 
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5" />
-            Allergies ({allergies.length})
-          </div>
-          <TabActionsButton onAdd={onAdd || (() => {})} label="Ajouter une allergie" />
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse border border-gray-200">
-            <thead>
-              <tr className="bg-gray-50">
-                <th className="border border-gray-200 px-4 py-3 text-left font-semibold text-sm">Allergène</th>
-                <th className="border border-gray-200 px-4 py-3 text-left font-semibold text-sm">Type</th>
-                <th className="border border-gray-200 px-4 py-3 text-left font-semibold text-sm">Réaction</th>
-                <th className="border border-gray-200 px-4 py-3 text-left font-semibold text-sm">Sévérité</th>
-                <th className="border border-gray-200 px-4 py-3 text-left font-semibold text-sm">Source</th>
-                <th className="border border-gray-200 px-4 py-3 text-left font-semibold text-sm">Statut</th>
-                <th className="border border-gray-200 px-4 py-3 text-left font-semibold text-sm">Notes</th>
-              </tr>
-            </thead>
-            <tbody>
-              {allergies.map((allergy) => (
-                <tr key={allergy.id_} className="hover:bg-gray-50">
-                  <td className="border border-gray-200 px-4 py-3">
-                    <div className="font-medium">{allergy.allergen}</div>
-                  </td>
-                  <td className="border border-gray-200 px-4 py-3">
-                    <Badge variant="outline" className="text-xs">
-                      {allergy.allergen_type}
-                    </Badge>
-                  </td>
-                  <td className="border border-gray-200 px-4 py-3">
-                    {allergy.reaction}
-                  </td>
-                  <td className="border border-gray-200 px-4 py-3">
-                    {allergy.severity && (
-                      <Badge className={getSeverityColor(allergy.severity)}>
-                        {allergy.severity}
-                      </Badge>
-                    )}
-                  </td>
-                  <td className="border border-gray-200 px-4 py-3">
-                    {allergy.source || '-'}
-                  </td>
-                  <td className="border border-gray-200 px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      {getStatusIcon(allergy.is_active)}
-                      <span className="text-sm">
-                        {allergy.is_active ? 'Actif' : 'Inactif'}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="border border-gray-200 px-4 py-3">
-                    <div className="max-w-xs truncate" title={allergy.notes}>
-                      {allergy.notes || '-'}
-                    </div>
-                  </td>
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5" />
+              Allergies ({allergies.length})
+            </div>
+            <TabActionsButton onAdd={handleAddNew} label="Ajouter une allergie" />
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse border border-gray-200">
+              <thead>
+                <tr className="bg-gray-50">
+                  <th className="border border-gray-200 px-4 py-3 text-left font-semibold text-sm">Allergène</th>
+                  <th className="border border-gray-200 px-4 py-3 text-left font-semibold text-sm">Type</th>
+                  <th className="border border-gray-200 px-4 py-3 text-left font-semibold text-sm">Réaction</th>
+                  <th className="border border-gray-200 px-4 py-3 text-left font-semibold text-sm">Sévérité</th>
+                  <th className="border border-gray-200 px-4 py-3 text-left font-semibold text-sm">Source</th>
+                  <th className="border border-gray-200 px-4 py-3 text-left font-semibold text-sm">Statut</th>
+                  <th className="border border-gray-200 px-4 py-3 text-left font-semibold text-sm">Notes</th>
+                  <th className="border border-gray-200 px-4 py-3 text-center font-semibold text-sm">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </CardContent>
-    </Card>
+              </thead>
+              <tbody>
+                {allergies.map((allergy) => (
+                  <tr key={allergy.id_} className="hover:bg-gray-50">
+                    <td className="border border-gray-200 px-4 py-3">
+                      <div className="font-medium">{allergy.allergen}</div>
+                    </td>
+                    <td className="border border-gray-200 px-4 py-3">
+                      <Badge variant="outline" className="text-xs">
+                        {translateAllergenType(allergy.allergen_type)}
+                      </Badge>
+                    </td>
+                    <td className="border border-gray-200 px-4 py-3">
+                      {allergy.reaction}
+                    </td>
+                    <td className="border border-gray-200 px-4 py-3">
+                      {allergy.severity && (
+                        <Badge className={getSeverityColor(allergy.severity)}>
+                          {translateAllergySeverity(allergy.severity)}
+                        </Badge>
+                      )}
+                    </td>
+                    <td className="border border-gray-200 px-4 py-3">
+                      {allergy.source ? translateAllergySource(allergy.source) : '-'}
+                    </td>
+                    <td className="border border-gray-200 px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        {getStatusIcon(allergy.is_active)}
+                        <span className="text-sm">
+                          {allergy.is_active ? 'Actif' : 'Inactif'}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="border border-gray-200 px-4 py-3">
+                      <div className="max-w-xs truncate" title={allergy.notes}>
+                        {allergy.notes || '-'}
+                      </div>
+                    </td>
+                    <td className="border border-gray-200 px-4 py-3">
+                      <ActionButtons
+                        onEdit={() => handleEdit(allergy)}
+                        onDelete={() => handleDelete(allergy)}
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
+      <AllergyModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onSubmit={handleSubmit}
+        editingAllergy={editingAllergy}
+      />
+    </>
   );
 }

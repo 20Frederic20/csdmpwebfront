@@ -2,7 +2,8 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Activity, Heart, Utensils, Cigarette, Wine } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Activity, Heart, Utensils, Cigarette, Wine, Edit } from "lucide-react";
 import { TabActionsButton } from "./tab-actions-button";
 
 interface LifestyleItem {
@@ -23,10 +24,10 @@ interface LifestyleItem {
 interface LifestyleTabProps {
   lifestyle?: LifestyleItem[];
   loading?: boolean;
-  onAdd?: () => void;
+  onEdit?: () => void;
 }
 
-export function LifestyleTab({ lifestyle = [], loading = false, onAdd = () => {} }: LifestyleTabProps) {
+export function LifestyleTab({ lifestyle = [], loading = false, onEdit = () => {} }: LifestyleTabProps) {
   const getTobaccoIcon = (status: string) => {
     switch (status?.toLowerCase()) {
       case 'non-smoker':
@@ -126,7 +127,15 @@ export function LifestyleTab({ lifestyle = [], loading = false, onAdd = () => {}
             <Heart className="h-5 w-5" />
             Style de vie ({activeLifestyle.length})
           </div>
-          <TabActionsButton onAdd={onAdd || (() => {})} label="Ajouter un style de vie" />
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={onEdit}
+            className="gap-2"
+          >
+            <Edit className="h-4 w-4" />
+            Modifier
+          </Button>
         </CardTitle>
       </CardHeader>
       <CardContent>

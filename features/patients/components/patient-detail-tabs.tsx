@@ -30,9 +30,9 @@ export function PatientDetailTabs({ patient }: PatientDetailTabsProps) {
     // TODO: Implémenter la logique d'ajout d'antécédent familial
   };
 
-  const handleAddLifestyle = () => {
-    console.log("Ajouter un style de vie");
-    // TODO: Implémenter la logique d'ajout de style de vie
+  const handleEditLifestyle = () => {
+    console.log("Modifier le style de vie");
+    // TODO: Implémenter la logique de modification du style de vie
   };
 
   const tabs = [
@@ -80,7 +80,7 @@ export function PatientDetailTabs({ patient }: PatientDetailTabsProps) {
         <LifestyleTab 
           lifestyle={patient.lifestyles}
           loading={false}
-          onAdd={handleAddLifestyle}
+          onEdit={handleEditLifestyle}
         />
       ),
     },

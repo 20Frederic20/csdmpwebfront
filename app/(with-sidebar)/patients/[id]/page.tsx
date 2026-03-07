@@ -136,6 +136,17 @@ export default function PatientDetailPage() {
             
             <div className="grid grid-cols-2 gap-4">
               <div>
+                <p className="text-sm text-muted-foreground">Nom du père</p>
+                <p className="font-medium">{patient.father_full_name || '-'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Nom de la mère</p>
+                <p className="font-medium">{patient.mother_full_name || '-'}</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
                 <p className="text-sm text-muted-foreground">Date de naissance</p>
                 <p className="font-medium flex items-center gap-2">
                   <Calendar className="h-4 w-4" />
@@ -148,17 +159,39 @@ export default function PatientDetailPage() {
               </div>
             </div>
 
-            <div>
-              <p className="text-sm text-muted-foreground">Localisation</p>
-              <p className="font-medium flex items-center gap-2">
-                <MapPin className="h-4 w-4" />
-                {patient.location || '-'}
-              </p>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm text-muted-foreground">Contact</p>
+                <p className="font-medium flex items-center gap-2">
+                  <Phone className="h-4 w-4" />
+                  {patient.phone_number || '-'}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Localisation</p>
+                <p className="font-medium flex items-center gap-2">
+                  <MapPin className="h-4 w-4" />
+                  {patient.location || '-'}
+                </p>
+              </div>
             </div>
 
-            <div>
-              <p className="text-sm text-muted-foreground">ID Santé</p>
-              <p className="font-medium">{patient.health_id || '-'}</p>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm text-muted-foreground">ID Santé</p>
+                <p className="font-medium">{patient.health_id || '-'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Statut</p>
+                <div className="flex gap-2">
+                  <Badge variant={patient.is_active ? "default" : "secondary"}>
+                    {patient.is_active ? 'Actif' : 'Inactif'}
+                  </Badge>
+                  {patient.is_main && (
+                    <Badge variant="outline">Principal</Badge>
+                  )}
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -210,59 +243,20 @@ export default function PatientDetailPage() {
                 </div>
               </div>
             </div>
-          </CardContent>
-        </Card>
-      </div>
 
-      {/* Contacts */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Phone className="h-5 w-5" />
-              Contact du patient
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="font-medium">{patient.phone_number || '-'}</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Contact d'urgence</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <div>
-              <p className="text-sm text-muted-foreground">Nom</p>
-              <p className="font-medium">{patient.emergency_contact_name || '-'}</p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Téléphone</p>
-              <p className="font-medium">{patient.emergency_contact_phone || '-'}</p>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm text-muted-foreground">Contact d'urgence</p>
+                <p className="font-medium">{patient.emergency_contact_name || '-'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Téléphone</p>
+                <p className="font-medium">{patient.emergency_contact_phone || '-'}</p>
+              </div>
             </div>
           </CardContent>
         </Card>
       </div>
-
-      {/* Famille */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Informations familiales</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <p className="text-sm text-muted-foreground">Nom du père</p>
-              <p className="font-medium">{patient.father_full_name || '-'}</p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Nom de la mère</p>
-              <p className="font-medium">{patient.mother_full_name || '-'}</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Tabs pour les informations médicales détaillées */}
       <PatientDetailTabs patient={patient} />
