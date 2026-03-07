@@ -1,14 +1,7 @@
-export interface PatientAllergy {
-  id_: string;
-  allergen: string;
-  allergen_type: string;
-  reaction: string;
-  notes?: string;
-  severity?: string;
-  source?: string;
-  is_active: boolean;
-  deleted_at?: string;
-}
+import { PatientAllergy } from './allergies.types';
+import { PatientLifestyle } from './lifestyle.types';
+import { PatientMedicalHistory } from './medical-history.types';
+import { PatientFamilyHistory } from './family-history.types';
 
 export interface PatientResponse {
   id_: string;
@@ -32,7 +25,7 @@ export interface PatientResponse {
   emergency_contact_name?: string;
   emergency_contact_phone?: string;
   patient_allergies?: PatientAllergy[];
-  medical_history?: any[];
-  family_history?: any[];
-  lifestyle?: any[];
+  medical_histories?: PatientMedicalHistory[];
+  family_histories?: PatientFamilyHistory[];
+  lifestyles?: PatientLifestyle[];
 }
