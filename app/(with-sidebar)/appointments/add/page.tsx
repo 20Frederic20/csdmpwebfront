@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowLeft, Calendar, Clock, User, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { useAuthToken } from "@/hooks/use-auth-token";
+import { usePermissions } from "@/hooks/use-permissions";
 import { CreateAppointmentRequest, AppointmentStatus, AppointmentType, PaymentMethod } from "@/features/appointments/types/appointments.types";
 import { AppointmentService } from "@/features/appointments/services/appointment.service";
 import { Patient } from "@/features/patients";
@@ -23,14 +24,15 @@ import CustomSelect from '@/components/ui/custom-select';
 export default function AddAppointmentPage() {
   const router = useRouter();
   const { token } = useAuthToken();
-  
+  const { user } = usePermissions();
+
   const [loading, setLoading] = useState(false);
   const [loadingPatients, setLoadingPatients] = useState(false);
   const [loadingDoctors, setLoadingDoctors] = useState(false);
   const [patients, setPatients] = useState<Patient[]>([]);
   const [doctors, setDoctors] = useState<HospitalStaff[]>([]);
   const [errors, setErrors] = useState<Record<string, string | undefined>>({});
-  
+
   const [formData, setFormData] = useState<CreateAppointmentRequest>({
     patient_id: "",
     doctor_id: null,
@@ -50,7 +52,7 @@ export default function AddAppointmentPage() {
   useEffect(() => {
     loadPatients();
     loadDoctors();
-  }, [token]);
+  }, [token, user?.health_facility_id]);
 
   const loadPatients = async () => {
     setLoadingPatients(true);
@@ -68,7 +70,10 @@ export default function AddAppointmentPage() {
   const loadDoctors = async () => {
     setLoadingDoctors(true);
     try {
-      const response = await HospitalStaffService.getHospitalStaff({ limit: 50 }, token || undefined);
+      const response = await HospitalStaffService.getHospitalStaff({
+        limit: 50,
+        health_facility_id: user?.health_facility_id || undefined
+      }, token || undefined);
       setDoctors(response.data || []);
     } catch (error: any) {
       console.error('Error loading doctors:', error);
@@ -121,7 +126,7 @@ export default function AddAppointmentPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
@@ -150,7 +155,7 @@ export default function AddAppointmentPage() {
       ...prev,
       [field]: actualValue
     }));
-    
+
     // Effacer l'erreur quand l'utilisateur modifie le champ
     if (errors[field as keyof typeof errors] !== undefined) {
       setErrors(prev => ({ ...prev, [field]: undefined }));
@@ -189,8 +194,8 @@ export default function AddAppointmentPage() {
     <div className="container mx-auto py-6 space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           onClick={() => router.push('/appointments')}
           className="cursor-pointer"
         >
@@ -344,16 +349,16 @@ export default function AddAppointmentPage() {
 
         {/* Actions */}
         <div className="flex justify-end gap-4">
-          <Button 
-            type="button" 
-            variant="outline" 
+          <Button
+            type="button"
+            variant="outline"
             onClick={() => router.push('/appointments')}
             className="cursor-pointer"
           >
             Annuler
           </Button>
-          <Button 
-            type="submit" 
+          <Button
+            type="submit"
             disabled={loading}
             className="cursor-pointer"
           >
