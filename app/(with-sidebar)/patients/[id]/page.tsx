@@ -10,6 +10,8 @@ import { Patient } from "@/features/patients";
 import { PatientService } from "@/features/patients";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { Badge } from "@/components/ui/badge";
+import { PatientDetailTabs } from "@/features/patients/components/patient-detail-tabs";
+import { PatientResponse } from "@/features/patients/types/patient-detail.types";
 
 export default function PatientDetailPage() {
   const router = useRouter();
@@ -17,7 +19,7 @@ export default function PatientDetailPage() {
   const patientId = params.id as string;
   
   const [loading, setLoading] = useState(false);
-  const [patient, setPatient] = useState<Patient | null>(null);
+  const [patient, setPatient] = useState<PatientResponse | null>(null);
   const { token } = useAuthToken();
 
   // Charger le patient
@@ -26,7 +28,8 @@ export default function PatientDetailPage() {
       setLoading(true);
       try {
         const patientData = await PatientService.getPatientById(patientId, token || undefined);
-        setPatient(patientData);
+        // Cast to PatientResponse to include additional fields
+        setPatient(patientData as PatientResponse);
       } catch (error: any) {
         console.error('Error loading patient:', error);
         toast.error(error.message || "Erreur lors du chargement du patient");
@@ -260,6 +263,9 @@ export default function PatientDetailPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Tabs pour les informations médicales détaillées */}
+      <PatientDetailTabs patient={patient} />
     </div>
   );
 }
