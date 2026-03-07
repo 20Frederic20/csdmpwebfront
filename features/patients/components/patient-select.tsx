@@ -3,8 +3,7 @@
 import { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import CustomSelect from "@/components/ui/custom-select";
-import { Patient } from "@/features/patients/types/patients.types";
-import { PatientService } from "@/features/patients/services/patients.service";
+import { Patient, usePatients } from "@/features/patients";
 
 interface PatientSelectProps {
   value?: string;
@@ -27,30 +26,12 @@ export function PatientSelect({
   height = "h-10",
   onlyActive = true,
 }: PatientSelectProps) {
-  const [patients, setPatients] = useState<Patient[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: response, isLoading: loading } = usePatients({
+    limit: 100,
+    search: '',
+  });
 
-  useEffect(() => {
-    const loadPatients = async () => {
-      try {
-        setLoading(true);
-        const params = {
-          limit: 100,
-          search: '', // Pour charger tous les patients
-        };
-        
-        const response = await PatientService.getPatients(params);
-        setPatients(response.data);
-      } catch (error) {
-        console.error('Error loading patients:', error);
-        setPatients([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadPatients();
-  }, [onlyActive]);
+  const patients = response?.data || [];
 
   const options = patients.map((patient) => ({
     value: patient.id_,

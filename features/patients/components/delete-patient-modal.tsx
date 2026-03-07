@@ -11,9 +11,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Trash2 } from "lucide-react";
-import { Patient } from "@/features/patients/types/patients.types";
-import { PatientService } from "@/features/patients/services/patients.service";
-import { useAuthToken } from "@/hooks/use-auth-token";
+import { Patient, useDeletePatient } from "@/features/patients";
 import { toast } from "sonner";
 
 interface DeletePatientModalProps {
@@ -24,21 +22,15 @@ interface DeletePatientModalProps {
 }
 
 export function DeletePatientModal({ patient, onPatientDeleted, isOpen, onClose }: DeletePatientModalProps) {
-  const [loading, setLoading] = useState(false);
-  const { token } = useAuthToken();
+  const { mutateAsync: deletePatient, isPending: loading } = useDeletePatient();
 
   const handleDelete = async () => {
-    setLoading(true);
-
     try {
-      await PatientService.softDeletePatient(patient.id_, token || undefined);
-      toast.success(`Patient ${patient.given_name} ${patient.family_name} supprimé avec succès`);
+      await deletePatient(patient.id_);
       onPatientDeleted();
       onClose();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Une erreur est survenue lors de la suppression du patient');
-    } finally {
-      setLoading(false);
+      // Erreur déjà gérée par le hook
     }
   };
 

@@ -6,9 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Edit, User, Phone, MapPin, Calendar, Heart } from "lucide-react";
 import { toast } from "sonner";
-import { Patient } from "@/features/patients";
-import { PatientService } from "@/features/patients";
-import { useAuthToken } from "@/hooks/use-auth-token";
+import { Patient, usePatient } from "@/features/patients";
 import { Badge } from "@/components/ui/badge";
 import { PatientDetailTabs } from "@/features/patients/components/patient-detail-tabs";
 import { PatientResponse } from "@/features/patients/types/patient-detail.types";
@@ -17,32 +15,17 @@ export default function PatientDetailPage() {
   const router = useRouter();
   const params = useParams();
   const patientId = params.id as string;
-  
-  const [loading, setLoading] = useState(false);
-  const [patient, setPatient] = useState<PatientResponse | null>(null);
-  const { token } = useAuthToken();
 
-  // Charger le patient
+  const { data: patientData, isLoading: loading, error: queryError } = usePatient(patientId);
+  const patient = patientData as PatientResponse | undefined;
+
+  // Gérer les erreurs de chargement
   useEffect(() => {
-    const loadPatient = async () => {
-      setLoading(true);
-      try {
-        const patientData = await PatientService.getPatientById(patientId, token || undefined);
-        // Cast to PatientResponse to include additional fields
-        setPatient(patientData as PatientResponse);
-      } catch (error: any) {
-        console.error('Error loading patient:', error);
-        toast.error(error.message || "Erreur lors du chargement du patient");
-        router.push('/patients');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (patientId) {
-      loadPatient();
+    if (queryError) {
+      toast.error("Erreur lors du chargement du patient");
+      router.push('/patients');
     }
-  }, [patientId, token, router]);
+  }, [queryError, router]);
 
   if (loading) {
     return (
@@ -85,8 +68,8 @@ export default function PatientDetailPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={() => router.push('/patients')}
             className="cursor-pointer"
           >
@@ -103,7 +86,7 @@ export default function PatientDetailPage() {
           </div>
         </div>
         <div className="flex gap-2">
-          <Button 
+          <Button
             onClick={() => router.push(`/patients/${patientId}/edit`)}
             className="cursor-pointer"
           >
@@ -133,7 +116,7 @@ export default function PatientDetailPage() {
                 <p className="font-medium">{patient.family_name || '-'}</p>
               </div>
             </div>
-            
+
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <p className="text-sm text-muted-foreground">Nom du père</p>
@@ -259,7 +242,7 @@ export default function PatientDetailPage() {
       </div>
 
       {/* Tabs pour les informations médicales détaillées */}
-      <PatientDetailTabs patient={patient} />
+      <PatientDetailTabs patient={patient} patientId={patientId} />
     </div>
   );
 }

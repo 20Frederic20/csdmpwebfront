@@ -11,9 +11,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Trash2 } from "lucide-react";
-import { Patient } from "@/features/patients/types/patients.types";
-import { PatientService } from "@/features/patients/services/patients.service";
-import { useAuthToken } from "@/hooks/use-auth-token";
+import { Patient, usePermanentlyDeletePatient } from "@/features/patients";
 import { toast } from "sonner";
 
 interface PermanentlyDeletePatientModalProps {
@@ -24,21 +22,15 @@ interface PermanentlyDeletePatientModalProps {
 }
 
 export function PermanentlyDeletePatientModal({ patient, onPatientDeleted, isOpen, onClose }: PermanentlyDeletePatientModalProps) {
-  const [loading, setLoading] = useState(false);
-  const { token } = useAuthToken();
+  const { mutateAsync: permanentlyDelete, isPending: loading } = usePermanentlyDeletePatient();
 
   const handlePermanentlyDelete = async () => {
-    setLoading(true);
-
     try {
-      await PatientService.permanentlyDeletePatient(patient.id_, token || undefined);
-      toast.success(`Patient ${patient.given_name} ${patient.family_name} supprimé définitivement avec succès`);
+      await permanentlyDelete(patient.id_);
       onPatientDeleted();
       onClose();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Une erreur est survenue lors de la suppression définitive du patient');
-    } finally {
-      setLoading(false);
+      // Erreur déjà gérée par le hook
     }
   };
 

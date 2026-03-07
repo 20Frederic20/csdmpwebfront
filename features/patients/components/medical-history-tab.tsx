@@ -19,9 +19,10 @@ interface MedicalHistoryTabProps {
   medicalHistory?: MedicalHistoryItem[];
   loading?: boolean;
   onAdd?: () => void;
+  patientId?: string;
 }
 
-export function MedicalHistoryTab({ medicalHistory = [], loading = false, onAdd = () => {} }: MedicalHistoryTabProps) {
+export function MedicalHistoryTab({ medicalHistory = [], loading = false, onAdd = () => { }, patientId }: MedicalHistoryTabProps) {
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
       case 'active':
@@ -96,7 +97,7 @@ export function MedicalHistoryTab({ medicalHistory = [], loading = false, onAdd 
             <FileText className="h-5 w-5" />
             Historique médical ({medicalHistory.length})
           </div>
-          <TabActionsButton onAdd={onAdd || (() => {})} label="Ajouter un antécédent" />
+          <TabActionsButton onAdd={onAdd || (() => { })} label="Ajouter un antécédent" />
         </CardTitle>
       </CardHeader>
       <CardContent>

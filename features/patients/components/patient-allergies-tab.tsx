@@ -6,6 +6,8 @@ import { PatientAllergy } from "@/features/patients/types/patient-detail.types";
 import { TabActionsButton } from "./tab-actions-button";
 import { ActionButtons } from "./action-buttons";
 import { AllergyModal } from "./allergy-modal";
+import { useCreateAllergy, useUpdateAllergy, useDeleteAllergy } from "@/features/patients";
+
 
 interface PatientAllergiesTabProps {
   allergies?: PatientAllergy[];
@@ -17,7 +19,7 @@ interface PatientAllergiesTabProps {
 const translateAllergenType = (value: string) => {
   const translations: Record<string, string> = {
     "FOOD": "Alimentaire",
-    "MEDICATION": "Médicamenteuse", 
+    "MEDICATION": "Médicamenteuse",
     "ENVIRONMENTAL": "Environnementale",
     "OTHER": "Autre"
   };
@@ -43,14 +45,19 @@ const translateAllergySource = (value: string) => {
   return translations[value] || value;
 };
 
-export function PatientAllergiesTab({ allergies = [], loading = false, onAdd }: PatientAllergiesTabProps) {
+export function PatientAllergiesTab({ allergies = [], loading = false, onAdd, patientId }: PatientAllergiesTabProps & { patientId?: string }) {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingAllergy, setEditingAllergy] = useState<PatientAllergy | undefined>(undefined);
+
+  const { mutateAsync: deleteAllergy } = useDeleteAllergy();
+  const { mutateAsync: createAllergy } = useCreateAllergy();
+  const { mutateAsync: updateAllergy } = useUpdateAllergy();
 
   const handleAddNew = () => {
     setEditingAllergy(undefined);
     setModalOpen(true);
   };
+
   const getSeverityColor = (severity?: string) => {
     switch (severity?.toLowerCase()) {
       case 'severe':
@@ -81,14 +88,33 @@ export function PatientAllergiesTab({ allergies = [], loading = false, onAdd }: 
     setModalOpen(true);
   };
 
-  const handleDelete = (allergy: PatientAllergy) => {
-    console.log("Supprimer l'allergie:", allergy);
-    // TODO: Implémenter la logique de suppression
+  const handleDelete = async (allergy: PatientAllergy) => {
+    const id = allergy.id_ || allergy.id;
+    if (!id) return;
+
+    if (confirm("Êtes-vous sûr de vouloir supprimer cette allergie ?")) {
+      try {
+        await deleteAllergy(id);
+      } catch (err) {
+        // Erreur gérée par le hook
+      }
+    }
   };
 
-  const handleSubmit = (data: any) => {
-    console.log("Soumettre les données:", data);
-    // TODO: Implémenter la logique de sauvegarde
+  const handleSubmit = async (data: any) => {
+    try {
+      if (editingAllergy) {
+        const id = editingAllergy.id_ || editingAllergy.id;
+        if (id) {
+          await updateAllergy({ id, data });
+        }
+      } else if (patientId) {
+        await createAllergy({ data, patientId });
+      }
+      setModalOpen(false);
+    } catch (err) {
+      // Erreur gérée par le hook
+    }
   };
 
   if (loading) {

@@ -25,9 +25,10 @@ interface LifestyleTabProps {
   lifestyle?: LifestyleItem[];
   loading?: boolean;
   onEdit?: () => void;
+  patientId?: string;
 }
 
-export function LifestyleTab({ lifestyle = [], loading = false, onEdit = () => {} }: LifestyleTabProps) {
+export function LifestyleTab({ lifestyle = [], loading = false, onEdit = () => { }, patientId }: LifestyleTabProps) {
   const getTobaccoIcon = (status: string) => {
     switch (status?.toLowerCase()) {
       case 'non-smoker':
@@ -127,9 +128,9 @@ export function LifestyleTab({ lifestyle = [], loading = false, onEdit = () => {
             <Heart className="h-5 w-5" />
             Style de vie ({activeLifestyle.length})
           </div>
-          <Button 
-            variant="outline" 
-            size="sm" 
+          <Button
+            variant="outline"
+            size="sm"
             onClick={onEdit}
             className="gap-2"
           >
@@ -161,9 +162,9 @@ export function LifestyleTab({ lifestyle = [], loading = false, onEdit = () => {
                       <div>
                         <div className="text-sm capitalize">
                           {item.tobacco_status === 'non-smoker' ? 'Non-fumeur' :
-                           item.tobacco_status === 'smoker' ? 'Fumeur' :
-                           item.tobacco_status === 'former-smoker' ? 'Ex-fumeur' :
-                           item.tobacco_status}
+                            item.tobacco_status === 'smoker' ? 'Fumeur' :
+                              item.tobacco_status === 'former-smoker' ? 'Ex-fumeur' :
+                                item.tobacco_status}
                         </div>
                         {item.tobacco_per_week && (
                           <div className="text-xs text-muted-foreground">
@@ -179,9 +180,9 @@ export function LifestyleTab({ lifestyle = [], loading = false, onEdit = () => {
                       <div>
                         <div className="text-sm capitalize">
                           {item.alcohol_consumption === 'none' ? 'Aucun' :
-                           item.alcohol_consumption === 'moderate' ? 'Modéré' :
-                           item.alcohol_consumption === 'heavy' ? 'Élevé' :
-                           item.alcohol_consumption}
+                            item.alcohol_consumption === 'moderate' ? 'Modéré' :
+                              item.alcohol_consumption === 'heavy' ? 'Élevé' :
+                                item.alcohol_consumption}
                         </div>
                         {item.alcohol_units_per_week && (
                           <div className="text-xs text-muted-foreground">
@@ -196,9 +197,9 @@ export function LifestyleTab({ lifestyle = [], loading = false, onEdit = () => {
                       {getActivityIcon(item.physical_activity)}
                       <div className="text-sm capitalize">
                         {item.physical_activity === 'active' ? 'Actif' :
-                         item.physical_activity === 'moderate' ? 'Modéré' :
-                         item.physical_activity === 'sedentary' ? 'Sédentaire' :
-                         item.physical_activity}
+                          item.physical_activity === 'moderate' ? 'Modéré' :
+                            item.physical_activity === 'sedentary' ? 'Sédentaire' :
+                              item.physical_activity}
                       </div>
                     </div>
                   </td>

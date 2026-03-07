@@ -5,9 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
-import { PatientsResponse, Patient } from "@/features/patients";
-import { PatientService } from "@/features/patients";
-import { useAuthToken } from "@/hooks/use-auth-token";
+import { PatientsResponse, Patient, usePatients, useTogglePatientActivation } from "@/features/patients";
 import { usePermissionsContext } from "@/contexts/permissions-context";
 import Link from "next/link";
 import { DeletePatientModal } from "@/features/patients/components/delete-patient-modal";
@@ -20,16 +18,12 @@ import { PatientFiltersWrapper } from "@/features/patients/components/patient-fi
 export default function PatientsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
-  const [patientsData, setPatientsData] = useState<PatientsResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState({
     search: "",
     birth_date_from: "",
     genders: "all" as 'male' | 'female' | 'other' | 'unknown' | 'all',
   });
   const [selectedRows, setSelectedRows] = useState<Record<string, boolean>>({});
-  const { token } = useAuthToken();
   const { canAccess } = usePermissionsContext();
 
   // États pour les modals
@@ -37,6 +31,23 @@ export default function PatientsPage() {
   const [isRestoreModalOpen, setIsRestoreModalOpen] = useState(false);
   const [isPermanentlyDeleteModalOpen, setIsPermanentlyDeleteModalOpen] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+
+  // Queries and Mutations
+  const {
+    data: patientsData,
+    isLoading: loading,
+    error: queryError
+  } = usePatients({
+    limit: itemsPerPage,
+    offset: (currentPage - 1) * itemsPerPage,
+    search: filters.search || undefined,
+    birth_date_from: filters.birth_date_from || undefined,
+    genders: filters.genders !== 'all' ? filters.genders : undefined,
+  });
+
+  const { mutateAsync: toggleStatus } = useTogglePatientActivation();
+
+  const error = queryError instanceof Error ? queryError.message : (queryError ? String(queryError) : null);
 
   const handleOpenDeleteModal = (patient: Patient) => {
     setSelectedPatient(patient);
@@ -59,162 +70,26 @@ export default function PatientsPage() {
 
   const handleToggleStatus = async (patientId: string) => {
     try {
-      const updatedPatient = await PatientService.togglePatientActivation(patientId, token || undefined);
-
-      // Mettre à jour localement sans recharger
-      if (updatedPatient && typeof updatedPatient.is_active === 'boolean') {
-        setPatientsData(prev => prev ? {
-          ...prev,
-          data: prev.data.map(p =>
-            p.id_ === patientId
-              ? { ...p, is_active: updatedPatient.is_active }
-              : p
-          ),
-        } : null);
-
-        toast.success(`Patient ${updatedPatient.is_active ? 'activé' : 'désactivé'} avec succès`);
-      }
-    } catch (error: any) {
-      console.error('Error toggling patient status:', error);
-      toast.error(error.message || "Erreur lors de la modification du statut");
-      // En cas d'erreur, recharger la liste
-      const reloadPatients = async () => {
-        setLoading(true);
-        setError(null);
-
-        try {
-          const params = {
-            limit: itemsPerPage,
-            offset: (currentPage - 1) * itemsPerPage,
-            search: filters.search || undefined,
-            birth_date_from: filters.birth_date_from || undefined,
-            genders: filters.genders !== 'all' ? filters.genders : undefined,
-          };
-
-          const response = await PatientService.getPatients(params, token || undefined);
-          setPatientsData(response);
-        } catch (error: any) {
-          console.error('Error loading patients:', error);
-          setError(error.message || "Erreur lors du chargement des patients");
-          toast.error(error.message || "Erreur lors du chargement des patients");
-        } finally {
-          setLoading(false);
-        }
-      };
-
-      reloadPatients();
+      await toggleStatus(patientId);
+    } catch (err) {
+      // Erreur déjà gérée par le hook via toast
     }
   };
 
-  const handlePatientRestored = async () => {
-    // Tenter de restaurer via le backend
-    if (!selectedPatient?.id_ || !token) return;
-
-    try {
-      const restoredPatient = await PatientService.restorePatient(selectedPatient.id_, token);
-
-      // Si le backend confirme, mettre à jour localement
-      setPatientsData(prev => prev ? {
-        ...prev,
-        data: prev.data.map(p =>
-          p.id_ === selectedPatient.id_
-            ? { ...restoredPatient, deleted_at: undefined, is_active: true }
-            : p
-        ),
-      } : null);
-
-      toast.success(`Patient ${selectedPatient.given_name} ${selectedPatient.family_name} restauré avec succès`);
-    } catch (error: any) {
-      console.error('Error restoring patient:', error);
-      toast.error(error.message || 'Erreur lors de la restauration du patient');
-      // En cas d'erreur, recharger la liste
-      const reloadPatients = async () => {
-        setLoading(true);
-        setError(null);
-
-        try {
-          const params = {
-            limit: itemsPerPage,
-            offset: (currentPage - 1) * itemsPerPage,
-            search: filters.search || undefined,
-            birth_date_from: filters.birth_date_from || undefined,
-            genders: filters.genders !== 'all' ? filters.genders : undefined,
-          };
-
-          const response = await PatientService.getPatients(params, token || undefined);
-          setPatientsData(response);
-        } catch (error: any) {
-          console.error('Error loading patients:', error);
-          setError(error.message || "Erreur lors du chargement des patients");
-          toast.error(error.message || "Erreur lors du chargement des patients");
-        } finally {
-          setLoading(false);
-        }
-      };
-
-      reloadPatients();
-    } finally {
-      setIsRestoreModalOpen(false);
-      setSelectedPatient(null);
-    }
+  const handlePatientRestored = () => {
+    setIsRestoreModalOpen(false);
+    setSelectedPatient(null);
   };
 
   const handlePatientDeleted = () => {
-    // Mettre à jour localement pour éviter un rechargement
-    setPatientsData(prev => prev ? {
-      ...prev,
-      data: prev.data.map(p =>
-        p.id_ === selectedPatient?.id_
-          ? { ...p, deleted_at: new Date().toISOString(), is_active: false }
-          : p
-      ),
-      total: prev.total - 1
-    } : null);
     setSelectedPatient(null);
     setIsDeleteModalOpen(false);
-    toast.success(`Patient ${selectedPatient?.given_name} ${selectedPatient?.family_name} supprimé avec succès`);
   };
 
   const handlePatientPermanentlyDeleted = () => {
-    // Retirer localement de la liste (pas de rechargement nécessaire)
-    setPatientsData(prev => prev ? {
-      ...prev,
-      data: prev.data.filter(p => p.id_ !== selectedPatient?.id_),
-      total: prev.total - 1
-    } : null);
     setSelectedPatient(null);
     setIsPermanentlyDeleteModalOpen(false);
-    toast.success(`Patient ${selectedPatient?.given_name} ${selectedPatient?.family_name} supprimé définitivement avec succès`);
   };
-
-  // Charger les patients
-  useEffect(() => {
-    const loadPatients = async () => {
-      setLoading(true);
-      setError(null);
-
-      try {
-        const params = {
-          limit: itemsPerPage,
-          offset: (currentPage - 1) * itemsPerPage,
-          search: filters.search || undefined,
-          birth_date_from: filters.birth_date_from || undefined,
-          genders: filters.genders !== 'all' ? filters.genders : undefined,
-        };
-
-        const response = await PatientService.getPatients(params, token || undefined);
-        setPatientsData(response);
-      } catch (error: any) {
-        console.error('Error loading patients:', error);
-        setError(error.message || "Erreur lors du chargement des patients");
-        toast.error(error.message || "Erreur lors du chargement des patients");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadPatients();
-  }, [currentPage, itemsPerPage, filters, token]);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -226,6 +101,7 @@ export default function PatientsPage() {
       birth_date_from: newFilters.birth_date_from || "",
       genders: newFilters.genders || "all",
     });
+    setCurrentPage(1); // Retour à la page 1 lors du changement de filtre
   };
 
   const handleItemsPerPageChange = (newItemsPerPage: number) => {
@@ -313,3 +189,4 @@ export default function PatientsPage() {
     </div>
   );
 }
+

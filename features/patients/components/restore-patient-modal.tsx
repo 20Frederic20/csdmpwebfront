@@ -11,9 +11,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { RotateCcw } from "lucide-react";
-import { Patient } from "@/features/patients/types/patients.types";
-import { PatientService } from "@/features/patients/services/patients.service";
-import { useAuthToken } from "@/hooks/use-auth-token";
+import { Patient, useRestorePatient } from "@/features/patients";
 import { toast } from "sonner";
 
 interface RestorePatientModalProps {
@@ -24,21 +22,15 @@ interface RestorePatientModalProps {
 }
 
 export function RestorePatientModal({ patient, onPatientRestored, isOpen, onClose }: RestorePatientModalProps) {
-  const [loading, setLoading] = useState(false);
-  const { token } = useAuthToken();
+  const { mutateAsync: restorePatient, isPending: loading } = useRestorePatient();
 
   const handleRestore = async () => {
-    setLoading(true);
-
     try {
-      await PatientService.restorePatient(patient.id_, token || undefined);
-      toast.success(`Patient ${patient.given_name} ${patient.family_name} restauré avec succès`);
+      await restorePatient(patient.id_);
       onPatientRestored();
       onClose();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Une erreur est survenue lors de la restauration du patient');
-    } finally {
-      setLoading(false);
+      // Erreur déjà gérée par le hook
     }
   };
 

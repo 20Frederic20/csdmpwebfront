@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Heart } from "lucide-react";
 import { PatientAllergiesTab } from "./patient-allergies-tab";
 import { MedicalHistoryTab } from "./medical-history-tab";
 import { FamilyHistoryTab } from "./family-history-tab";
@@ -10,9 +11,10 @@ import { PatientResponse } from "@/features/patients/types/patient-detail.types"
 
 interface PatientDetailTabsProps {
   patient: PatientResponse;
+  patientId: string;
 }
 
-export function PatientDetailTabs({ patient }: PatientDetailTabsProps) {
+export function PatientDetailTabs({ patient, patientId }: PatientDetailTabsProps) {
   const [activeTab, setActiveTab] = useState("allergies");
 
   const handleAddAllergy = () => {
@@ -41,10 +43,11 @@ export function PatientDetailTabs({ patient }: PatientDetailTabsProps) {
       label: "Allergies",
       count: patient.patient_allergies?.length || 0,
       component: (
-        <PatientAllergiesTab 
+        <PatientAllergiesTab
           allergies={patient.patient_allergies}
           loading={false}
           onAdd={handleAddAllergy}
+          patientId={patientId}
         />
       ),
     },
@@ -53,13 +56,14 @@ export function PatientDetailTabs({ patient }: PatientDetailTabsProps) {
       label: "Historique médical",
       count: patient.medical_histories?.length || 0,
       component: (
-        <MedicalHistoryTab 
+        <MedicalHistoryTab
           medicalHistory={patient.medical_histories?.map(h => ({
             ...h,
             condition: h.description || h.category
           }))}
           loading={false}
           onAdd={handleAddMedicalHistory}
+          patientId={patientId}
         />
       ),
     },
@@ -68,7 +72,7 @@ export function PatientDetailTabs({ patient }: PatientDetailTabsProps) {
       label: "Historique familial",
       count: patient.family_histories?.length || 0,
       component: (
-        <FamilyHistoryTab 
+        <FamilyHistoryTab
           familyHistory={patient.family_histories}
           loading={false}
           onAdd={handleAddFamilyHistory}
@@ -80,10 +84,11 @@ export function PatientDetailTabs({ patient }: PatientDetailTabsProps) {
       label: "Style de vie",
       count: patient.lifestyles?.length || 0,
       component: (
-        <LifestyleTab 
+        <LifestyleTab
           lifestyle={patient.lifestyles}
           loading={false}
           onEdit={handleEditLifestyle}
+          patientId={patientId}
         />
       ),
     },
@@ -94,8 +99,8 @@ export function PatientDetailTabs({ patient }: PatientDetailTabsProps) {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-4">
           {tabs.map((tab) => (
-            <TabsTrigger 
-              key={tab.value} 
+            <TabsTrigger
+              key={tab.value}
               value={tab.value}
               className="relative"
             >
@@ -108,7 +113,7 @@ export function PatientDetailTabs({ patient }: PatientDetailTabsProps) {
             </TabsTrigger>
           ))}
         </TabsList>
-        
+
         {tabs.map((tab) => (
           <TabsContent key={tab.value} value={tab.value} className="mt-6">
             {tab.component}

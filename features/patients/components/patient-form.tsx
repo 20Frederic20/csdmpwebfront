@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Save, X } from "lucide-react";
 import { toast } from "sonner";
-import { CreatePatientRequest, Patient } from "@/features/patients";
+import { CreatePatientRequest, Patient, useCreatePatient, useUpdatePatient } from "@/features/patients";
 import { PatientService } from "@/features/patients";
 import { User, ListUsersQueryParams } from "@/features/users";
 import { UserService } from "@/features/users";
@@ -34,15 +34,14 @@ interface PatientFormProps {
   submitButtonText?: string;
 }
 
-export function PatientForm({ 
-  patient, 
-  onCancel, 
-  onSuccess, 
+export function PatientForm({
+  patient,
+  onCancel,
+  onSuccess,
   title = patient ? "Modifier le patient" : "Ajouter un patient",
   submitButtonText = patient ? "Modifier" : "Créer"
 }: PatientFormProps) {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
   const [createUser, setCreateUser] = useState(true);
@@ -53,10 +52,10 @@ export function PatientForm({
     password: "",
   });
   const [selectedRoles, setSelectedRoles] = useState<UserRole[]>(['PATIENT']);
-  
+
   // État pour la gestion des villes
   const [cities, setCities] = useState<City[]>([]);
-  
+
   const [formData, setFormData] = useState<CreatePatientRequest>({
     given_name: patient?.given_name || "",
     family_name: patient?.family_name || "",
@@ -97,14 +96,14 @@ export function PatientForm({
           };
           const response = await UserService.getUsers(params, token || undefined);
           allUsers = [...allUsers, ...(response.data || [])];
-          
+
           if (response.data && response.data.length < limit) {
             hasMore = false;
           } else {
             offset += limit;
           }
         }
-        
+
         setUsers(allUsers);
       } catch (error) {
         console.error('Error loading users:', error);
@@ -144,7 +143,7 @@ export function PatientForm({
     if (cities.length > 0 && patient) {
       const residenceCitySelected = findCityByName(cities, patient.residence_city);
       const birthPlaceSelected = findCityByName(cities, patient.birth_place);
-      
+
       setFormData(prev => ({
         ...prev,
         residence_city: residenceCitySelected?.code || "",
@@ -162,9 +161,14 @@ export function PatientForm({
     }
   }, [users, patient]);
 
+  const { mutateAsync: createPatient, isPending: isCreating } = useCreatePatient();
+  const { mutateAsync: updatePatient, isPending: isUpdating } = useUpdatePatient();
+
+  const loading = isCreating || isUpdating;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validation
     if (!formData.given_name.trim()) {
       toast.error("Le prénom est requis");
@@ -226,12 +230,11 @@ export function PatientForm({
       return;
     }
 
-    setLoading(true);
     try {
       let patientData: CreatePatientRequest;
 
       if (createUser && !patient) {
-        
+
         patientData = {
           given_name: userData.given_name || formData.given_name,
           family_name: userData.family_name || formData.family_name,
@@ -253,7 +256,7 @@ export function PatientForm({
         };
       } else {
         // Récupérer le code de la ville depuis le nom (label)
-        
+
         patientData = {
           given_name: formData.given_name,
           family_name: formData.family_name,
@@ -276,11 +279,10 @@ export function PatientForm({
       }
 
       if (patient) {
-        await PatientService.updatePatient(patient.id_, patientData, token || undefined);
-        toast.success("Patient modifié avec succès");
+        await updatePatient({ id: patient.id_, data: patientData });
       } else {
         if (createUser && !patient) {
-          
+
           (patientData as any).main_user = {
             given_name: userData.given_name,
             family_name: userData.family_name,
@@ -291,17 +293,14 @@ export function PatientForm({
 
           patientData.is_main = true;
         }
-        
-        await PatientService.createPatient(patientData, token || undefined);
-        toast.success("Patient créé avec succès");
+
+        await createPatient(patientData);
       }
-      
+
       onSuccess();
-    } catch (error: any) {
+    } catch (error) {
+      // L'erreur est déjà gérée par le hook via toast
       console.error('Error saving patient:', error);
-      toast.error(error.message || `Erreur lors de la ${patient ? 'modification' : 'création'} du patient`);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -373,7 +372,7 @@ export function PatientForm({
       emergency_contact_phone: patient?.emergency_contact_phone || null,
       is_main: patient?.is_main || false,
     });
-    
+
     // Réinitialiser les données utilisateur en gardant la synchronisation
     const resetUserData = {
       given_name: "",
@@ -381,13 +380,13 @@ export function PatientForm({
       health_id: "",
       password: "",
     };
-    
+
     // Si on est en mode création, synchroniser avec les valeurs patient actuelles
     if (createUser && !patient) {
       resetUserData.given_name = formData.given_name;
       resetUserData.family_name = formData.family_name;
     }
-    
+
     setUserData(resetUserData);
     setSelectedRoles(['PATIENT']);
   };
@@ -397,8 +396,8 @@ export function PatientForm({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={onCancel}
             className="cursor-pointer"
           >
@@ -413,8 +412,8 @@ export function PatientForm({
           </div>
         </div>
         <div className="flex gap-2">
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={resetForm}
             className="cursor-pointer"
           >
