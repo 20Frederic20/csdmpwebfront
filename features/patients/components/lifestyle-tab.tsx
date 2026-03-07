@@ -3,59 +3,86 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Activity, Heart, Utensils, Cigarette, Wine } from "lucide-react";
+import { TabActionsButton } from "./tab-actions-button";
 
 interface LifestyleItem {
-  id_: string;
-  category: string;
-  habit: string;
-  frequency?: string;
-  details?: string;
+  id: string;
+  tobacco_status: string;
+  alcohol_consumption: string;
+  physical_activity: string;
+  assessment_date?: string;
+  tobacco_per_week?: number;
+  alcohol_units_per_week?: number;
+  dietary_regime?: string;
+  occupational_risks?: string;
+  notes?: string;
   is_active: boolean;
+  deleted_at?: string;
 }
 
 interface LifestyleTabProps {
   lifestyle?: LifestyleItem[];
   loading?: boolean;
+  onAdd?: () => void;
 }
 
-export function LifestyleTab({ lifestyle = [], loading = false }: LifestyleTabProps) {
-  const getCategoryIcon = (category: string) => {
-    switch (category?.toLowerCase()) {
-      case 'exercise':
-      case 'activité physique':
-        return <Activity className="h-5 w-5" />;
-      case 'diet':
-      case 'alimentation':
-        return <Utensils className="h-5 w-5" />;
-      case 'smoking':
-      case 'tabac':
-        return <Cigarette className="h-5 w-5" />;
-      case 'alcohol':
-      case 'alcool':
-        return <Wine className="h-5 w-5" />;
+export function LifestyleTab({ lifestyle = [], loading = false, onAdd = () => {} }: LifestyleTabProps) {
+  const getTobaccoIcon = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case 'non-smoker':
+      case 'non-fumeur':
+        return <div className="h-5 w-5 rounded-full bg-green-100 flex items-center justify-center">✓</div>;
+      case 'smoker':
+      case 'fumeur':
+        return <Cigarette className="h-5 w-5 text-red-500" />;
+      case 'former-smoker':
+      case 'ex-fumeur':
+        return <div className="h-5 w-5 rounded-full bg-orange-100 flex items-center justify-center">○</div>;
       default:
         return <Heart className="h-5 w-5" />;
     }
   };
 
-  const getCategoryColor = (category: string) => {
-    switch (category?.toLowerCase()) {
-      case 'exercise':
-      case 'activité physique':
-        return 'bg-green-100 text-green-800 border-green-200';
-      case 'diet':
-      case 'alimentation':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'smoking':
-      case 'tabac':
-        return 'bg-orange-100 text-orange-800 border-orange-200';
-      case 'alcohol':
-      case 'alcool':
-        return 'bg-purple-100 text-purple-800 border-purple-200';
+  const getAlcoholIcon = (consumption: string) => {
+    switch (consumption?.toLowerCase()) {
+      case 'none':
+      case 'aucun':
+        return <div className="h-5 w-5 rounded-full bg-green-100 flex items-center justify-center">✓</div>;
+      case 'moderate':
+      case 'modéré':
+        return <Wine className="h-5 w-5 text-yellow-500" />;
+      case 'heavy':
+      case 'élevé':
+        return <Wine className="h-5 w-5 text-red-500" />;
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return <Wine className="h-5 w-5" />;
     }
   };
+
+  const getActivityIcon = (activity: string) => {
+    switch (activity?.toLowerCase()) {
+      case 'active':
+      case 'actif':
+        return <Activity className="h-5 w-5 text-green-500" />;
+      case 'moderate':
+      case 'modéré':
+        return <Activity className="h-5 w-5 text-yellow-500" />;
+      case 'sedentary':
+      case 'sédentaire':
+        return <Activity className="h-5 w-5 text-red-500" />;
+      default:
+        return <Activity className="h-5 w-5" />;
+    }
+  };
+
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return null;
+    const date = new Date(dateString);
+    return date.toLocaleDateString('fr-FR');
+  };
+
+  // Filter out inactive items
+  const activeLifestyle = lifestyle.filter(item => item.is_active);
 
   if (loading) {
     return (
@@ -72,7 +99,7 @@ export function LifestyleTab({ lifestyle = [], loading = false }: LifestyleTabPr
     );
   }
 
-  if (!lifestyle || lifestyle.length === 0) {
+  if (!activeLifestyle || activeLifestyle.length === 0) {
     return (
       <Card>
         <CardHeader>
@@ -91,58 +118,113 @@ export function LifestyleTab({ lifestyle = [], loading = false }: LifestyleTabPr
     );
   }
 
-  // Group by category
-  const groupedLifestyle = lifestyle.reduce((acc, item) => {
-    if (!acc[item.category]) {
-      acc[item.category] = [];
-    }
-    acc[item.category].push(item);
-    return acc;
-  }, {} as Record<string, LifestyleItem[]>);
-
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Heart className="h-5 w-5" />
-          Style de vie ({lifestyle.length})
+        <CardTitle className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Heart className="h-5 w-5" />
+            Style de vie ({activeLifestyle.length})
+          </div>
+          <TabActionsButton onAdd={onAdd || (() => {})} label="Ajouter un style de vie" />
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-6">
-          {Object.entries(groupedLifestyle).map(([category, items]) => (
-            <div key={category} className="space-y-3">
-              <div className="flex items-center gap-2">
-                {getCategoryIcon(category)}
-                <h3 className="font-semibold text-lg capitalize">{category}</h3>
-                <Badge variant="outline" className={getCategoryColor(category)}>
-                  {items.length}
-                </Badge>
-              </div>
-              
-              <div className="space-y-2 ml-7">
-                {items.map((item) => (
-                  <div
-                    key={item.id_}
-                    className="p-3 rounded-lg border border-gray-200"
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-medium">{item.habit}</h4>
-                      {item.frequency && (
-                        <Badge variant="outline" className="text-xs">
-                          {item.frequency}
-                        </Badge>
-                      )}
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse border border-gray-200">
+            <thead>
+              <tr className="bg-gray-50">
+                <th className="border border-gray-200 px-4 py-3 text-left font-semibold text-sm">Tabac</th>
+                <th className="border border-gray-200 px-4 py-3 text-left font-semibold text-sm">Alcool</th>
+                <th className="border border-gray-200 px-4 py-3 text-left font-semibold text-sm">Activité physique</th>
+                <th className="border border-gray-200 px-4 py-3 text-left font-semibold text-sm">Régime</th>
+                <th className="border border-gray-200 px-4 py-3 text-left font-semibold text-sm">Risques professionnels</th>
+                <th className="border border-gray-200 px-4 py-3 text-left font-semibold text-sm">Date d'évaluation</th>
+                <th className="border border-gray-200 px-4 py-3 text-left font-semibold text-sm">Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              {activeLifestyle.map((item) => (
+                <tr key={item.id} className="hover:bg-gray-50">
+                  <td className="border border-gray-200 px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      {getTobaccoIcon(item.tobacco_status)}
+                      <div>
+                        <div className="text-sm capitalize">
+                          {item.tobacco_status === 'non-smoker' ? 'Non-fumeur' :
+                           item.tobacco_status === 'smoker' ? 'Fumeur' :
+                           item.tobacco_status === 'former-smoker' ? 'Ex-fumeur' :
+                           item.tobacco_status}
+                        </div>
+                        {item.tobacco_per_week && (
+                          <div className="text-xs text-muted-foreground">
+                            {item.tobacco_per_week}/sem
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    
-                    {item.details && (
-                      <p className="text-sm text-muted-foreground">{item.details}</p>
+                  </td>
+                  <td className="border border-gray-200 px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      {getAlcoholIcon(item.alcohol_consumption)}
+                      <div>
+                        <div className="text-sm capitalize">
+                          {item.alcohol_consumption === 'none' ? 'Aucun' :
+                           item.alcohol_consumption === 'moderate' ? 'Modéré' :
+                           item.alcohol_consumption === 'heavy' ? 'Élevé' :
+                           item.alcohol_consumption}
+                        </div>
+                        {item.alcohol_units_per_week && (
+                          <div className="text-xs text-muted-foreground">
+                            {item.alcohol_units_per_week} unités/semaine
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </td>
+                  <td className="border border-gray-200 px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      {getActivityIcon(item.physical_activity)}
+                      <div className="text-sm capitalize">
+                        {item.physical_activity === 'active' ? 'Actif' :
+                         item.physical_activity === 'moderate' ? 'Modéré' :
+                         item.physical_activity === 'sedentary' ? 'Sédentaire' :
+                         item.physical_activity}
+                      </div>
+                    </div>
+                  </td>
+                  <td className="border border-gray-200 px-4 py-3">
+                    {item.dietary_regime ? (
+                      <div className="flex items-center gap-2">
+                        <Utensils className="h-4 w-4 text-blue-500" />
+                        <span className="text-sm">{item.dietary_regime}</span>
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground">-</span>
                     )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
+                  </td>
+                  <td className="border border-gray-200 px-4 py-3">
+                    {item.occupational_risks ? (
+                      <div className="flex items-center gap-2">
+                        <Heart className="h-4 w-4 text-orange-500" />
+                        <span className="text-sm">{item.occupational_risks}</span>
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground">-</span>
+                    )}
+                  </td>
+                  <td className="border border-gray-200 px-4 py-3">
+                    {item.assessment_date ? formatDate(item.assessment_date) : '-'}
+                  </td>
+                  <td className="border border-gray-200 px-4 py-3">
+                    <div className="max-w-xs truncate" title={item.notes}>
+                      {item.notes || '-'}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </CardContent>
     </Card>
