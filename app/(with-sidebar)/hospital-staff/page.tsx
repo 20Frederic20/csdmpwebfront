@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import Link from "next/link";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { usePermissionsContext } from "@/contexts/permissions-context";
+import { useHospitalStaffs } from "@/features/hospital-staff/hooks/use-hospital-staffs";
 import { DeleteHospitalStaffModal } from "@/features/hospital-staff/components/delete-hospital-staff-modal";
 import { PermanentDeleteHospitalStaffModal } from "@/features/hospital-staff/components/permanent-delete-hospital-staff-modal";
 import { DataTableWithFilters } from "@/components/ui/data-table-with-filters";
@@ -18,15 +19,12 @@ import { HospitalStaffFiltersWrapper } from "@/features/hospital-staff/component
 
 export default function HospitalStaffPage() {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [total, setTotal] = useState(0);
-  const [staff, setStaff] = useState<HospitalStaff[]>([]);
   const [sortingColumn, setSortingColumn] = useState<string>('user_given_name');
   const [sortingOrder, setSortingOrder] = useState<'asc' | 'desc'>('asc');
   const { token } = useAuthToken();
-  const { user, loading: permissionsLoading, canAccess } = usePermissionsContext();
+  const { canAccess } = usePermissionsContext();
 
   // Mémoriser les permissions pour éviter les rechargements infinis
   const canDeleteStaff = useMemo(() => canAccess('hospital_staffs', 'delete'), [canAccess]);
@@ -38,27 +36,11 @@ export default function HospitalStaffPage() {
     department_id: "" as string | "",
   });
   const [selectedRows, setSelectedRows] = useState<Record<string, boolean>>({});
-  const [error, setError] = useState<string | null>(null);
 
   // États pour les modals
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isPermanentDeleteModalOpen, setIsPermanentDeleteModalOpen] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState<HospitalStaff | null>(null);
-
-  const loadStaff = async () => {
-    setLoading(true);
-    try {
-      const response = await HospitalStaffService.getHospitalStaff(params, token || undefined);
-      setStaff(response.data || []);
-      setTotal(response.total || 0);
-    } catch (error) {
-      toast.error('Erreur lors du chargement du personnel');
-      setStaff([]);
-      setTotal(0);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   // Mémoriser les paramètres pour éviter les rechargements multiples
   const params = useMemo((): HospitalStaffQueryParams => {
@@ -71,18 +53,23 @@ export default function HospitalStaffPage() {
       sort_order: sortingOrder,
       specialty: filters.specialty as MedicalSpecialty || undefined,
       department_id: filters.department_id || undefined,
-      health_facility_id: user?.health_facility_id || undefined,
       // Inclure les éléments supprimés si on a le droit de restaurer
       include_deleted: canDeleteStaff,
     };
-  }, [currentPage, itemsPerPage, sortingColumn, sortingOrder, filters.search, filters.specialty, filters.department_id, user?.health_facility_id, canDeleteStaff]);
+  }, [currentPage, itemsPerPage, sortingColumn, sortingOrder, filters.search, filters.specialty, filters.department_id, canDeleteStaff]);
 
-  useEffect(() => {
-    // Ne lancer la requête que si le token est présent ET que les permissions ont fini de charger
-    if (token && !permissionsLoading) {
-      loadStaff();
-    }
-  }, [params, token, permissionsLoading]);
+  // Utiliser le nouveau hook TanStack Query
+  const {
+    data: staffData,
+    isLoading,
+    error: fetchError,
+    refetch
+  } = useHospitalStaffs(params);
+
+  const staff = staffData?.data || [];
+  const total = staffData?.total || 0;
+  const error = fetchError ? (fetchError as Error).message : null;
+
 
   const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page);
@@ -153,7 +140,7 @@ export default function HospitalStaffPage() {
   };
 
   const handleStaffDeleted = () => {
-    loadStaff();
+    refetch();
   };
 
   const handleStaffSoftDeleted = async (id: string) => {
@@ -271,7 +258,7 @@ export default function HospitalStaffPage() {
       <DataTableWithFilters
         columns={hospitalStaffColumns}
         data={staff}
-        loading={loading}
+        loading={isLoading}
         error={error}
         total={total}
         currentPage={currentPage}
@@ -300,10 +287,7 @@ export default function HospitalStaffPage() {
           onClose={() => setIsDeleteModalOpen(false)}
           onStaffDeleted={() => {
             // Recharger les données après suppression
-            setStaff(prevStaff =>
-              prevStaff.filter(member => member.id_ !== selectedStaff.id_)
-            );
-            setTotal(prev => prev - 1);
+            refetch();
             setIsDeleteModalOpen(false);
           }}
         />
@@ -317,10 +301,7 @@ export default function HospitalStaffPage() {
           onClose={() => setIsPermanentDeleteModalOpen(false)}
           onStaffDeleted={() => {
             // Recharger les données après suppression définitive
-            setStaff(prevStaff =>
-              prevStaff.filter(member => member.id_ !== selectedStaff.id_)
-            );
-            setTotal(prev => prev - 1);
+            refetch();
             setIsPermanentDeleteModalOpen(false);
           }}
         />
