@@ -30,7 +30,7 @@ export default function DepartmentsPage() {
   });
   const [selectedRows, setSelectedRows] = useState<Record<string, boolean>>({});
   const { token } = useAuthToken();
-  const { canAccess } = usePermissionsContext();
+  const { user, loading: permissionsLoading, canAccess } = usePermissionsContext();
 
   // États pour les modals
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -87,13 +87,13 @@ export default function DepartmentsPage() {
     const loadDepartments = async () => {
       setLoading(true);
       setError(null);
-      
+
       try {
         const params = {
           limit: itemsPerPage,
           offset: (currentPage - 1) * itemsPerPage,
           search: filters.search || undefined,
-          health_facility_id: filters.health_facility_id || undefined,
+          health_facility_id: user?.health_facility_id || filters.health_facility_id || undefined,
           code: filters.code || undefined,
           is_active: filters.is_active !== null ? filters.is_active : undefined,
         };
@@ -109,8 +109,10 @@ export default function DepartmentsPage() {
       }
     };
 
-    loadDepartments();
-  }, [currentPage, itemsPerPage, filters, token]);
+    if (token && !permissionsLoading) {
+      loadDepartments();
+    }
+  }, [currentPage, itemsPerPage, filters, token, permissionsLoading, user?.health_facility_id]);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -144,7 +146,7 @@ export default function DepartmentsPage() {
           </p>
         </div>
         {canAccess('departments', 'create') && (
-          <Button 
+          <Button
             className="cursor-pointer"
             onClick={() => setIsAddModalOpen(true)}
           >

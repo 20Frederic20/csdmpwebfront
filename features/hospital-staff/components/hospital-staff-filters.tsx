@@ -6,12 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Search, Filter, X, Building2 } from "lucide-react";
-import { 
-  getSpecialtyOptions, 
+import {
+  getSpecialtyOptions,
   MedicalSpecialty
 } from "@/features/hospital-staff";
 import CustomSelect from "@/components/ui/custom-select";
 import { DepartmentSelect } from "@/features/departments/components/department-select";
+import { usePermissions } from "@/hooks/use-permissions";
 
 // Fonction debounce personnalisée
 function debounce<T extends (...args: any[]) => any>(
@@ -39,13 +40,14 @@ interface HospitalStaffFiltersProps {
   onToggle: () => void;
 }
 
-export function HospitalStaffFilters({ 
-  filters, 
-  onFiltersChange, 
-  onReset, 
-  isOpen, 
-  onToggle 
+export function HospitalStaffFilters({
+  filters,
+  onFiltersChange,
+  onReset,
+  isOpen,
+  onToggle
 }: HospitalStaffFiltersProps) {
+  const { user } = usePermissions();
   const [localSearch, setLocalSearch] = useState(filters.search || '');
   // Supprimer l'état local des départements et utiliser une fonction de recherche
   // pour éviter le double chargement avec DepartmentSelect
@@ -81,8 +83,8 @@ export function HospitalStaffFilters({
   };
 
   const hasActiveFilters = !!(
-    filters.search || 
-    filters.specialty || 
+    filters.search ||
+    filters.specialty ||
     filters.department_id
   );
 
@@ -95,9 +97,9 @@ export function HospitalStaffFilters({
             Filtres avancés
           </CardTitle>
           <div className="flex items-center gap-2">
-            <Button 
-              variant="ghost" 
-              size="sm" 
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={onToggle}
             >
               {isOpen ? 'Masquer' : 'Afficher'} les filtres
@@ -121,7 +123,7 @@ export function HospitalStaffFilters({
                 />
               </div>
             </div>
-            
+
             <div className="space-y-2">
               <label className="text-sm font-medium">Spécialité</label>
               <CustomSelect
@@ -135,7 +137,7 @@ export function HospitalStaffFilters({
                 height="h-10"
               />
             </div>
-            
+
             <div className="space-y-2">
               <label className="text-sm font-medium">Département</label>
               <DepartmentSelect
@@ -144,15 +146,15 @@ export function HospitalStaffFilters({
                 placeholder="Tous les départements"
                 height="h-10"
                 onlyActive={true}
-                healthFacilityId={null}
+                healthFacilityId={user?.health_facility_id || null}
               />
             </div>
-            
+
             <div className="space-y-2">
               <label className="text-sm font-medium invisible">Actions</label>
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={onReset}
                 className="text-red-600 hover:text-red-700 w-full h-10"
               >
@@ -170,8 +172,8 @@ export function HospitalStaffFilters({
                   <Badge variant="secondary" className="flex items-center gap-1">
                     <Search className="h-3 w-3" />
                     Recherche: {filters.search}
-                    <X 
-                      className="h-3 w-3 cursor-pointer" 
+                    <X
+                      className="h-3 w-3 cursor-pointer"
                       onClick={() => handleFilterChange('search', '')}
                     />
                   </Badge>
@@ -179,8 +181,8 @@ export function HospitalStaffFilters({
                 {filters.specialty && (
                   <Badge variant="secondary" className="flex items-center gap-1">
                     Spécialité: {getSpecialtyOptions().find(opt => opt.value === filters.specialty)?.label || filters.specialty}
-                    <X 
-                      className="h-3 w-3 cursor-pointer" 
+                    <X
+                      className="h-3 w-3 cursor-pointer"
                       onClick={() => handleFilterChange('specialty', '')}
                     />
                   </Badge>
@@ -189,8 +191,8 @@ export function HospitalStaffFilters({
                   <Badge variant="secondary" className="flex items-center gap-1">
                     <Building2 className="h-3 w-3" />
                     Département: {filters.department_id}
-                    <X 
-                      className="h-3 w-3 cursor-pointer" 
+                    <X
+                      className="h-3 w-3 cursor-pointer"
                       onClick={() => handleFilterChange('department_id', '')}
                     />
                   </Badge>
