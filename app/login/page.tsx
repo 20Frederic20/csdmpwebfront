@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
+import { usePermissionsContext } from '@/contexts/permissions-context';
 import { Button } from "@/components/ui/button"
 import {
     Card,
@@ -19,10 +20,11 @@ import { AuthClientService } from '@/features/core/auth/services/auth-client.ser
 
 export default function LoginPage() {
 
+    const { refreshPermissions } = usePermissionsContext();
     const router = useRouter();
     const [error, setError] = useState<string | null>(null);
     const [isPending, startTransition] = useTransition();
-    
+
     async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();
         setError(null);
@@ -33,8 +35,11 @@ export default function LoginPage() {
 
         startTransition(async () => {
             try {
-                const data = await AuthClientService.login(health_id, password);
-                
+                await AuthClientService.login(health_id, password);
+
+                // Rafraîchir les permissions après la connexion
+                await refreshPermissions();
+
                 router.push('/dashboard');
                 router.refresh();
             } catch (err: any) {
