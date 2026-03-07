@@ -26,8 +26,8 @@ export default function HospitalStaffPage() {
   const [sortingColumn, setSortingColumn] = useState<string>('user_given_name');
   const [sortingOrder, setSortingOrder] = useState<'asc' | 'desc'>('asc');
   const { token } = useAuthToken();
-  const { canAccess } = usePermissions();
-  
+  const { user, loading: permissionsLoading, canAccess } = usePermissions();
+
   // Mémoriser les permissions pour éviter les rechargements infinis
   const canDeleteStaff = useMemo(() => canAccess('hospital_staffs', 'delete'), [canAccess]);
 
@@ -71,16 +71,18 @@ export default function HospitalStaffPage() {
       sort_order: sortingOrder,
       specialty: filters.specialty as MedicalSpecialty || undefined,
       department_id: filters.department_id || undefined,
+      health_facility_id: user?.health_facility_id || undefined,
       // Inclure les éléments supprimés si on a le droit de restaurer
       include_deleted: canDeleteStaff,
     };
-  }, [currentPage, itemsPerPage, sortingColumn, sortingOrder, filters.search, filters.specialty, filters.department_id]);
+  }, [currentPage, itemsPerPage, sortingColumn, sortingOrder, filters.search, filters.specialty, filters.department_id, user?.health_facility_id, canDeleteStaff]);
 
   useEffect(() => {
-    if (token) {
+    // Ne lancer la requête que si le token est présent ET que les permissions ont fini de charger
+    if (token && !permissionsLoading) {
       loadStaff();
     }
-  }, [params, token]);
+  }, [params, token, permissionsLoading]);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -145,7 +147,7 @@ export default function HospitalStaffPage() {
     if (sortingColumn !== field) {
       return <ChevronsUpDown className="h-4 w-4" />;
     }
-    return sortingOrder === 'asc' 
+    return sortingOrder === 'asc'
       ? <ChevronUp className="h-4 w-4" />
       : <ChevronDown className="h-4 w-4" />;
   };
@@ -157,16 +159,16 @@ export default function HospitalStaffPage() {
   const handleStaffSoftDeleted = async (id: string) => {
     try {
       await HospitalStaffService.deleteHospitalStaff(id, token || undefined);
-      
+
       const canViewDeleted = canAccess('hospital_staffs', 'delete');
-      
+
       if (canViewDeleted) {
         setStaff(prevStaff => {
-          const updated = prevStaff.map(member => 
-            member.id_ === id ? { 
-              ...member, 
+          const updated = prevStaff.map(member =>
+            member.id_ === id ? {
+              ...member,
               deleted_at: new Date().toISOString(),
-              is_active: false 
+              is_active: false
             } : member
           );
           return updated;
@@ -189,11 +191,11 @@ export default function HospitalStaffPage() {
   const handleStaffPermanentlyDeleted = async (id: string) => {
     try {
       await HospitalStaffService.permanentlyDeleteHospitalStaff(id, token || undefined);
-      
+
       // Retirer de la liste
       setStaff(prevStaff => prevStaff.filter(member => member.id_ !== id));
       setTotal(prevTotal => prevTotal - 1);
-      
+
       toast.success('Personnel supprimé définitivement');
     } catch (error: any) {
       console.error('Error permanently deleting staff:', error);
@@ -204,19 +206,19 @@ export default function HospitalStaffPage() {
   const handleStaffRestored = async (id: string) => {
     try {
       const restoredStaff = await HospitalStaffService.restoreHospitalStaff(id, token || undefined);
-      
+
       // Mettre à jour l'état localement sans recharger
-      setStaff(prevStaff => 
-        prevStaff.map(member => 
-          member.id_ === id ? { 
-            ...member, 
+      setStaff(prevStaff =>
+        prevStaff.map(member =>
+          member.id_ === id ? {
+            ...member,
             ...restoredStaff,
             deleted_at: null,
-            is_active: true 
+            is_active: true
           } : member
         )
       );
-      
+
       toast.success('Personnel restauré avec succès');
     } catch (error: any) {
       console.error('Error restoring staff:', error);
@@ -227,15 +229,15 @@ export default function HospitalStaffPage() {
   const handleToggleStatus = async (id: string) => {
     try {
       const updatedStaff = await HospitalStaffService.toggleHospitalStaffStatus(id, token || undefined);
-      
+
       if (updatedStaff && typeof updatedStaff.is_active === 'boolean') {
         // Mettre à jour l'état localement sans recharger toute la liste
-        setStaff(prevStaff => 
-          prevStaff.map(member => 
+        setStaff(prevStaff =>
+          prevStaff.map(member =>
             member.id_ === id ? { ...updatedStaff, id_: member.id_ } : member
           )
         );
-        
+
         toast.success(`Personnel ${updatedStaff.is_active ? 'activé' : 'désactivé'} avec succès`);
       } else {
         throw new Error('Réponse invalide du serveur');
@@ -298,7 +300,7 @@ export default function HospitalStaffPage() {
           onClose={() => setIsDeleteModalOpen(false)}
           onStaffDeleted={() => {
             // Recharger les données après suppression
-            setStaff(prevStaff => 
+            setStaff(prevStaff =>
               prevStaff.filter(member => member.id_ !== selectedStaff.id_)
             );
             setTotal(prev => prev - 1);
@@ -315,7 +317,7 @@ export default function HospitalStaffPage() {
           onClose={() => setIsPermanentDeleteModalOpen(false)}
           onStaffDeleted={() => {
             // Recharger les données après suppression définitive
-            setStaff(prevStaff => 
+            setStaff(prevStaff =>
               prevStaff.filter(member => member.id_ !== selectedStaff.id_)
             );
             setTotal(prev => prev - 1);

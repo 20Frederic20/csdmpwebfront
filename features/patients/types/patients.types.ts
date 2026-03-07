@@ -72,7 +72,7 @@ export interface PatientsResponse {
 export interface PatientsQueryParams {
   limit?: number;
   offset?: number;
-  sorting_field?: string ;
+  sorting_field?: string;
   sorting_order?: 'ASC' | 'DESC';
   search?: string;
   birth_date_from?: string;

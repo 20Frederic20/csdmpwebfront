@@ -9,7 +9,7 @@ export class PatientService {
 
   static async getPatients(params: PatientsQueryParams = {}, token?: string): Promise<PatientsResponse> {
     const searchParams = new URLSearchParams();
-    
+
     // Ajouter les paramètres de query
     if (params.limit) searchParams.append('limit', params.limit.toString());
     if (params.offset) searchParams.append('offset', params.offset.toString());
@@ -20,7 +20,7 @@ export class PatientService {
     if (params.genders) searchParams.append('genders', params.genders);
 
     const url = `${API_BASE}/patients${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
-    
+
     const response = await AuthClientService.makeAuthenticatedRequest(url, {
       method: 'GET',
       headers: {

@@ -1,9 +1,9 @@
 export enum UserRole {
-  ADMIN = 'admin',
-  DOCTOR = 'doctor', 
-  NURSE = 'nurse',
-  RECEPTIONIST = 'receptionist',
-  LAB_TECHNICIAN = 'lab_technician'
+  ADMIN = 'ADMIN',
+  DOCTOR = 'DOCTOR',
+  NURSE = 'NURSE',
+  RECEPTIONIST = 'RECEPTIONIST',
+  LAB_TECHNICIAN = 'LAB_TECHNICIAN'
 }
 
 export interface Permission {
@@ -22,6 +22,9 @@ export interface UserWithRoles {
   email: string;
   given_name: string;
   family_name: string;
+  health_facility_id?: string;
+  patient_id?: string;
+  hospital_staff_id?: string;
   roles: UserRole[];
   permissions: Permission[];
 }

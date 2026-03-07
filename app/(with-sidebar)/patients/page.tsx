@@ -65,13 +65,13 @@ export default function PatientsPage() {
       if (updatedPatient && typeof updatedPatient.is_active === 'boolean') {
         setPatientsData(prev => prev ? {
           ...prev,
-          data: prev.data.map(p => 
-            p.id_ === patientId 
+          data: prev.data.map(p =>
+            p.id_ === patientId
               ? { ...p, is_active: updatedPatient.is_active }
               : p
           ),
         } : null);
-        
+
         toast.success(`Patient ${updatedPatient.is_active ? 'activé' : 'désactivé'} avec succès`);
       }
     } catch (error: any) {
@@ -81,7 +81,7 @@ export default function PatientsPage() {
       const reloadPatients = async () => {
         setLoading(true);
         setError(null);
-        
+
         try {
           const params = {
             limit: itemsPerPage,
@@ -101,7 +101,7 @@ export default function PatientsPage() {
           setLoading(false);
         }
       };
-      
+
       reloadPatients();
     }
   };
@@ -109,20 +109,20 @@ export default function PatientsPage() {
   const handlePatientRestored = async () => {
     // Tenter de restaurer via le backend
     if (!selectedPatient?.id_ || !token) return;
-    
+
     try {
       const restoredPatient = await PatientService.restorePatient(selectedPatient.id_, token);
-      
+
       // Si le backend confirme, mettre à jour localement
       setPatientsData(prev => prev ? {
         ...prev,
-        data: prev.data.map(p => 
-          p.id_ === selectedPatient.id_ 
+        data: prev.data.map(p =>
+          p.id_ === selectedPatient.id_
             ? { ...restoredPatient, deleted_at: undefined, is_active: true }
             : p
         ),
       } : null);
-      
+
       toast.success(`Patient ${selectedPatient.given_name} ${selectedPatient.family_name} restauré avec succès`);
     } catch (error: any) {
       console.error('Error restoring patient:', error);
@@ -131,7 +131,7 @@ export default function PatientsPage() {
       const reloadPatients = async () => {
         setLoading(true);
         setError(null);
-        
+
         try {
           const params = {
             limit: itemsPerPage,
@@ -151,7 +151,7 @@ export default function PatientsPage() {
           setLoading(false);
         }
       };
-      
+
       reloadPatients();
     } finally {
       setIsRestoreModalOpen(false);
@@ -163,8 +163,8 @@ export default function PatientsPage() {
     // Mettre à jour localement pour éviter un rechargement
     setPatientsData(prev => prev ? {
       ...prev,
-      data: prev.data.map(p => 
-        p.id_ === selectedPatient?.id_ 
+      data: prev.data.map(p =>
+        p.id_ === selectedPatient?.id_
           ? { ...p, deleted_at: new Date().toISOString(), is_active: false }
           : p
       ),
@@ -192,7 +192,7 @@ export default function PatientsPage() {
     const loadPatients = async () => {
       setLoading(true);
       setError(null);
-      
+
       try {
         const params = {
           limit: itemsPerPage,
