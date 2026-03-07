@@ -5,7 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
-import { DepartmentsResponse, Department, DepartmentFilterParams } from "@/features/departments/types/departments.types";
+import {
+  DepartmentsResponse,
+  Department,
+  DepartmentFilterParams,
+  useDepartments,
+  useDepartmentMutations
+} from "@/features/departments";
 import { DepartmentService } from "@/features/departments/services/departments.service";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { usePermissionsContext } from "@/contexts/permissions-context";
@@ -19,9 +25,6 @@ import { DepartmentFiltersWrapper } from "@/features/departments/components/depa
 export default function DepartmentsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
-  const [departmentsData, setDepartmentsData] = useState<DepartmentsResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<DepartmentFilterParams>({
     search: "",
     health_facility_id: null,
@@ -31,6 +34,17 @@ export default function DepartmentsPage() {
   const [selectedRows, setSelectedRows] = useState<Record<string, boolean>>({});
   const { token } = useAuthToken();
   const { user, loading: permissionsLoading, canAccess } = usePermissionsContext();
+
+  const { data: departmentsData, isLoading: loading, error: queryError, refetch } = useDepartments({
+    limit: itemsPerPage,
+    offset: (currentPage - 1) * itemsPerPage,
+    search: filters.search || undefined,
+    health_facility_id: user?.health_facility_id || filters.health_facility_id || undefined,
+    code: filters.code || undefined,
+    is_active: filters.is_active !== null ? filters.is_active : undefined,
+  });
+
+  const { toggleStatus, deleteDepartment } = useDepartmentMutations();
 
   // États pour les modals
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -48,71 +62,23 @@ export default function DepartmentsPage() {
 
   const handleToggleStatus = async (departmentId: string) => {
     try {
-      const updatedDepartment = await DepartmentService.toggleDepartmentActivation(departmentId, token || undefined);
-
-      if (updatedDepartment && typeof updatedDepartment.is_active === 'boolean') {
-        if (departmentsData) {
-          setDepartmentsData({
-            ...departmentsData,
-            data: departmentsData.data.map(department =>
-              department.id_ === departmentId ? updatedDepartment : department
-            ),
-          });
-        }
-        toast.success(`Département ${updatedDepartment.is_active ? 'activé' : 'désactivé'} avec succès`);
-      }
+      await toggleStatus(departmentId);
     } catch (error: any) {
       console.error('Error toggling department status:', error);
-      toast.error(error.message || "Erreur lors de la modification du statut");
     }
   };
 
   const handleDepartmentRestored = (departmentId: string) => {
-    // TODO: Implement restore functionality
+    // TODO: Implement restore functionality if needed in mutations hook
     toast.info("Fonctionnalité de restauration à venir");
   };
 
-  const handleDepartmentCreated = (newDepartment: any) => {
-    // Recharger les données après création
-    setDepartmentsData(prev => prev ? {
-      ...prev,
-      data: [newDepartment, ...prev.data],
-      total: prev.total + 1
-    } : null);
-    toast.success("Département créé avec succès");
+  const handleDepartmentCreated = () => {
+    // Le refresh est géré par l'invalidation automatique dans le hook de mutation
+    setIsAddModalOpen(false);
   };
 
-  // Charger les départements
-  useEffect(() => {
-    const loadDepartments = async () => {
-      setLoading(true);
-      setError(null);
-
-      try {
-        const params = {
-          limit: itemsPerPage,
-          offset: (currentPage - 1) * itemsPerPage,
-          search: filters.search || undefined,
-          health_facility_id: user?.health_facility_id || filters.health_facility_id || undefined,
-          code: filters.code || undefined,
-          is_active: filters.is_active !== null ? filters.is_active : undefined,
-        };
-
-        const response = await DepartmentService.getDepartments(params, token || undefined);
-        setDepartmentsData(response);
-      } catch (error: any) {
-        console.error('Error loading departments:', error);
-        setError(error.message || "Erreur lors du chargement des départements");
-        toast.error(error.message || "Erreur lors du chargement des départements");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (token && !permissionsLoading) {
-      loadDepartments();
-    }
-  }, [currentPage, itemsPerPage, filters, token, permissionsLoading, user?.health_facility_id]);
+  const error = queryError ? (queryError as any).message : null;
 
   const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page);
@@ -186,6 +152,7 @@ export default function DepartmentsPage() {
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onDepartmentCreated={handleDepartmentCreated}
+        defaultHealthFacilityId={user?.health_facility_id}
       />
 
       {/* Modal de suppression */}
@@ -194,15 +161,7 @@ export default function DepartmentsPage() {
           department={selectedDepartment}
           isOpen={isDeleteModalOpen}
           onClose={() => setIsDeleteModalOpen(false)}
-          onDepartmentDeleted={() => {
-            // Recharger les données après suppression
-            setDepartmentsData(prev => prev ? {
-              ...prev,
-              data: prev.data.filter(d => d.id_ !== selectedDepartment.id_),
-              total: prev.total - 1
-            } : null);
-            setIsDeleteModalOpen(false);
-          }}
+          onDepartmentDeleted={() => setIsDeleteModalOpen(false)}
         />
       )}
     </div>

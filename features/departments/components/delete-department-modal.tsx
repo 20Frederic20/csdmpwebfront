@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+
 import {
   Dialog,
   DialogContent,
@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Department } from "@/features/departments/types/departments.types";
+import { useDepartmentMutations } from "@/features/departments/hooks/use-department-mutations";
 
 interface DeleteDepartmentModalProps {
   department: Department;
@@ -25,17 +26,14 @@ export function DeleteDepartmentModal({
   onClose,
   onDepartmentDeleted,
 }: DeleteDepartmentModalProps) {
-  const [isDeleting, setIsDeleting] = useState(false);
+  const { deleteDepartment, isDeleting } = useDepartmentMutations();
 
   const handleDelete = async () => {
-    setIsDeleting(true);
     try {
-      // La logique de suppression sera gérée par le parent
+      await deleteDepartment(department.id_);
       onDepartmentDeleted();
     } catch (error) {
       console.error('Error deleting department:', error);
-    } finally {
-      setIsDeleting(false);
     }
   };
 
@@ -50,7 +48,7 @@ export function DeleteDepartmentModal({
             Cette action est irréversible.
           </DialogDescription>
         </DialogHeader>
-        
+
         <DialogFooter>
           <Button
             variant="outline"
