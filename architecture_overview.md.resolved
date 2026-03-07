@@ -1,0 +1,68 @@
+# Architecture du Projet CSDMP Dashboard
+
+Ce document décrit l'organisation technique et les principes architecturaux du projet **CSDMP Dashboard**.
+
+## Vue d'Ensemble
+
+Le projet est construit avec **Next.js** (App Router) et suit une architecture modulaire basée sur le concept de **Features (Fonctionnalités)**. Cette approche permet de regrouper toute la logique liée à un domaine métier au même endroit.
+
+---
+
+## 📂 Structure des Dossiers
+
+### 1. `/app` (Routage et Pages)
+C'est le cœur du système de routage de Next.js.
+- **`layout.tsx`** : Définit la structure globale (HTML, Body) et les Providers (ex: `PermissionsProvider`).
+- **`(with-sidebar)`** : Un groupe de routes qui partagent une barre latérale commune.
+- **`page.tsx`** : Chaque dossier contient un fichier `page.tsx` représentant une route (ex: `/patients`, `/hospital-staff`).
+
+### 2. `/features` (Logique Métier)
+C'est ici que se trouve l'essentiel du code. Chaque sous-dossier représente un domaine (ex: `patients`, `appointments`).
+Une feature standard contient :
+- **`components/`** : Composants UI spécifiques à cette fonctionnalité (ex: `PatientForm`, `DoctorSelect`).
+- **`services/`** : Classes gérant les appels API (ex: `PatientService`).
+- **`types/`** : Définitions TypeScript (Interfaces, Enums).
+- **`utils/`** : Fonctions d'aide locales.
+
+### 3. `/components` (UI Partagée)
+Contient les composants réutilisables dans tout le projet.
+- **`/ui`** : Composants atomiques (Boutons, Inputs, Modales), souvent basés sur **Radix UI**.
+- **`custom-select.tsx`** : Une version personnalisée de Select pour les besoins du projet.
+
+### 4. `/contexts` & `/hooks`
+- **`contexts/`** : État global de l'application (ex: `permissions-context.tsx` pour l'utilisateur connecté).
+- **`hooks/`** : Logique de composants partageable (ex: `use-auth-token`).
+
+---
+
+## 🛠️ Couches de Communication (Flux de Données)
+
+L'application suit un flux descendant pour les requêtes :
+
+1. **Composant UI** : Appelle une méthode d'un Service.
+2. **Service (`features/*/services/`)** : Prépare les paramètres (query params, body) et appelle le `FetchService`.
+3. **FetchService (`features/core/services/`)** : Gère la logique générique de `fetch` (JSON, erreurs). Il fait appel à l' `AuthClientService`.
+4. **AuthClientService (`features/core/auth/services/`)** : Ajoute le token `Authorization`, gère le rafraîchissement automatique du token (refresh token) si expiré.
+
+---
+
+## 🛡️ Sécurité et Permissions
+
+- **PermissionsContext** : Fournit les informations de l'utilisateur (`user`) et des fonctions utilitaires (`canAccess`, `hasRole`) à tous les composants.
+- **Deduplication** : Les services (comme `DepartmentService`) incluent un mécanisme pour éviter les requêtes identiques simultanées et supportent l'annulation via `AbortSignal`.
+
+---
+
+## 🎨 Design System
+
+Le projet utilise **Tailwind CSS** pour le style.
+- Les couleurs et thèmes sont définis via des variables CSS dans `app/globals.css`.
+- Les composants suivent une esthétique moderne et premium (transitions douces, états de chargement skeleton).
+
+---
+
+## 🚀 Bonnes Pratiques
+
+- **`use client`** : Utilisé au sommet des fichiers nécessitant de l'interactivité (React Hooks).
+- **Dossiers `__tests__`** : Présents dans chaque feature pour les tests unitaires et d'intégration.
+- **Mémorisation** : Utilisation intensive de `useCallback` et `useMemo` dans les contextes et pages pour éviter les re-renders inutiles et stabiliser les performances.
