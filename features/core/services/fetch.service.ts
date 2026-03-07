@@ -6,10 +6,11 @@ export interface FetchOptions {
   headers?: Record<string, string>;
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
   body?: any;
+  signal?: AbortSignal;
 }
 
 export class FetchService {
-  private static readonly BASE_URL = process.env.NODE_ENV === 'development' 
+  private static readonly BASE_URL = process.env.NODE_ENV === 'development'
     ? (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1')
     : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1');
 
@@ -22,9 +23,9 @@ export class FetchService {
   ): Promise<void> {
     try {
       setLoading(true);
-      
+
       const url = endpoint.startsWith('http') ? endpoint : `${this.BASE_URL}/${endpoint}`;
-      
+
       const response = await AuthClientService.makeAuthenticatedRequest(url, {
         method: options?.method || 'GET',
         headers: {
@@ -33,16 +34,16 @@ export class FetchService {
         },
         body: options?.body ? JSON.stringify(options.body) : undefined,
       });
-      
+
       if (!response.ok) {
         throw new Error(`Failed to fetch ${dataKey || 'data'}: ${response.statusText}`);
       }
-      
+
       if (response.status === 204) {
         setState([]);
         return;
       }
-      
+
       const data = await response.json();
       console.log(`${dataKey || 'Data'}:`, data);
       setState(Array.isArray(data) ? data : (data.data || []));
@@ -61,7 +62,7 @@ export class FetchService {
   ): Promise<T> {
     try {
       const url = endpoint.startsWith('http') ? endpoint : `${this.BASE_URL}/${endpoint}`;
-      
+
       const response = await AuthClientService.makeAuthenticatedRequest(url, {
         method: options.method,
         headers: {
@@ -69,16 +70,17 @@ export class FetchService {
           ...options.headers
         },
         body: options.body ? JSON.stringify(options.body) : undefined,
+        signal: options.signal,
       });
-      
+
       if (!response.ok) {
         throw new Error(`Failed to ${options.method} ${dataKey || 'data'}: ${response.statusText}`);
       }
-      
+
       if (response.status === 204) {
         return undefined as T;
       }
-      
+
       const data = await response.json();
       console.log(`${options.method} ${dataKey || 'Data'}:`, data);
       return data;

@@ -34,6 +34,8 @@ export function DepartmentSelect({
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const controller = new AbortController();
+
     const loadDepartments = async () => {
       try {
         setLoading(true);
@@ -42,10 +44,11 @@ export function DepartmentSelect({
           is_active: onlyActive ? true : undefined,
           limit: 100,
         };
-        
-        const response = await DepartmentService.getDepartments(params);
+
+        const response = await DepartmentService.getDepartments(params, controller.signal);
         setDepartments(response.data);
-      } catch (error) {
+      } catch (error: any) {
+        if (error.name === 'AbortError') return;
         console.error('Error loading departments:', error);
         setDepartments([]);
       } finally {
@@ -54,6 +57,10 @@ export function DepartmentSelect({
     };
 
     loadDepartments();
+
+    return () => {
+      controller.abort();
+    };
   }, [onlyActive, healthFacilityId]);
 
   const options = departments.map((department) => ({

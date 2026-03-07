@@ -12,7 +12,7 @@ import {
 } from "@/features/hospital-staff";
 import CustomSelect from "@/components/ui/custom-select";
 import { DepartmentSelect } from "@/features/departments/components/department-select";
-import { usePermissions } from "@/hooks/use-permissions";
+import { usePermissionsContext } from "@/contexts/permissions-context";
 
 // Fonction debounce personnalisée
 function debounce<T extends (...args: any[]) => any>(
@@ -47,7 +47,7 @@ export function HospitalStaffFilters({
   isOpen,
   onToggle
 }: HospitalStaffFiltersProps) {
-  const { user } = usePermissions();
+  const { user, loading: permissionsLoading } = usePermissionsContext();
   const [localSearch, setLocalSearch] = useState(filters.search || '');
   // Supprimer l'état local des départements et utiliser une fonction de recherche
   // pour éviter le double chargement avec DepartmentSelect
@@ -140,14 +140,18 @@ export function HospitalStaffFilters({
 
             <div className="space-y-2">
               <label className="text-sm font-medium">Département</label>
-              <DepartmentSelect
-                value={filters.department_id}
-                onChange={(value) => handleFilterChange('department_id', value || '')}
-                placeholder="Tous les départements"
-                height="h-10"
-                onlyActive={true}
-                healthFacilityId={user?.health_facility_id || null}
-              />
+              {permissionsLoading ? (
+                <div className="h-10 w-full animate-pulse bg-muted rounded-md" />
+              ) : (
+                <DepartmentSelect
+                  value={filters.department_id}
+                  onChange={(value) => handleFilterChange('department_id', value || '')}
+                  placeholder="Tous les départements"
+                  height="h-10"
+                  onlyActive={true}
+                  healthFacilityId={user?.health_facility_id || null}
+                />
+              )}
             </div>
 
             <div className="space-y-2">

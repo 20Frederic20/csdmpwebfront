@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Plus, ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react";
@@ -9,7 +9,7 @@ import { HospitalStaffService } from "@/features/hospital-staff/services/hospita
 import { toast } from "sonner";
 import Link from "next/link";
 import { useAuthToken } from "@/hooks/use-auth-token";
-import { usePermissions } from "@/hooks/use-permissions";
+import { usePermissionsContext } from "@/contexts/permissions-context";
 import { DeleteHospitalStaffModal } from "@/features/hospital-staff/components/delete-hospital-staff-modal";
 import { PermanentDeleteHospitalStaffModal } from "@/features/hospital-staff/components/permanent-delete-hospital-staff-modal";
 import { DataTableWithFilters } from "@/components/ui/data-table-with-filters";
@@ -26,7 +26,7 @@ export default function HospitalStaffPage() {
   const [sortingColumn, setSortingColumn] = useState<string>('user_given_name');
   const [sortingOrder, setSortingOrder] = useState<'asc' | 'desc'>('asc');
   const { token } = useAuthToken();
-  const { user, loading: permissionsLoading, canAccess } = usePermissions();
+  const { user, loading: permissionsLoading, canAccess } = usePermissionsContext();
 
   // Mémoriser les permissions pour éviter les rechargements infinis
   const canDeleteStaff = useMemo(() => canAccess('hospital_staffs', 'delete'), [canAccess]);
@@ -84,22 +84,22 @@ export default function HospitalStaffPage() {
     }
   }, [params, token, permissionsLoading]);
 
-  const handlePageChange = (page: number) => {
+  const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page);
-  };
+  }, []);
 
-  const handleItemsPerPageChange = (newItemsPerPage: number) => {
+  const handleItemsPerPageChange = useCallback((newItemsPerPage: number) => {
     setItemsPerPage(newItemsPerPage);
     setCurrentPage(1);
-  };
+  }, []);
 
-  const handleFiltersChange = (newFilters: Record<string, any>) => {
+  const handleFiltersChange = useCallback((newFilters: Record<string, any>) => {
     setFilters({
       search: newFilters.search || "",
       specialty: newFilters.specialty || "",
       department_id: newFilters.department_id || "",
     });
-  };
+  }, []);
 
   const handleRowSelectionChange = (selection: Record<string, boolean>) => {
     setSelectedRows(selection);

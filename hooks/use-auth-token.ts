@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 export function useAuthToken() {
   const [token, setToken] = useState<string | null>(null);
 
-  // Synchroniser avec localStorage à chaque render
+  // Synchroniser avec localStorage au montage
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const storedToken = localStorage.getItem('access_token');
@@ -11,7 +11,7 @@ export function useAuthToken() {
         setToken(storedToken);
       }
     }
-  });
+  }, []); // Seulement au montage
 
   const saveToken = (newToken: string) => {
     if (typeof window !== 'undefined') {

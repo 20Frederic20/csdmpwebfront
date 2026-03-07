@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { PermissionsService } from '@/features/auth/services/permissions.service';
 import { UserWithRoles, UserRole } from '@/features/auth/types/roles.types';
 
@@ -32,7 +32,7 @@ export function PermissionsProvider({ children }: { children: ReactNode }) {
           if (cached) {
             const parsed = JSON.parse(cached);
             const now = Date.now();
-            
+
             if (parsed.timestamp && (now - parsed.timestamp) < CACHE_DURATION) {
               console.log('PermissionsContext: Using valid cache');
               setUser(parsed.data);
@@ -46,17 +46,17 @@ export function PermissionsProvider({ children }: { children: ReactNode }) {
 
         console.log('PermissionsContext: Fetching fresh permissions...');
         const userData = await PermissionsService.getUserPermissions();
-        
+
         // Mettre en cache
         const cacheData = {
           data: userData,
           timestamp: Date.now()
         };
-        
+
         if (typeof window !== 'undefined') {
           sessionStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
         }
-        
+
         setUser(userData);
       } catch (error) {
         console.error('PermissionsContext: Failed to fetch permissions:', error);
@@ -69,54 +69,54 @@ export function PermissionsProvider({ children }: { children: ReactNode }) {
     initializePermissions();
   }, []);
 
-  const hasRole = (role: UserRole) => {
+  const hasRole = useCallback((role: UserRole) => {
     return user ? PermissionsService.hasRole(user, role) : false;
-  };
+  }, [user]);
 
-  const hasPermission = (resource: string, action: string) => {
+  const hasPermission = useCallback((resource: string, action: string) => {
     return user ? PermissionsService.hasPermission(user, resource, action) : false;
-  };
+  }, [user]);
 
-  const canAccess = (resource: string, action: string = 'read') => {
+  const canAccess = useCallback((resource: string, action: string = 'read') => {
     return user ? PermissionsService.canAccess(user, resource, action) : false;
-  };
+  }, [user]);
 
-  const refreshPermissions = async () => {
+  const refreshPermissions = useCallback(async () => {
     try {
       setLoading(true);
-      
+
       // Vider le cache
       if (typeof window !== 'undefined') {
         sessionStorage.removeItem(CACHE_KEY);
       }
-      
+
       const userData = await PermissionsService.getUserPermissions();
-      
+
       // Remettre en cache
       const cacheData = {
         data: userData,
         timestamp: Date.now()
       };
-      
+
       if (typeof window !== 'undefined') {
         sessionStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
       }
-      
+
       setUser(userData);
     } catch (error) {
       console.error('Failed to refresh permissions:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const clearPermissionsCache = () => {
+  const clearPermissionsCache = useCallback(() => {
     if (typeof window !== 'undefined') {
       sessionStorage.removeItem(CACHE_KEY);
     }
     setUser(null);
     setLoading(false);
-  };
+  }, []);
 
   return (
     <PermissionsContext.Provider value={{

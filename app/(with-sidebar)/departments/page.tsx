@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
@@ -114,23 +114,23 @@ export default function DepartmentsPage() {
     }
   }, [currentPage, itemsPerPage, filters, token, permissionsLoading, user?.health_facility_id]);
 
-  const handlePageChange = (page: number) => {
+  const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page);
-  };
+  }, []);
 
-  const handleItemsPerPageChange = (newItemsPerPage: number) => {
+  const handleItemsPerPageChange = useCallback((newItemsPerPage: number) => {
     setItemsPerPage(newItemsPerPage);
     setCurrentPage(1);
-  };
+  }, []);
 
-  const handleFiltersChange = (newFilters: Record<string, any>) => {
+  const handleFiltersChange = useCallback((newFilters: Record<string, any>) => {
     setFilters({
       search: newFilters.search || "",
       health_facility_id: newFilters.health_facility_id || null,
       code: newFilters.code || null,
       is_active: newFilters.is_active || null,
     });
-  };
+  }, []);
 
   const departments = departmentsData?.data || [];
   const total = departmentsData?.total || 0;
