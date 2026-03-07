@@ -1,17 +1,17 @@
-"use client";
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, CheckCircle, Clock, Info } from "lucide-react";
 import { PatientAllergy } from "@/features/patients/types/patient-detail.types";
+import { TabActionsButton } from "./tab-actions-button";
 
 interface PatientAllergiesTabProps {
   allergies?: PatientAllergy[];
   loading?: boolean;
+  onAdd?: () => void;
 }
 
-export function PatientAllergiesTab({ allergies = [], loading = false }: PatientAllergiesTabProps) {
+export function PatientAllergiesTab({ allergies = [], loading = false, onAdd }: PatientAllergiesTabProps) {
   const getSeverityColor = (severity?: string) => {
     switch (severity?.toLowerCase()) {
       case 'severe':
@@ -73,61 +73,69 @@ export function PatientAllergiesTab({ allergies = [], loading = false }: Patient
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <AlertTriangle className="h-5 w-5" />
-          Allergies ({allergies.length})
+        <CardTitle className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5" />
+            Allergies ({allergies.length})
+          </div>
+          <TabActionsButton onAdd={onAdd || (() => {})} label="Ajouter une allergie" />
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
-          {allergies.map((allergy) => (
-            <div
-              key={allergy.id_}
-              className={`p-4 rounded-lg border ${getSeverityColor(allergy.severity)}`}
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <h4 className="font-semibold text-lg">{allergy.allergen}</h4>
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse border border-gray-200">
+            <thead>
+              <tr className="bg-gray-50">
+                <th className="border border-gray-200 px-4 py-3 text-left font-semibold text-sm">Allergène</th>
+                <th className="border border-gray-200 px-4 py-3 text-left font-semibold text-sm">Type</th>
+                <th className="border border-gray-200 px-4 py-3 text-left font-semibold text-sm">Réaction</th>
+                <th className="border border-gray-200 px-4 py-3 text-left font-semibold text-sm">Sévérité</th>
+                <th className="border border-gray-200 px-4 py-3 text-left font-semibold text-sm">Source</th>
+                <th className="border border-gray-200 px-4 py-3 text-left font-semibold text-sm">Statut</th>
+                <th className="border border-gray-200 px-4 py-3 text-left font-semibold text-sm">Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              {allergies.map((allergy) => (
+                <tr key={allergy.id_} className="hover:bg-gray-50">
+                  <td className="border border-gray-200 px-4 py-3">
+                    <div className="font-medium">{allergy.allergen}</div>
+                  </td>
+                  <td className="border border-gray-200 px-4 py-3">
                     <Badge variant="outline" className="text-xs">
                       {allergy.allergen_type}
                     </Badge>
-                    {getStatusIcon(allergy.is_active)}
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <div>
-                      <p className="text-sm font-medium">Réaction:</p>
-                      <p className="text-sm">{allergy.reaction}</p>
-                    </div>
-                    
+                  </td>
+                  <td className="border border-gray-200 px-4 py-3">
+                    {allergy.reaction}
+                  </td>
+                  <td className="border border-gray-200 px-4 py-3">
                     {allergy.severity && (
-                      <div>
-                        <p className="text-sm font-medium">Sévérité:</p>
-                        <Badge className={getSeverityColor(allergy.severity)}>
-                          {allergy.severity}
-                        </Badge>
-                      </div>
+                      <Badge className={getSeverityColor(allergy.severity)}>
+                        {allergy.severity}
+                      </Badge>
                     )}
-                    
-                    {allergy.source && (
-                      <div>
-                        <p className="text-sm font-medium">Source:</p>
-                        <p className="text-sm">{allergy.source}</p>
-                      </div>
-                    )}
-                    
-                    {allergy.notes && (
-                      <div>
-                        <p className="text-sm font-medium">Notes:</p>
-                        <p className="text-sm">{allergy.notes}</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
+                  </td>
+                  <td className="border border-gray-200 px-4 py-3">
+                    {allergy.source || '-'}
+                  </td>
+                  <td className="border border-gray-200 px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      {getStatusIcon(allergy.is_active)}
+                      <span className="text-sm">
+                        {allergy.is_active ? 'Actif' : 'Inactif'}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="border border-gray-200 px-4 py-3">
+                    <div className="max-w-xs truncate" title={allergy.notes}>
+                      {allergy.notes || '-'}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </CardContent>
     </Card>

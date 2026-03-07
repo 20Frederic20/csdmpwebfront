@@ -15,6 +15,26 @@ interface PatientDetailTabsProps {
 export function PatientDetailTabs({ patient }: PatientDetailTabsProps) {
   const [activeTab, setActiveTab] = useState("allergies");
 
+  const handleAddAllergy = () => {
+    console.log("Ajouter une allergie");
+    // TODO: Implémenter la logique d'ajout d'allergie
+  };
+
+  const handleAddMedicalHistory = () => {
+    console.log("Ajouter un antécédent médical");
+    // TODO: Implémenter la logique d'ajout d'antécédent médical
+  };
+
+  const handleAddFamilyHistory = () => {
+    console.log("Ajouter un antécédent familial");
+    // TODO: Implémenter la logique d'ajout d'antécédent familial
+  };
+
+  const handleAddLifestyle = () => {
+    console.log("Ajouter un style de vie");
+    // TODO: Implémenter la logique d'ajout de style de vie
+  };
+
   const tabs = [
     {
       value: "allergies",
@@ -24,39 +44,43 @@ export function PatientDetailTabs({ patient }: PatientDetailTabsProps) {
         <PatientAllergiesTab 
           allergies={patient.patient_allergies}
           loading={false}
+          onAdd={handleAddAllergy}
         />
       ),
     },
     {
       value: "medical-history",
       label: "Historique médical",
-      count: patient.medical_history?.length || 0,
+      count: patient.medical_histories?.length || 0,
       component: (
         <MedicalHistoryTab 
-          medicalHistory={patient.medical_history}
+          medicalHistory={patient.medical_histories}
           loading={false}
+          onAdd={handleAddMedicalHistory}
         />
       ),
     },
     {
       value: "family-history",
       label: "Historique familial",
-      count: patient.family_history?.length || 0,
+      count: patient.family_histories?.length || 0,
       component: (
         <FamilyHistoryTab 
-          familyHistory={patient.family_history}
+          familyHistory={patient.family_histories}
           loading={false}
+          onAdd={handleAddFamilyHistory}
         />
       ),
     },
     {
       value: "lifestyle",
       label: "Style de vie",
-      count: patient.lifestyle?.length || 0,
+      count: patient.lifestyles?.length || 0,
       component: (
         <LifestyleTab 
-          lifestyle={patient.lifestyle}
+          lifestyle={patient.lifestyles}
           loading={false}
+          onAdd={handleAddLifestyle}
         />
       ),
     },
