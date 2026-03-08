@@ -206,7 +206,7 @@ export function LifestyleTab({ lifestyle = [], loading = false, onEdit = () => {
                   <td className="border border-gray-200 px-4 py-3">
                     {item.dietary_regime ? (
                       <div className="flex items-center gap-2">
-                        <Utensils className="h-4 w-4 text-blue-500" />
+                        <Utensils className="h-4 w-4 text-primary" />
                         <span className="text-sm">{item.dietary_regime}</span>
                       </div>
                     ) : (

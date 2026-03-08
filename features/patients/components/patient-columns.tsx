@@ -5,10 +5,10 @@ import { Eye, Edit, Trash2, RotateCcw } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Patient } from "@/features/patients";
 import { formatBirthDate, formatGender } from "@/features/patients/utils/patients.utils";
-import { 
-  createNameColumn, 
-  createDateColumn, 
-  createStatusColumn, 
+import {
+  createNameColumn,
+  createDateColumn,
+  createStatusColumn,
   createActionsColumn,
   ActionConfig,
   DataTableActions
@@ -102,7 +102,7 @@ export function getPatientDetailUrl(patient: Patient): string {
 export function getPatientAvatarColor(patient: Patient): string {
   if (patient.deleted_at) return 'bg-gray-100 text-gray-500';
   if (!patient.is_active) return 'bg-gray-100 text-gray-500';
-  return 'bg-blue-100 text-blue-700';
+  return 'bg-green-100 text-green-700';
 }
 
 export function getPatientInitial(patient: Patient): string {
@@ -150,7 +150,7 @@ export const patientColumns: ColumnDef<Patient>[] = [
     header: "Statut",
     cell: ({ row, table }) => {
       const patient = row.original;
-      
+
       return (
         <Switch
           checked={patient.is_active}
@@ -173,7 +173,7 @@ export const patientColumns: ColumnDef<Patient>[] = [
     cell: ({ row, table }) => {
       const patient = row.original;
       const meta = table.options.meta as any;
-      
+
       return (
         <DataTableActions
           row={row}

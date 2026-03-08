@@ -20,12 +20,12 @@ interface FamilyHistoryTabProps {
   onAdd?: () => void;
 }
 
-export function FamilyHistoryTab({ familyHistory = [], loading = false, onAdd = () => {} }: FamilyHistoryTabProps) {
+export function FamilyHistoryTab({ familyHistory = [], loading = false, onAdd = () => { } }: FamilyHistoryTabProps) {
   const getRelationshipColor = (relationship: string) => {
     switch (relationship?.toLowerCase()) {
       case 'father':
       case 'père':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
+        return 'bg-teal-100 text-teal-800 border-teal-200';
       case 'mother':
       case 'mère':
         return 'bg-pink-100 text-pink-800 border-pink-200';
@@ -83,7 +83,7 @@ export function FamilyHistoryTab({ familyHistory = [], loading = false, onAdd = 
             <Users className="h-5 w-5" />
             Historique familial ({familyHistory.length})
           </div>
-          <TabActionsButton onAdd={onAdd || (() => {})} label="Ajouter un antécédent familial" />
+          <TabActionsButton onAdd={onAdd || (() => { })} label="Ajouter un antécédent familial" />
         </CardTitle>
       </CardHeader>
       <CardContent>

@@ -97,16 +97,44 @@ export function PatientDetailTabs({ patient, patientId }: PatientDetailTabsProps
   return (
     <div className="space-y-4">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="
+          flex w-full
+          h-auto
+          p-1
+          bg-slate-100/50
+          overflow-x-auto
+          no-scrollbar
+          justify-start
+          md:grid
+          md:grid-cols-4
+          rounded-lg
+        ">
           {tabs.map((tab) => (
             <TabsTrigger
               key={tab.value}
               value={tab.value}
-              className="relative"
+              className="
+                flex items-center justify-center
+                gap-2
+                px-4 py-2.5
+                min-w-max
+                md:min-w-0
+                transition-all
+                data-[state=active]:bg-white
+                data-[state=active]:text-primary
+                data-[state=active]:shadow-sm
+              "
             >
-              {tab.label}
+              <span className="text-sm font-medium">{tab.label}</span>
               {tab.count > 0 && (
-                <span className="ml-2 bg-primary text-primary-foreground text-xs rounded-full px-2 py-0.5">
+                <span className="
+                  inline-flex items-center justify-center
+                  bg-primary text-primary-foreground
+                  text-[11px] font-bold
+                  min-w-[20px] h-5
+                  px-1.5
+                  rounded-full
+                ">
                   {tab.count}
                 </span>
               )}
