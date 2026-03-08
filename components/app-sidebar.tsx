@@ -2,21 +2,6 @@
 
 import { useEffect, useState } from "react"
 
-// Client-side wrapper for Collapsible to handle hydration
-function ClientCollapsible({ children, defaultOpen, ...props }: React.ComponentProps<typeof Collapsible> & { defaultOpen?: boolean }) {
-  const [isOpen, setIsOpen] = useState(false)
-
-  // Use useEffect to set initial state only on client side, preventing SSR mismatch
-  useEffect(() => {
-    setIsOpen(!!defaultOpen)
-  }, [defaultOpen])
-
-  return (
-    <Collapsible open={isOpen} onOpenChange={setIsOpen} {...props}>
-      {children}
-    </Collapsible>
-  )
-}
 
 import {
   Sidebar,
@@ -28,15 +13,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubItem,
-  SidebarMenuSubButton,
 } from "@/components/ui/sidebar"
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible"
 import {
   ChevronRight,
   Plus,
@@ -95,38 +72,14 @@ function NavMain({
         <SidebarGroupLabel>Navigation</SidebarGroupLabel>
         <SidebarMenu>
           {items.map((item) => (
-            <Collapsible
-              key={item.title}
-              asChild
-              defaultOpen={item.isActive}
-              className="group/collapsible"
-            >
-              <SidebarMenuItem>
-                <CollapsibleTrigger asChild>
-                  <SidebarMenuButton tooltip={item.title} isActive={item.isActive}>
-                    {item.icon && <item.icon />}
-                    <span>{item.title}</span>
-                    {item.items && item.items.length > 0 && (
-                      <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-                    )}
-                  </SidebarMenuButton>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <SidebarMenuSub>
-                    {item.items?.map((subItem) => (
-                      <SidebarMenuSubItem key={subItem.title}>
-                        <SidebarMenuSubButton asChild isActive={pathname === subItem.url}>
-                          <Link href={subItem.url}>
-                            {subItem.icon && <subItem.icon />}
-                            <span>{subItem.title}</span>
-                          </Link>
-                        </SidebarMenuSubButton>
-                      </SidebarMenuSubItem>
-                    ))}
-                  </SidebarMenuSub>
-                </CollapsibleContent>
-              </SidebarMenuItem>
-            </Collapsible>
+            <SidebarMenuItem key={item.title}>
+              <SidebarMenuButton tooltip={item.title} isActive={item.isActive} asChild>
+                <Link href={item.url || "#"}>
+                  {item.icon && <item.icon />}
+                  <span>{item.title}</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
           ))}
         </SidebarMenu>
       </SidebarGroup>
@@ -143,49 +96,15 @@ function NavMain({
             return null;
           }
 
-          // Filter sub-items based on permissions
-          const filteredSubItems = item.items ? item.items.filter(subItem => {
-            if (subItem.requiredPermission && canAccess && !canAccess(subItem.requiredPermission.resource, subItem.requiredPermission.action)) {
-              return false;
-            }
-            return true;
-          }) : [];
-
           return (
-            <ClientCollapsible
-              key={item.title}
-              asChild
-              defaultOpen={item.isActive}
-              className="group/collapsible"
-            >
-              <SidebarMenuItem>
-                <CollapsibleTrigger asChild>
-                  <SidebarMenuButton tooltip={item.title} isActive={item.isActive}>
-                    {item.icon && <item.icon />}
-                    <span>{item.title}</span>
-                    {filteredSubItems.length > 0 && (
-                      <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-                    )}
-                  </SidebarMenuButton>
-                </CollapsibleTrigger>
-                {filteredSubItems.length > 0 && (
-                  <CollapsibleContent>
-                    <SidebarMenuSub>
-                      {filteredSubItems.map((subItem) => (
-                        <SidebarMenuSubItem key={subItem.title}>
-                          <SidebarMenuSubButton asChild isActive={pathname === subItem.url}>
-                            <Link href={subItem.url}>
-                              {subItem.icon && <subItem.icon />}
-                              <span>{subItem.title}</span>
-                            </Link>
-                          </SidebarMenuSubButton>
-                        </SidebarMenuSubItem>
-                      ))}
-                    </SidebarMenuSub>
-                  </CollapsibleContent>
-                )}
-              </SidebarMenuItem>
-            </ClientCollapsible>
+            <SidebarMenuItem key={item.title}>
+              <SidebarMenuButton tooltip={item.title} isActive={item.isActive} asChild>
+                <Link href={item.url || "#"}>
+                  {item.icon && <item.icon />}
+                  <span>{item.title}</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
           );
         })}
       </SidebarMenu>
