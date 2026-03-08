@@ -7,20 +7,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import CustomSelect from "@/components/ui/custom-select";
 import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
 import { HealthFacilitySelect } from "@/features/health-facilities/components/health-facility-select";
 import { DepartmentSelect } from "@/features/departments/components/department-select";
 import { InsuranceCompanySelect } from "@/features/insurance-companies/components/insurance-company-select";
 import { HospitalStaffSelect } from "@/features/hospital-staff/components/hospital-staff-select";
 import { PatientSelect } from "@/features/patients/components/patient-select";
 import { PrescriptionsTable } from "@/features/consultations/components/prescriptions-table";
-import { 
-  ArrowLeft, 
-  Save, 
-  Activity, 
+import {
+  ArrowLeft,
+  Save,
+  Activity,
   Shield,
   DollarSign,
   Thermometer,
@@ -28,32 +26,26 @@ import {
   Weight,
   Ruler
 } from "lucide-react";
-import { Consultation, ConsultationStatus, UpdateConsultationRequest, Prescription } from "@/features/consultations/types/consultations.types";
-import { ConsultationService } from "@/features/consultations";
-import { useAuthToken } from "@/hooks/use-auth-token";
-import { 
-  getConsultationStatusLabel, 
+import { ConsultationStatus, UpdateConsultationRequest } from "@/features/consultations/types/consultations.types";
+import { useConsultation, useUpdateConsultation } from "@/features/consultations/hooks/use-consultations";
+import {
   getConsultationStatusOptions,
   formatVitalSigns,
   formatAmount,
-  validateConsultationData
 } from "@/features/consultations";
-import { toast } from "sonner";
 import Link from "next/link";
 
 export default function EditConsultationPage() {
   const params = useParams();
   const router = useRouter();
-  const { token } = useAuthToken();
   const consultationId = params.id as string;
 
-  const [consultation, setConsultation] = useState<Consultation | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const { data: consultation, isLoading: loading } = useConsultation(consultationId);
+  const { mutateAsync: updateConsultation, isPending: saving } = useUpdateConsultation();
   const [errors, setErrors] = useState<string[]>([]);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [formInitialized, setFormInitialized] = useState(false);
 
-  // Formulaire
   const [formData, setFormData] = useState<UpdateConsultationRequest>({
     patient_id: undefined,
     chief_complaint: "",
@@ -84,57 +76,38 @@ export default function EditConsultationPage() {
     prescriptions: [],
   });
 
-  const loadConsultation = async () => {
-    try {
-      setLoading(true);
-      const data = await ConsultationService.getConsultationById(consultationId);
-      setConsultation(data);
-      
-      // Pré-remplir le formulaire avec les données existantes
-      setFormData({
-        patient_id: data.patient_id,
-        chief_complaint: data.chief_complaint || "",
-        insurance_company_id: data.insurance_company_id,
-        health_facility_id: data.health_facility_id,
-        department_id: data.department_id,
-        physical_examination: data.physical_examination || "",
-        triage_by_id: data.triage_by_id,
-        consulted_by_id: data.consulted_by_id,
-        parent_consultation_id: data.parent_consultation_id,
-        other_symptoms: data.other_symptoms || "",
-        vital_signs: data.vital_signs || {
-          temperature: undefined,
-          pulse: undefined,
-          systolic_bp: undefined,
-          diastolic_bp: undefined,
-          weight: undefined,
-          height: undefined,
-        },
-        diagnosis: data.diagnosis || "",
-        treatment_plan: data.treatment_plan || "",
-        follow_up_notes: data.follow_up_notes || "",
-        follow_up_date: data.follow_up_date || "",
-        status: data.status || ConsultationStatus.SCHEDULED,
-        billing_code: data.billing_code || "",
-        amount_paid: data.amount_paid,
-        is_confidential: data.is_confidential || false,
-      });
-    } catch (error) {
-      console.error('Error loading consultation:', error);
-      toast.error('Erreur lors du chargement de la consultation');
-      router.push('/consultations');
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // Pre-fill form from fetched consultation data (once)
   useEffect(() => {
-    if (consultationId && token) {
-      loadConsultation();
+    if (consultation && !formInitialized) {
+      setFormData({
+        patient_id: consultation.patient_id,
+        chief_complaint: consultation.chief_complaint || "",
+        insurance_company_id: consultation.insurance_company_id,
+        health_facility_id: consultation.health_facility_id,
+        department_id: consultation.department_id,
+        physical_examination: consultation.physical_examination || "",
+        triage_by_id: consultation.triage_by_id,
+        consulted_by_id: consultation.consulted_by_id,
+        parent_consultation_id: consultation.parent_consultation_id,
+        other_symptoms: consultation.other_symptoms || "",
+        vital_signs: consultation.vital_signs || {
+          temperature: undefined, pulse: undefined, systolic_bp: undefined,
+          diastolic_bp: undefined, weight: undefined, height: undefined,
+        },
+        diagnosis: consultation.diagnosis || "",
+        treatment_plan: consultation.treatment_plan || "",
+        follow_up_notes: consultation.follow_up_notes || "",
+        follow_up_date: consultation.follow_up_date || "",
+        status: consultation.status || ConsultationStatus.SCHEDULED,
+        billing_code: consultation.billing_code || "",
+        amount_paid: consultation.amount_paid,
+        is_confidential: consultation.is_confidential || false,
+      });
+      setFormInitialized(true);
     }
-  }, [consultationId, token]);
+  }, [consultation, formInitialized]);
 
-  const handleInputChange = (field: string, value: any) => {
+  const handleInputChange = (field: string, value: string | number | boolean | null | undefined | Record<string, unknown> | unknown[]) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -171,66 +144,38 @@ export default function EditConsultationPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Réinitialiser les erreurs de champs
+
     setFieldErrors({});
-    
+
     try {
-      setSaving(true);
       setErrors([]);
-      
+
       const updateData: UpdateConsultationRequest = {
         chief_complaint: formData.chief_complaint || "",
-        other_symptoms: formData.other_symptoms || null,
-        diagnosis: formData.diagnosis || null,
-        treatment_plan: formData.treatment_plan || null,
-        follow_up_notes: formData.follow_up_notes || null,
-        follow_up_date: formData.follow_up_date || null,
+        other_symptoms: formData.other_symptoms || undefined,
+        diagnosis: formData.diagnosis || undefined,
+        treatment_plan: formData.treatment_plan || undefined,
+        follow_up_notes: formData.follow_up_notes || undefined,
+        follow_up_date: formData.follow_up_date || undefined,
         status: formData.status || ConsultationStatus.SCHEDULED,
-        billing_code: formData.billing_code || null,
-        amount_paid: formData.amount_paid === null ? null : formData.amount_paid,
+        billing_code: formData.billing_code || undefined,
+        amount_paid: formData.amount_paid ?? undefined,
         is_confidential: formData.is_confidential || false,
         prescriptions: formData.prescriptions || [],
         vital_signs: {
-          temperature: formData.vital_signs?.temperature || null,
-          pulse: formData.vital_signs?.pulse || null,
-          systolic_bp: formData.vital_signs?.systolic_bp || null,
-          diastolic_bp: formData.vital_signs?.diastolic_bp || null,
-          weight: formData.vital_signs?.weight || null,
-          height: formData.vital_signs?.height || null,
+          temperature: formData.vital_signs?.temperature ?? undefined,
+          pulse: formData.vital_signs?.pulse ?? undefined,
+          systolic_bp: formData.vital_signs?.systolic_bp ?? undefined,
+          diastolic_bp: formData.vital_signs?.diastolic_bp ?? undefined,
+          weight: formData.vital_signs?.weight ?? undefined,
+          height: formData.vital_signs?.height ?? undefined,
         }
       };
 
-      const updatedConsultation = await ConsultationService.updateConsultation(consultationId, updateData);
-      
-      toast.success('Consultation mise à jour avec succès');
+      await updateConsultation({ id: consultationId, data: updateData });
       router.push('/consultations');
-    } catch (error: any) {
-      console.error('Error updating consultation:', error);
-      
-      // Extraire et afficher les erreurs de champ spécifiques
-      if (error?.detail && Array.isArray(error.detail)) {
-        const newFieldErrors: Record<string, string> = {};
-        const generalErrors: string[] = [];
-        
-        error.detail.forEach((err: any) => {
-          if (err.loc && Array.isArray(err.loc) && err.loc.length >= 2) {
-            const fieldName = err.loc[1]; // Le champ est en deuxième position
-            newFieldErrors[fieldName] = err.msg;
-          } else {
-            generalErrors.push(err.msg);
-          }
-        });
-        
-        setFieldErrors(newFieldErrors);
-        setErrors(generalErrors);
-      } else {
-        setErrors(['Erreur lors de la mise à jour de la consultation']);
-      }
-      
-      toast.error('Veuillez corriger les erreurs dans le formulaire');
-    } finally {
-      setSaving(false);
+    } catch {
+      // Handled by hook
     }
   };
 
@@ -375,7 +320,7 @@ export default function EditConsultationPage() {
                   className="w-full"
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="department_id">Département</Label>
                 <DepartmentSelect
@@ -387,7 +332,7 @@ export default function EditConsultationPage() {
                   className="w-full"
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="insurance_company_id">Compagnie d'assurance</Label>
                 <InsuranceCompanySelect
@@ -514,7 +459,7 @@ export default function EditConsultationPage() {
                   className="w-full"
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="consulted_by_id">Consulté par</Label>
                 <HospitalStaffSelect

@@ -8,15 +8,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowLeft, Save, Loader2, Plus, Minus } from "lucide-react";
+import { ArrowLeft, Save } from "lucide-react";
 import { toast } from "sonner";
 import { CreateConsultationRequest, ConsultationStatus, VitalSigns } from "@/features/consultations/types/consultations.types";
-import { ConsultationService } from "@/features/consultations";
+import { useCreateConsultation } from "@/features/consultations/hooks/use-consultations";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { Patient, PatientsQueryParams } from "@/features/patients";
 import { PatientService } from "@/features/patients";
-import { User, ListUsersQueryParams } from "@/features/users";
-import { UserService } from "@/features/users";
+import { User } from "@/features/users";
 import { HospitalStaff, HospitalStaffQueryParams } from "@/features/hospital-staff";
 import { HospitalStaffService } from "@/features/hospital-staff";
 import CustomSelect from '@/components/ui/custom-select';
@@ -28,15 +27,12 @@ import { PatientSelect } from "@/features/patients/components/patient-select";
 
 export default function AddConsultationPage() {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
-  const [loadingPatients, setLoadingPatients] = useState(false);
-  const [loadingUsers, setLoadingUsers] = useState(false);
+  const { mutateAsync: createConsultation, isPending: loading } = useCreateConsultation();
   const [loadingStaff, setLoadingStaff] = useState(false);
   const [patients, setPatients] = useState<Patient[]>([]);
-  const [users, setUsers] = useState<User[]>([]);
   const [hospitalStaff, setHospitalStaff] = useState<HospitalStaff[]>([]);
   const [errors, setErrors] = useState<Record<string, string | undefined>>({});
-  
+
   const [formData, setFormData] = useState<CreateConsultationRequest>({
     patient_id: "",
     chief_complaint: "",
@@ -65,24 +61,24 @@ export default function AddConsultationPage() {
     amount_paid: undefined,
     is_confidential: false,
   });
-  
+
   const { token } = useAuthToken();
 
-  // Convertir les patients en options pour CustomSelect
+  // Convertir les patients en options pour CustomSelect (kept for compatibility)
   const patientOptions = [
     { value: '', label: 'Sélectionner un patient' },
     ...patients.map((patient) => ({
       value: patient.id_,
-      label: `${patient.given_name} ${patient.family_name} (${patient.id_})`
+      label: `${patient.given_name} ${patient.family_name}`
     }))
   ];
 
-  // Convertir le personnel hospitalier en options pour CustomSelect
+  // Convertir le personnel hospitalier en options
   const staffOptions = [
     { value: '', label: 'Aucun' },
     ...hospitalStaff.map((staff) => ({
       value: staff.id_,
-      label: `${staff.matricule} (${staff.id_})`
+      label: `${staff.matricule}`
     }))
   ];
 
@@ -159,21 +155,16 @@ export default function AddConsultationPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
 
-    setLoading(true);
     try {
-      await ConsultationService.createConsultation(formData);
-      toast.success("Consultation créée avec succès");
+      await createConsultation(formData);
       router.push('/consultations');
-    } catch (error: any) {
-      console.error('Error creating consultation:', error);
-      toast.error(error.message || "Erreur lors de la création");
-    } finally {
-      setLoading(false);
+    } catch {
+      // Handled by hook
     }
   };
 
@@ -242,8 +233,8 @@ export default function AddConsultationPage() {
     <div className="container mx-auto py-6 space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           onClick={() => router.push('/consultations')}
           className="cursor-pointer"
         >

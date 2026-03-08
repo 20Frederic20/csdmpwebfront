@@ -59,7 +59,7 @@ export interface UpdateConsultationRequest {
   health_facility_id?: string;
   department_id?: string;
   physical_examination?: string | null;
-  triage_by_id?: string  | null;
+  triage_by_id?: string | null;
   consulted_by_id?: string | null;
   parent_consultation_id?: string | null;
   other_symptoms?: string | null;
@@ -150,6 +150,7 @@ export interface ConsultationQueryParams {
   search?: string;
   status?: string;
   follow_up_date?: string;
+  health_facility_id?: string;
   limit?: number;
   offset?: number;
   sorting_field?: string;

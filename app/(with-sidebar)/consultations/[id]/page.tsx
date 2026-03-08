@@ -1,17 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
-import { 
-  ArrowLeft, 
-  Edit, 
-  Trash2, 
-  Activity, 
+import {
+  ArrowLeft,
+  Edit,
+  Trash2,
+  Activity,
   Shield,
   DollarSign,
   Thermometer,
@@ -22,125 +22,86 @@ import {
   AlertTriangle,
   CheckSquare
 } from "lucide-react";
-import { Consultation, UpdateConsultationRequest, ConsultationStatus } from "@/features/consultations";
-import { ConsultationService } from "@/features/consultations";
-import { useAuthToken } from "@/hooks/use-auth-token";
-import { 
-  getConsultationStatusLabel, 
+import { UpdateConsultationRequest, ConsultationStatus } from "@/features/consultations";
+import {
+  useConsultation,
+  useDeleteConsultation,
+  useRestoreConsultation,
+  usePermanentlyDeleteConsultation,
+  useUpdateConsultation,
+} from "@/features/consultations/hooks/use-consultations";
+import {
+  getConsultationStatusLabel,
   getConsultationStatusBadge,
   formatVitalSigns,
   formatAmount,
   formatDate,
-  formatDateTime,
   isConsultationActive,
   canDeleteConsultation,
   canRestoreConsultation,
   validateConsultationData
 } from "@/features/consultations";
-import { toast } from "sonner";
 import Link from "next/link";
 
 export default function ViewConsultationPage() {
   const params = useParams();
   const router = useRouter();
-  const { token } = useAuthToken();
   const consultationId = params.id as string;
 
-  const [consultation, setConsultation] = useState<Consultation | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [deleting, setDeleting] = useState(false);
-  const [restoring, setRestoring] = useState(false);
-  const [completing, setCompleting] = useState(false);
-  const [isEditingFields, setIsEditingFields] = useState(false);
+  const { data: consultation, isLoading: loading } = useConsultation(consultationId);
+  const { mutateAsync: deleteConsultation, isPending: deleting } = useDeleteConsultation();
+  const { mutateAsync: restoreConsultation, isPending: restoring } = useRestoreConsultation();
+  const { mutateAsync: permanentlyDeleteConsultation, isPending: permanentlyDeleting } = usePermanentlyDeleteConsultation();
+  const { mutateAsync: updateConsultation, isPending: completing } = useUpdateConsultation();
+
   const [formData, setFormData] = useState<UpdateConsultationRequest>({
     diagnosis: "",
     treatment_plan: "",
   });
 
-  const loadConsultation = async () => {
-    try {
-      setLoading(true);
-      const data = await ConsultationService.getConsultationById(consultationId);
-      setConsultation(data);
-      
-      // Pré-remplir le formulaire avec les données existantes
-      setFormData({
-        diagnosis: data.diagnosis || "",
-        treatment_plan: data.treatment_plan || "",
-      });
-    } catch (error) {
-      console.error('Error loading consultation:', error);
-      toast.error('Erreur lors du chargement de la consultation');
-      router.push('/consultations');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (consultationId && token) {
-      loadConsultation();
-    }
-  }, [consultationId, token]);
+  // Pre-fill form when consultation data loads
+  if (consultation && !formData.diagnosis && !formData.treatment_plan && (consultation.diagnosis || consultation.treatment_plan)) {
+    setFormData({
+      diagnosis: consultation.diagnosis || "",
+      treatment_plan: consultation.treatment_plan || "",
+    });
+  }
 
   const handleDelete = async () => {
     if (!consultation) return;
-    
+
     if (!confirm('Êtes-vous sûr de vouloir supprimer cette consultation ?')) {
       return;
     }
 
     try {
-      setDeleting(true);
-      await ConsultationService.deleteConsultation(consultation.id_);
-      
-      // Mettre à jour l'état localement
-      setConsultation(prev => prev ? { ...prev, deleted_at: new Date().toISOString() } : null);
-      
-      toast.success('Consultation supprimée avec succès');
-    } catch (error) {
-      console.error('Error deleting consultation:', error);
-      toast.error('Erreur lors de la suppression de la consultation');
-    } finally {
-      setDeleting(false);
+      await deleteConsultation(consultation.id_);
+    } catch {
+      // Handled by hook
     }
   };
 
   const handleRestore = async () => {
     if (!consultation) return;
-
     try {
-      setRestoring(true);
-      const restoredConsultation = await ConsultationService.restoreConsultation(consultation.id_);
-      setConsultation(restoredConsultation);
-      
-      toast.success('Consultation restaurée avec succès');
-    } catch (error) {
-      console.error('Error restoring consultation:', error);
-      toast.error('Erreur lors de la restauration de la consultation');
-    } finally {
-      setRestoring(false);
+      await restoreConsultation(consultation.id_);
+    } catch {
+      // Handled by hook
     }
   };
 
   const handlePermanentlyDelete = async () => {
     if (!consultation) return;
-    
+
     if (!confirm('ATTENTION: Cette action est irréversible. Êtes-vous sûr de vouloir supprimer définitivement cette consultation ?')) {
       return;
     }
 
     try {
-      setDeleting(true);
-      await ConsultationService.permanentlyDeleteConsultation(consultation.id_);
-      
-      toast.success('Consultation supprimée définitivement');
+      await permanentlyDeleteConsultation(consultation.id_);
       router.push('/consultations');
-    } catch (error) {
-      console.error('Error permanently deleting consultation:', error);
-      toast.error('Erreur lors de la suppression définitive de la consultation');
-    } finally {
-      setDeleting(false);
+    } catch {
+      // Handled by hook
     }
   };
 
@@ -153,36 +114,22 @@ export default function ViewConsultationPage() {
       diagnosis: formData.diagnosis || undefined,
       treatment_plan: formData.treatment_plan || undefined,
     });
-    
+
     if (validationErrors.length > 0) {
-      toast.error('Veuillez remplir les champs obligatoires pour terminer la consultation');
-      
-      // Afficher les erreurs spécifiques
-      validationErrors.forEach(error => {
-        toast.error(error);
-      });
-      
       return;
     }
 
     try {
-      setCompleting(true);
-      
-      const updateData = {
-        diagnosis: formData.diagnosis || null,
-        treatment_plan: formData.treatment_plan || null,
-        status: ConsultationStatus.COMPLETED,
-      };
-
-      const updatedConsultation = await ConsultationService.updateConsultation(consultation.id_, updateData);
-      setConsultation(updatedConsultation);
-      
-      toast.success('Consultation terminée avec succès');
-    } catch (error) {
-      console.error('Error completing consultation:', error);
-      toast.error('Erreur lors de la terminaison de la consultation');
-    } finally {
-      setCompleting(false);
+      await updateConsultation({
+        id: consultation.id_,
+        data: {
+          diagnosis: formData.diagnosis || undefined,
+          treatment_plan: formData.treatment_plan || undefined,
+          status: ConsultationStatus.COMPLETED,
+        },
+      });
+    } catch {
+      // Handled by hook
     }
   };
 
@@ -195,20 +142,16 @@ export default function ViewConsultationPage() {
 
   const handleSaveFields = async () => {
     if (!consultation) return;
-
     try {
-      const updateData = {
-        diagnosis: formData.diagnosis || null,
-        treatment_plan: formData.treatment_plan || null,
-      };
-
-      const updatedConsultation = await ConsultationService.updateConsultation(consultation.id_, updateData);
-      setConsultation(updatedConsultation);
-      
-      toast.success('Champs mis à jour avec succès');
-    } catch (error) {
-      console.error('Error saving fields:', error);
-      toast.error('Erreur lors de la mise à jour des champs');
+      await updateConsultation({
+        id: consultation.id_,
+        data: {
+          diagnosis: formData.diagnosis || undefined,
+          treatment_plan: formData.treatment_plan || undefined,
+        },
+      });
+    } catch {
+      // Handled by hook
     }
   };
 
@@ -295,7 +238,7 @@ export default function ViewConsultationPage() {
             <div className="flex items-center gap-2 text-yellow-800">
               <AlertTriangle className="h-5 w-5" />
               <span className="font-medium">
-                Pour terminer cette consultation, veuillez remplir les champs obligatoires : 
+                Pour terminer cette consultation, veuillez remplir les champs obligatoires :
                 {!consultation.diagnosis && ' Diagnostic'}
                 {!consultation.diagnosis && !consultation.treatment_plan && ' et '}
                 {!consultation.treatment_plan && ' Plan de traitement'}
@@ -318,7 +261,7 @@ export default function ViewConsultationPage() {
             <div>
               <h4 className="font-medium text-sm text-muted-foreground">Statut</h4>
               <div className="mt-1">
-                <Badge 
+                <Badge
                   variant={statusBadge.variant as "default" | "secondary" | "destructive" | "outline"}
                   className={statusBadge.className}
                 >
@@ -373,12 +316,12 @@ export default function ViewConsultationPage() {
               <h4 className="font-medium text-sm text-muted-foreground">Établissement</h4>
               <p className="mt-1 text-sm">{consultation.health_facility_id || 'Non spécifié'}</p>
             </div>
-            
+
             <div>
               <h4 className="font-medium text-sm text-muted-foreground">Département</h4>
               <p className="mt-1 text-sm">{consultation.department_id || 'Non spécifié'}</p>
             </div>
-            
+
             <div>
               <h4 className="font-medium text-sm text-muted-foreground">Compagnie d'assurance</h4>
               <p className="mt-1 text-sm">{consultation.insurance_company_id || 'Non spécifié'}</p>
@@ -399,7 +342,7 @@ export default function ViewConsultationPage() {
               <h4 className="font-medium text-sm text-muted-foreground">Triage par</h4>
               <p className="mt-1 text-sm">{consultation.triage_by_id || 'Non spécifié'}</p>
             </div>
-            
+
             <div>
               <h4 className="font-medium text-sm text-muted-foreground">Consulté par</h4>
               <p className="mt-1 text-sm">{consultation.consulted_by_id || 'Non spécifié'}</p>
@@ -512,8 +455,8 @@ export default function ViewConsultationPage() {
 
             {!isCompleted && canComplete && (
               <div className="flex gap-2 pt-2">
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={handleSaveFields}
                   disabled={!formData.diagnosis && !formData.treatment_plan}
                 >
@@ -579,8 +522,8 @@ export default function ViewConsultationPage() {
               </Link>
 
               {canComplete && (
-                <Button 
-                  variant="default" 
+                <Button
+                  variant="default"
                   onClick={handleComplete}
                   disabled={completing}
                   className="bg-green-600 hover:bg-green-700"
@@ -591,8 +534,8 @@ export default function ViewConsultationPage() {
               )}
 
               {canDelete && (
-                <Button 
-                  variant="destructive" 
+                <Button
+                  variant="destructive"
                   onClick={handleDelete}
                   disabled={deleting}
                 >
@@ -602,8 +545,8 @@ export default function ViewConsultationPage() {
               )}
 
               {canRestore && (
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={handleRestore}
                   disabled={restoring}
                   className="border-green-600 text-green-600 hover:bg-green-50"
@@ -614,13 +557,13 @@ export default function ViewConsultationPage() {
               )}
 
               {consultation.deleted_at && (
-                <Button 
-                  variant="destructive" 
+                <Button
+                  variant="destructive"
                   onClick={handlePermanentlyDelete}
-                  disabled={deleting}
+                  disabled={permanentlyDeleting}
                 >
                   <AlertTriangle className="h-4 w-4 mr-2" />
-                  {deleting ? 'Suppression définitive...' : 'Supprimer définitivement'}
+                  {permanentlyDeleting ? 'Suppression définitive...' : 'Supprimer définitivement'}
                 </Button>
               )}
             </div>
