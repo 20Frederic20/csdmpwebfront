@@ -7,9 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Save } from "lucide-react";
 import { PatientInsurance, CreatePatientInsuranceRequest } from "../types/patient-insurance.types";
-import { PatientInsuranceService } from "../services/patient-insurance.service";
-import { PatientService } from "@/features/patients/services/patients.service";
-import { InsuranceCompaniesService } from "@/features/insurance-companies/services/insurance-companies.service";
+import { useUpdatePatientInsurance } from "../hooks/use-patient-insurances";
+import { usePatients } from "@/features/patients/hooks/use-patients";
+import { useInsuranceCompanies } from "@/features/insurance-companies/hooks/use-insurance-companies";
 import { Modal } from "@/components/ui/modal";
 import CustomSelect from "@/components/ui/custom-select";
 import { toast } from "sonner";
@@ -18,15 +18,19 @@ interface EditPatientInsuranceModalProps {
   isOpen: boolean;
   onClose: () => void;
   patientInsurance: PatientInsurance;
-  onUpdate: (updatedPatientInsurance: PatientInsurance) => void;
+  onUpdate: () => void;
 }
 
 export function EditPatientInsuranceModal({ isOpen, onClose, patientInsurance, onUpdate }: EditPatientInsuranceModalProps) {
-  const [loading, setLoading] = useState(false);
-  const [loadingData, setLoadingData] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [patients, setPatients] = useState<any[]>([]);
-  const [insurances, setInsurances] = useState<any[]>([]);
+  const { mutateAsync: updateInsurance, isPending: loading } = useUpdatePatientInsurance();
+
+  // Queries for options
+  const { data: patientsData, isLoading: loadingPatients } = usePatients({ limit: 50 });
+  const { data: insurancesData, isLoading: loadingInsurances } = useInsuranceCompanies({
+    limit: 50,
+    is_active: true
+  });
+
   const [formData, setFormData] = useState<CreatePatientInsuranceRequest>({
     patient_id: '',
     insurance_id: '',
@@ -35,33 +39,7 @@ export function EditPatientInsuranceModal({ isOpen, onClose, patientInsurance, o
     is_active: true
   });
 
-  // Charger les données quand le modal s'ouvre
-  useEffect(() => {
-    const loadData = async () => {
-      if (!isOpen) return;
-      
-      setLoadingData(true);
-      try {
-        // Charger les patients
-        const patientsResponse = await PatientService.getPatients({ limit: 50 });
-        setPatients(patientsResponse.data);
-        
-        // Charger les compagnies d'assurance
-        const insurancesResponse = await InsuranceCompaniesService.getInsuranceCompanies({ 
-          limit: 50,
-          is_active: true 
-        });
-        setInsurances(insurancesResponse.data);
-      } catch (err) {
-        console.error('Failed to load options:', err);
-        setError('Erreur lors du chargement des données');
-      } finally {
-        setLoadingData(false);
-      }
-    };
-    
-    loadData();
-  }, [isOpen]);
+  const loadingData = loadingPatients || loadingInsurances;
 
   useEffect(() => {
     if (patientInsurance) {
@@ -76,12 +54,12 @@ export function EditPatientInsuranceModal({ isOpen, onClose, patientInsurance, o
   }, [patientInsurance]);
 
   // Transformer les données pour le CustomSelect
-  const patientOptions = patients.map(patient => ({
+  const patientOptions = (patientsData?.data || []).map(patient => ({
     value: patient.id_,
     label: `${patient.given_name} ${patient.family_name}`
   }));
 
-  const insuranceOptions = insurances.map(insurance => ({
+  const insuranceOptions = (insurancesData?.data || []).map(insurance => ({
     value: insurance.id_,
     label: insurance.name
   }));
@@ -95,25 +73,18 @@ export function EditPatientInsuranceModal({ isOpen, onClose, patientInsurance, o
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.patient_id || !formData.insurance_id || !formData.policy_number.trim()) {
-      setError('Le patient, l\'assurance et le numéro de police sont obligatoires');
+      toast.error('Le patient, l\'assurance et le numéro de police sont obligatoires');
       return;
     }
 
     try {
-      setLoading(true);
-      setError(null);
-      
-      const updatedPatientInsurance = await PatientInsuranceService.updatePatientInsurance(patientInsurance.id_, formData);
-      onUpdate(updatedPatientInsurance);
-      toast.success('Assurance patient mise à jour avec succès');
+      await updateInsurance({ id: patientInsurance.id_, data: formData });
+      onUpdate();
       onClose();
     } catch (err: any) {
-      console.error('Failed to update patient insurance:', err);
-      setError(err.message || 'Erreur lors de la mise à jour');
-    } finally {
-      setLoading(false);
+      // Handled by hook
     }
   };
 
@@ -126,12 +97,6 @@ export function EditPatientInsuranceModal({ isOpen, onClose, patientInsurance, o
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Error */}
-          {error && (
-            <div className="p-4 border border-red-300 rounded-lg bg-red-50 text-red-700">
-              {error}
-            </div>
-          )}
 
           {/* Patient Selection - Read-only */}
           <div className="space-y-2">

@@ -7,9 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Save } from "lucide-react";
 import { CreatePatientInsuranceRequest } from "../types/patient-insurance.types";
-import { PatientInsuranceService } from "../services/patient-insurance.service";
-import { PatientService } from "@/features/patients/services/patients.service";
-import { InsuranceCompaniesService } from "@/features/insurance-companies/services/insurance-companies.service";
+import { useCreatePatientInsurance } from "../hooks/use-patient-insurances";
+import { usePatients } from "@/features/patients/hooks/use-patients";
+import { useInsuranceCompanies } from "@/features/insurance-companies/hooks/use-insurance-companies";
 import { Modal } from "@/components/ui/modal";
 import CustomSelect from "@/components/ui/custom-select";
 import { toast } from "sonner";
@@ -17,16 +17,20 @@ import { toast } from "sonner";
 interface CreatePatientInsuranceModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: (newPatientInsurance: any) => void;
+  onSuccess: () => void;
   patientId?: string;
 }
 
 export function CreatePatientInsuranceModal({ isOpen, onClose, onSuccess, patientId }: CreatePatientInsuranceModalProps) {
-  const [loading, setLoading] = useState(false);
-  const [loadingData, setLoadingData] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [patients, setPatients] = useState<any[]>([]);
-  const [insurances, setInsurances] = useState<any[]>([]);
+  const { mutateAsync: createInsurance, isPending: loading } = useCreatePatientInsurance();
+
+  // Queries
+  const { data: patientsData, isLoading: loadingPatients } = usePatients({ limit: 50 });
+  const { data: insurancesData, isLoading: loadingInsurances } = useInsuranceCompanies({
+    limit: 50,
+    is_active: true
+  });
+
   const [formData, setFormData] = useState<CreatePatientInsuranceRequest>({
     patient_id: patientId || '',
     insurance_id: '',
@@ -35,49 +39,21 @@ export function CreatePatientInsuranceModal({ isOpen, onClose, onSuccess, patien
     is_active: true
   });
 
-  // Charger les données quand le modal s'ouvre
-  useEffect(() => {
-    const loadData = async () => {
-      if (!isOpen) return;
-      
-      setLoadingData(true);
-      try {
-        // Charger les patients (si pas de patientId prédéfini)
-        if (!patientId) {
-          const patientsResponse = await PatientService.getPatients({ limit: 50 });
-          setPatients(patientsResponse.data);
-        }
-        
-        // Charger les compagnies d'assurance
-        const insurancesResponse = await InsuranceCompaniesService.getInsuranceCompanies({ 
-          limit: 50,
-          is_active: true 
-        });
-        setInsurances(insurancesResponse.data);
-      } catch (err) {
-        console.error('Failed to load options:', err);
-        setError('Erreur lors du chargement des données');
-      } finally {
-        setLoadingData(false);
-      }
-    };
-    
-    loadData();
-  }, [isOpen, patientId]);
-
   useEffect(() => {
     if (patientId) {
       setFormData(prev => ({ ...prev, patient_id: patientId }));
     }
   }, [patientId]);
 
+  const loadingData = loadingPatients || loadingInsurances;
+
   // Transformer les données pour le CustomSelect
-  const patientOptions = patients.map(patient => ({
+  const patientOptions = (patientsData?.data || []).map(patient => ({
     value: patient.id_,
     label: `${patient.given_name} ${patient.family_name}`
   }));
 
-  const insuranceOptions = insurances.map(insurance => ({
+  const insuranceOptions = (insurancesData?.data || []).map(insurance => ({
     value: insurance.id_,
     label: insurance.name
   }));
@@ -91,25 +67,19 @@ export function CreatePatientInsuranceModal({ isOpen, onClose, onSuccess, patien
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.patient_id || !formData.insurance_id || !formData.policy_number) {
-      setError('Veuillez remplir tous les champs obligatoires');
+      toast.error('Veuillez remplir tous les champs obligatoires');
       return;
     }
 
-    setLoading(true);
-    setError(null);
-
     try {
-      console.log('Creating patient insurance:', formData);
-      const response = await PatientInsuranceService.createPatientInsurance(formData);
-      
-      toast.success('Assurance patient créée avec succès');
-      
-      // Fermer le modal et appeler onSuccess avec les données créées
-      onSuccess(response);
+      await createInsurance(formData);
+
+      // Fermer le modal et appeler onSuccess
+      onSuccess();
       onClose();
-      
+
       // Reset form
       setFormData({
         patient_id: patientId || '',
@@ -119,10 +89,7 @@ export function CreatePatientInsuranceModal({ isOpen, onClose, onSuccess, patien
         is_active: true
       });
     } catch (err: any) {
-      console.error('Failed to create patient insurance:', err);
-      setError(err.message || 'Erreur lors de la création');
-    } finally {
-      setLoading(false);
+      // Handled by hook
     }
   };
 
@@ -135,12 +102,6 @@ export function CreatePatientInsuranceModal({ isOpen, onClose, onSuccess, patien
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Error */}
-          {error && (
-            <div className="p-4 border border-red-300 rounded-lg bg-red-50 text-red-700">
-              {error}
-            </div>
-          )}
 
           {/* Patient Selection */}
           {!patientId && (

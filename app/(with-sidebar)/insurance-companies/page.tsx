@@ -9,52 +9,54 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { 
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { 
-  Plus, 
-  Search, 
-  Building2, 
-  Phone, 
-  Eye, 
-  Edit, 
-  Trash2, 
-  ToggleLeft, 
+import {
+  Plus,
+  Search,
+  Building2,
+  Phone,
+  Eye,
+  Edit,
+  Trash2,
+  ToggleLeft,
   ToggleRight,
   Filter,
   RotateCcw,
   AlertTriangle,
   MoreHorizontal
 } from "lucide-react";
-import { InsuranceCompaniesService } from "@/features/insurance-companies/services/insurance-companies.service";
+import {
+  useInsuranceCompanies,
+  useToggleInsuranceCompanyStatus,
+  useDeleteInsuranceCompany,
+  useRestoreInsuranceCompany,
+  usePermanentlyDeleteInsuranceCompany
+} from "@/features/insurance-companies/hooks/use-insurance-companies";
 import { InsuranceCompany, ListInsuranceCompanyQueryParams } from "@/features/insurance-companies/types/insurance-companies.types";
 import { useAuthRefresh } from "@/hooks/use-auth-refresh";
-import { usePermissions } from "@/hooks/use-permissions";
+import { usePermissionsContext } from "@/contexts/permissions-context";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import Link from "next/link";
 import { ViewInsuranceCompanyModal } from "@/features/insurance-companies/components/view-insurance-company-modal";
 import { EditInsuranceCompanyModal } from "@/features/insurance-companies/components/edit-insurance-company-modal";
 import { ConfirmModal } from "@/components/ui/modal";
 import { toast } from "sonner";
+import { DataPagination } from "@/components/ui/data-pagination";
 
 export default function InsuranceCompaniesPage() {
-  const router = useRouter();
   const { isLoading: authLoading } = useAuthRefresh();
-  const { canAccess } = usePermissions();
+  const { canAccess } = usePermissionsContext();
   const { token } = useAuthToken();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  
-  const [insuranceCompanies, setInsuranceCompanies] = useState<InsuranceCompany[]>([]);
-  const [total, setTotal] = useState(0);
+
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(10);
-  
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+
   // Filtres
   const [searchName, setSearchName] = useState('');
   const [searchInsurerCode, setSearchInsurerCode] = useState('');
@@ -66,65 +68,45 @@ export default function InsuranceCompaniesPage() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedCompany, setSelectedCompany] = useState<InsuranceCompany | null>(null);
 
-  const [refreshKey, setRefreshKey] = useState(0);
-
-  const fetchInsuranceCompanies = async (page: number = 1) => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const params: ListInsuranceCompanyQueryParams = {
-        limit: pageSize,
-        offset: (page - 1) * pageSize,
-        sort_by: 'name',
-        sort_order: 'asc'
-      };
-
-      if (searchName) params.name = searchName;
-      if (searchInsurerCode) params.insurer_code = searchInsurerCode;
-      if (filterActive !== undefined) params.is_active = filterActive;
-
-      const response = await InsuranceCompaniesService.getInsuranceCompanies(params);
-      setInsuranceCompanies(response.data);
-      setTotal(response.total);
-      setCurrentPage(page);
-    } catch (err) {
-      console.error('Failed to fetch insurance companies:', err);
-      setError('Erreur lors du chargement des compagnies d\'assurance');
-    } finally {
-      setLoading(false);
-    }
+  const queryParams: ListInsuranceCompanyQueryParams = {
+    limit: itemsPerPage,
+    offset: (currentPage - 1) * itemsPerPage,
+    sort_by: 'name',
+    sort_order: 'asc'
   };
 
-  useEffect(() => {
-    if (!authLoading) {
-      fetchInsuranceCompanies();
-    }
-  }, [authLoading]);
+  if (searchName) queryParams.name = searchName;
+  if (searchInsurerCode) queryParams.insurer_code = searchInsurerCode;
+  if (filterActive !== undefined) queryParams.is_active = filterActive;
+
+  const { data: response, isLoading: loading } = useInsuranceCompanies(queryParams, token || undefined);
+  const { mutateAsync: toggleStatus } = useToggleInsuranceCompanyStatus();
+  const { mutateAsync: softDelete } = useDeleteInsuranceCompany();
+  const { mutateAsync: restore } = useRestoreInsuranceCompany();
+  const { mutateAsync: permanentlyDelete } = usePermanentlyDeleteInsuranceCompany();
+
+  const insuranceCompanies = response?.data || [];
+  const total = response?.total || 0;
 
   const handleSearch = () => {
-    fetchInsuranceCompanies(1);
+    setCurrentPage(1);
   };
 
   const handleClearFilters = () => {
     setSearchName('');
     setSearchInsurerCode('');
     setFilterActive(undefined);
-    fetchInsuranceCompanies(1);
+    setCurrentPage(1);
   };
 
   const handleToggleStatus = async (company: InsuranceCompany) => {
     try {
-      const updatedCompany = await InsuranceCompaniesService.toggleInsuranceCompanyStatus(company.id_, !company.is_active);
-      
-      setInsuranceCompanies(prevCompanies => 
-        prevCompanies.map(c => 
-          c.id_ === company.id_ ? updatedCompany : c
-        )
-      );
+      await toggleStatus({
+        id: company.id_,
+        isActive: !company.is_active
+      });
     } catch (err) {
-      console.error('Failed to toggle status:', err);
-      setError('Erreur lors du changement de statut');
+      // Handled by hook
     }
   };
 
@@ -135,62 +117,36 @@ export default function InsuranceCompaniesPage() {
 
   const handleSoftDelete = async (id: string) => {
     try {
-      await InsuranceCompaniesService.deleteInsuranceCompany(id);
-      setInsuranceCompanies(prevCompanies => 
-        prevCompanies.map(company => 
-          company.id_ === id ? { ...company, deleted_at: new Date().toISOString() } : company
-        )
-      );
-      toast.success('Compagnie supprimée avec succès');
-    } catch (error: any) {
-      console.error('Error soft deleting company:', error);
-      toast.error(error.message || "Erreur lors de la suppression");
+      await softDelete(id);
+    } catch (error) {
+      // Handled by hook
     }
   };
 
   const handlePermanentlyDelete = async (id: string) => {
     try {
-      await InsuranceCompaniesService.permanentlyDeleteInsuranceCompany(id);
-      setInsuranceCompanies(prevCompanies => prevCompanies.filter(company => company.id_ !== id));
-      setTotal(prevTotal => prevTotal - 1);
-      toast.success('Compagnie supprimée définitivement');
-    } catch (error: any) {
-      console.error('Error permanently deleting company:', error);
-      toast.error(error.message || "Erreur lors de la suppression définitive");
+      await permanentlyDelete(id);
+    } catch (error) {
+      // Handled by hook
     }
   };
 
   const handleRestore = async (id: string) => {
     try {
-      const restoredCompany = await InsuranceCompaniesService.restoreInsuranceCompany(id);
-      setInsuranceCompanies(prevCompanies => 
-        prevCompanies.map(company => 
-          company.id_ === id ? restoredCompany : company
-        )
-      );
-      toast.success('Compagnie restaurée avec succès');
-    } catch (error: any) {
-      console.error('Error restoring company:', error);
-      toast.error(error.message || "Erreur lors de la restauration");
+      await restore(id);
+    } catch (error) {
+      // Handled by hook
     }
   };
 
   const confirmDelete = async () => {
     if (!selectedCompany) return;
-
     try {
-      setLoading(true);
-      setError(null);
-      
-      await InsuranceCompaniesService.deleteInsuranceCompany(selectedCompany.id_);
+      await softDelete(selectedCompany.id_);
       setDeleteModalOpen(false);
       setSelectedCompany(null);
-      await fetchInsuranceCompanies(currentPage);
     } catch (err) {
-      console.error('Failed to delete insurance company:', err);
-      setError('Erreur lors de la suppression');
-    } finally {
-      setLoading(false);
+      // Handled by hook
     }
   };
 
@@ -204,26 +160,14 @@ export default function InsuranceCompaniesPage() {
     setEditModalOpen(true);
   };
 
-  const handleUpdate = (updatedCompany: InsuranceCompany) => {
-    
-    setInsuranceCompanies(prev => {
-      const updatedList = prev.map(company => 
-        company.id_ === updatedCompany.id_ ? updatedCompany : company
-      );
-      return updatedList;
-    });
-    
-    setSelectedCompany(updatedCompany);
+  const handleUpdate = () => {
+    setEditModalOpen(false);
   };
-
-  const totalPages = Math.ceil(total / pageSize);
 
   if (authLoading) {
     return (
-      <div className="container mx-auto py-8">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-lg">Chargement...</div>
-        </div>
+      <div className="container mx-auto py-8 text-center text-lg">
+        Chargement...
       </div>
     );
   }
@@ -245,13 +189,6 @@ export default function InsuranceCompaniesPage() {
           </Link>
         )}
       </div>
-
-      {/* Error */}
-      {error && (
-        <div className="p-4 border border-red-300 rounded-lg bg-red-50 text-red-700">
-          {error}
-        </div>
-      )}
 
       {/* Filters */}
       <Card>
@@ -336,13 +273,12 @@ export default function InsuranceCompaniesPage() {
                     <TableRow key={company.id_} className={company.deleted_at ? 'opacity-60' : ''}>
                       <TableCell className="font-medium">
                         <div className="flex items-center gap-3">
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-md font-medium ${
-                            company.deleted_at 
-                              ? 'bg-gray-100 text-gray-500' 
-                              : !company.is_active 
-                                ? 'bg-gray-100 text-gray-500' 
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-md font-medium ${company.deleted_at
+                              ? 'bg-gray-100 text-gray-500'
+                              : !company.is_active
+                                ? 'bg-gray-100 text-gray-500'
                                 : 'bg-blue-100 text-blue-700'
-                          }`}>
+                            }`}>
                             {company.name.charAt(0).toUpperCase()}
                           </div>
                           <div>
@@ -386,7 +322,7 @@ export default function InsuranceCompaniesPage() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             {canAccess('insurance_companies', 'read') && (
-                              <DropdownMenuItem 
+                              <DropdownMenuItem
                                 className="cursor-pointer"
                                 onClick={() => handleView(company)}
                               >
@@ -397,7 +333,7 @@ export default function InsuranceCompaniesPage() {
                             {canAccess('insurance_companies', 'update') && !company.deleted_at && (
                               <>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem 
+                                <DropdownMenuItem
                                   className="cursor-pointer"
                                   onClick={() => handleEdit(company)}
                                 >
@@ -409,7 +345,7 @@ export default function InsuranceCompaniesPage() {
                             {canAccess('insurance_companies', 'soft_delete') && !company.deleted_at && (
                               <>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem 
+                                <DropdownMenuItem
                                   className="cursor-pointer text-red-600"
                                   onClick={() => handleSoftDelete(company.id_)}
                                 >
@@ -421,7 +357,7 @@ export default function InsuranceCompaniesPage() {
                             {company.deleted_at && canAccess('insurance_companies', 'delete') && (
                               <>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem 
+                                <DropdownMenuItem
                                   className="cursor-pointer text-green-600"
                                   onClick={() => handleRestore(company.id_)}
                                 >
@@ -433,7 +369,7 @@ export default function InsuranceCompaniesPage() {
                             {company.deleted_at && canAccess('insurance_companies', 'delete') && (
                               <>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem 
+                                <DropdownMenuItem
                                   className="cursor-pointer text-red-600"
                                   onClick={() => handlePermanentlyDelete(company.id_)}
                                 >
@@ -450,28 +386,14 @@ export default function InsuranceCompaniesPage() {
                 </TableBody>
               </Table>
 
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="flex items-center justify-center gap-2 mt-6">
-                  <Button
-                    variant="outline"
-                    onClick={() => fetchInsuranceCompanies(currentPage - 1)}
-                    disabled={currentPage === 1}
-                  >
-                    Précédent
-                  </Button>
-                  <span className="text-sm text-gray-600">
-                    Page {currentPage} sur {totalPages}
-                  </span>
-                  <Button
-                    variant="outline"
-                    onClick={() => fetchInsuranceCompanies(currentPage + 1)}
-                    disabled={currentPage === totalPages}
-                  >
-                    Suivant
-                  </Button>
-                </div>
-              )}
+              <DataPagination
+                currentPage={currentPage}
+                totalPages={Math.ceil(total / itemsPerPage)}
+                onPageChange={setCurrentPage}
+                itemsPerPage={itemsPerPage}
+                onItemsPerPageChange={setItemsPerPage}
+                totalItems={total}
+              />
             </>
           )}
         </CardContent>
@@ -485,14 +407,14 @@ export default function InsuranceCompaniesPage() {
             onClose={() => setViewModalOpen(false)}
             company={selectedCompany}
           />
-          
+
           <EditInsuranceCompanyModal
             isOpen={editModalOpen}
             onClose={() => setEditModalOpen(false)}
             company={selectedCompany}
             onUpdate={handleUpdate}
           />
-          
+
           <ConfirmModal
             isOpen={deleteModalOpen}
             onClose={() => setDeleteModalOpen(false)}

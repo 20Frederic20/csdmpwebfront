@@ -9,33 +9,38 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { 
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { 
-  Plus, 
-  Search, 
-  User, 
-  Building2, 
-  Eye, 
-  Edit, 
-  Trash2, 
-  ToggleLeft, 
+import {
+  Plus,
+  Search,
+  User,
+  Building2,
+  Eye,
+  Edit,
+  Trash2,
+  ToggleLeft,
   ToggleRight,
   Filter,
   RotateCcw,
   AlertTriangle,
   MoreHorizontal
 } from "lucide-react";
-import { PatientInsuranceService } from "@/features/patient-insurance/services/patient-insurance.service";
+import {
+  usePatientInsurances,
+  useTogglePatientInsuranceStatus,
+  useDeletePatientInsurance,
+  useRestorePatientInsurance,
+  usePermanentlyDeletePatientInsurance
+} from "@/features/patient-insurance/hooks/use-patient-insurances";
 import { PatientInsurance, ListPatientInsuranceQueryParams } from "@/features/patient-insurance/types/patient-insurance.types";
-import { useAuthRefresh } from "@/hooks/use-auth-refresh";
-import { usePermissions } from "@/hooks/use-permissions";
 import { useAuthToken } from "@/hooks/use-auth-token";
+import { usePermissionsContext } from "@/contexts/permissions-context";
 import Link from "next/link";
 import { ViewPatientInsuranceModal } from "@/features/patient-insurance/components/view-patient-insurance-modal";
 import { EditPatientInsuranceModal } from "@/features/patient-insurance/components/edit-patient-insurance-modal";
@@ -43,113 +48,63 @@ import { CreatePatientInsuranceModal } from "@/features/patient-insurance/compon
 import { ConfirmModal } from "@/components/ui/modal";
 import { DataPagination } from "@/components/ui/data-pagination";
 import { toast } from "sonner";
+import { useAuthRefresh } from "@/hooks/use-auth-refresh";
 
 export default function PatientInsurancePage() {
-  const router = useRouter();
   const { isLoading: authLoading } = useAuthRefresh();
-  const { canAccess } = usePermissions();
+  const { canAccess } = usePermissionsContext();
   const { token } = useAuthToken();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  
-  const [patientInsurances, setPatientInsurances] = useState<PatientInsurance[]>([]);
-  const [total, setTotal] = useState(0);
+
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
-  
+
   // Search and filter states
   const [search, setSearch] = useState('');
   const [searchPolicyNumber, setSearchPolicyNumber] = useState('');
   const [searchPriority, setSearchPriority] = useState('');
-  
+
   // Modal states
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedPatientInsurance, setSelectedPatientInsurance] = useState<PatientInsurance | null>(null);
-  
-  const [refreshKey, setRefreshKey] = useState(0);
 
-  const fetchPatientInsurances = async (page: number = 1) => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const params: ListPatientInsuranceQueryParams = {
-        limit: itemsPerPage,
-        offset: (page - 1) * itemsPerPage,
-        sort_by: 'patient_full_name',
-        sort_order: 'asc'
-      };
-
-      if (search && search.length >= 3) params.search = search;
-      if (searchPolicyNumber && searchPolicyNumber.length >= 7) params.policy_number = searchPolicyNumber;
-      if (searchPriority) params.priority = parseInt(searchPriority);
-
-      const response = await PatientInsuranceService.getPatientInsurances(params);
-      setPatientInsurances(response.data);
-      setTotal(response.total);
-      setCurrentPage(page);
-    } catch (err) {
-      console.error('Failed to fetch patient insurances:', err);
-      setError('Erreur lors du chargement des assurances patients');
-    } finally {
-      setLoading(false);
-    }
+  const queryParams: ListPatientInsuranceQueryParams = {
+    limit: itemsPerPage,
+    offset: (currentPage - 1) * itemsPerPage,
+    sort_by: 'patient_full_name',
+    sort_order: 'asc',
   };
 
-  useEffect(() => {
-    if (token) {
-      fetchPatientInsurances(currentPage);
-    }
-  }, [currentPage, itemsPerPage, token]);
+  if (search && search.length >= 3) queryParams.search = search;
+  if (searchPolicyNumber && searchPolicyNumber.length >= 7) queryParams.policy_number = searchPolicyNumber;
+  if (searchPriority) queryParams.priority = parseInt(searchPriority);
 
-  // Recherche dynamique pour le champ search (minimum 3 caractères)
-  useEffect(() => {
-    if (token) {
-      fetchPatientInsurances(1);
-    }
-  }, [search, token]);
+  const { data: response, isLoading: loading } = usePatientInsurances(queryParams, token || undefined);
+  const { mutateAsync: toggleStatus } = useTogglePatientInsuranceStatus();
+  const { mutateAsync: softDelete } = useDeletePatientInsurance();
+  const { mutateAsync: restore } = useRestorePatientInsurance();
+  const { mutateAsync: permanentlyDelete } = usePermanentlyDeletePatientInsurance();
 
-  // Recherche dynamique pour le numéro de police (minimum 7 caractères)
-  useEffect(() => {
-    if (token) {
-      fetchPatientInsurances(1);
-    }
-  }, [searchPolicyNumber, token]);
-
-  // Recherche dynamique pour la priorité
-  useEffect(() => {
-    if (token) {
-      fetchPatientInsurances(1);
-    }
-  }, [searchPriority, token]);
+  const patientInsurances = response?.data || [];
+  const total = response?.total || 0;
 
   const handleClearFilters = () => {
     setSearch('');
     setSearchPolicyNumber('');
     setSearchPriority('');
     setCurrentPage(1);
-    fetchPatientInsurances(1);
   };
 
   const handleToggleStatus = async (patientInsurance: PatientInsurance) => {
     try {
-      const updatedPatientInsurance = await PatientInsuranceService.togglePatientInsuranceStatus(
-        patientInsurance.id_, 
-        !patientInsurance.is_active
-      );
-      
-      // Mettre à jour l'état localement
-      setPatientInsurances(prev => 
-        prev.map(pi => 
-          pi.id_ === updatedPatientInsurance.id_ ? updatedPatientInsurance : pi
-        )
-      );
+      await toggleStatus({
+        id: patientInsurance.id_,
+        isActive: !patientInsurance.is_active
+      });
     } catch (err) {
-      console.error('Failed to toggle status:', err);
-      setError('Erreur lors du changement de statut');
+      // Handled by hook
     }
   };
 
@@ -160,65 +115,36 @@ export default function PatientInsurancePage() {
 
   const handleSoftDelete = async (id: string) => {
     try {
-      await PatientInsuranceService.deletePatientInsurance(id);
-      // Mettre à jour l'état localement (pas de réponse du backend)
-      setPatientInsurances(prev => 
-        prev.map(pi => 
-          pi.id_ === id ? { ...pi, deleted_at: new Date().toISOString() } : pi
-        )
-      );
-      toast.success('Assurance patient supprimée avec succès');
-    } catch (error: any) {
-      console.error('Error soft deleting patient insurance:', error);
-      toast.error(error.message || "Erreur lors de la suppression");
+      await softDelete(id);
+    } catch (error) {
+      // Handled by hook
     }
   };
 
   const handlePermanentlyDelete = async (id: string) => {
     try {
-      await PatientInsuranceService.permanentlyDeletePatientInsurance(id);
-      // Retirer de la liste localement (pas de réponse du backend)
-      setPatientInsurances(prev => prev.filter(pi => pi.id_ !== id));
-      setTotal(prevTotal => prevTotal - 1);
-      toast.success('Assurance patient supprimée définitivement');
-    } catch (error: any) {
-      console.error('Error permanently deleting patient insurance:', error);
-      toast.error(error.message || "Erreur lors de la suppression définitive");
+      await permanentlyDelete(id);
+    } catch (error) {
+      // Handled by hook
     }
   };
 
   const handleRestore = async (id: string) => {
     try {
-      const restoredPatientInsurance = await PatientInsuranceService.restorePatientInsurance(id);
-      // Mettre à jour l'état localement
-      setPatientInsurances(prev => 
-        prev.map(pi => 
-          pi.id_ === id ? restoredPatientInsurance : pi
-        )
-      );
-      toast.success('Assurance patient restaurée avec succès');
-    } catch (error: any) {
-      console.error('Error restoring patient insurance:', error);
-      toast.error(error.message || "Erreur lors de la restauration");
+      await restore(id);
+    } catch (error) {
+      // Handled by hook
     }
   };
 
   const confirmDelete = async () => {
     if (!selectedPatientInsurance) return;
-
     try {
-      setLoading(true);
-      setError(null);
-      
-      await PatientInsuranceService.deletePatientInsurance(selectedPatientInsurance.id_);
+      await softDelete(selectedPatientInsurance.id_);
       setDeleteModalOpen(false);
       setSelectedPatientInsurance(null);
-      await fetchPatientInsurances(currentPage);
     } catch (err) {
-      console.error('Failed to delete patient insurance:', err);
-      setError('Erreur lors de la suppression');
-    } finally {
-      setLoading(false);
+      // Handled by hook
     }
   };
 
@@ -233,37 +159,14 @@ export default function PatientInsurancePage() {
   };
 
   // Handler for successful creation
-  const handleCreateSuccess = (newPatientInsurance: any) => {
-    console.log('Adding new patient insurance to list:', newPatientInsurance);
-    
-    // Add the new item to the beginning of the list
-    setPatientInsurances(prev => {
-      const newList = [newPatientInsurance, ...prev];
-      console.log('Updated list after creation:', newList);
-      return newList;
-    });
-    
-    // Force table re-render
-    setRefreshKey(prev => prev + 1);
+  const handleCreateSuccess = () => {
+    // No longer need manual list update, React Query handles it via validation
+    setCreateModalOpen(false);
   };
 
-  const handleUpdate = (updatedPatientInsurance: PatientInsurance) => {
-    console.log('Updating patient insurance in list:', updatedPatientInsurance); // Debug
-    
-    // Force re-render by creating new array and using spread operator
-    setPatientInsurances(prev => {
-      const updatedList = [...prev.map(pi => 
-        pi.id_ === updatedPatientInsurance.id_ ? { ...updatedPatientInsurance } : { ...pi }
-      )];
-      console.log('Updated list:', updatedList); // Debug
-      return updatedList;
-    });
-    
-    // Force table re-render
-    setRefreshKey(prev => prev + 1);
-    
-    // Update selected patient insurance too
-    setSelectedPatientInsurance({ ...updatedPatientInsurance });
+  const handleUpdate = () => {
+    // No longer need manual list update, React Query handles it via validation
+    setEditModalOpen(false);
   };
 
   const totalPages = Math.ceil(total / itemsPerPage);
@@ -301,7 +204,7 @@ export default function PatientInsurancePage() {
           <p className="text-gray-600 mt-2">Gérer les assurances des patients</p>
         </div>
         {canAccess('patient_insurances', 'create') && (
-          <Button 
+          <Button
             className="bg-green-600 hover:bg-green-700"
             onClick={() => setCreateModalOpen(true)}
           >
@@ -378,7 +281,7 @@ export default function PatientInsurancePage() {
             </div>
           ) : (
             <>
-              <Table key={refreshKey}>
+              <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[200px]">Patient</TableHead>
@@ -394,13 +297,12 @@ export default function PatientInsurancePage() {
                     <TableRow key={patientInsurance.id_} className={patientInsurance.deleted_at ? 'opacity-60' : ''}>
                       <TableCell className="font-medium">
                         <div className="flex items-center gap-3">
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-md font-medium ${
-                            patientInsurance.deleted_at 
-                              ? 'bg-gray-100 text-gray-500' 
-                              : !patientInsurance.is_active 
-                                ? 'bg-gray-100 text-gray-500' 
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-md font-medium ${patientInsurance.deleted_at
+                              ? 'bg-gray-100 text-gray-500'
+                              : !patientInsurance.is_active
+                                ? 'bg-gray-100 text-gray-500'
                                 : 'bg-blue-100 text-blue-700'
-                          }`}>
+                            }`}>
                             {patientInsurance.patient_full_name?.charAt(0)?.toUpperCase() || '?'}
                           </div>
                           <div>
@@ -450,7 +352,7 @@ export default function PatientInsurancePage() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             {canAccess('patient_insurances', 'read') && (
-                              <DropdownMenuItem 
+                              <DropdownMenuItem
                                 className="cursor-pointer"
                                 onClick={() => handleView(patientInsurance)}
                               >
@@ -461,7 +363,7 @@ export default function PatientInsurancePage() {
                             {canAccess('patient_insurances', 'update') && !patientInsurance.deleted_at && (
                               <>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem 
+                                <DropdownMenuItem
                                   className="cursor-pointer"
                                   onClick={() => handleEdit(patientInsurance)}
                                 >
@@ -473,7 +375,7 @@ export default function PatientInsurancePage() {
                             {canAccess('patient_insurances', 'soft_delete') && !patientInsurance.deleted_at && (
                               <>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem 
+                                <DropdownMenuItem
                                   className="cursor-pointer text-red-600"
                                   onClick={() => handleSoftDelete(patientInsurance.id_)}
                                 >
@@ -485,7 +387,7 @@ export default function PatientInsurancePage() {
                             {patientInsurance.deleted_at && canAccess('patient_insurances', 'delete') && (
                               <>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem 
+                                <DropdownMenuItem
                                   className="cursor-pointer text-green-600"
                                   onClick={() => handleRestore(patientInsurance.id_)}
                                 >
@@ -497,7 +399,7 @@ export default function PatientInsurancePage() {
                             {patientInsurance.deleted_at && canAccess('patient_insurances', 'delete') && (
                               <>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem 
+                                <DropdownMenuItem
                                   className="cursor-pointer text-red-600"
                                   onClick={() => handlePermanentlyDelete(patientInsurance.id_)}
                                 >
@@ -544,7 +446,7 @@ export default function PatientInsurancePage() {
           />
         </>
       )}
-      
+
       <CreatePatientInsuranceModal
         isOpen={createModalOpen}
         onClose={() => setCreateModalOpen(false)}

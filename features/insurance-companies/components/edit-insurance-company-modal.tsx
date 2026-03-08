@@ -6,20 +6,20 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Phone, Save } from "lucide-react";
-import { InsuranceCompany, CreateInsuranceCompanyRequest } from "../types/insurance-companies.types";
-import { InsuranceCompaniesService } from "../services/insurance-companies.service";
+import { useUpdateInsuranceCompany } from "../hooks/use-insurance-companies";
+import { type InsuranceCompany, type CreateInsuranceCompanyRequest } from "../types/insurance-companies.types";
 import { Modal } from "@/components/ui/modal";
+import { toast } from "sonner";
 
 interface EditInsuranceCompanyModalProps {
   isOpen: boolean;
   onClose: () => void;
   company: InsuranceCompany;
-  onUpdate: (updatedCompany: InsuranceCompany) => void;
+  onUpdate: () => void;
 }
 
 export function EditInsuranceCompanyModal({ isOpen, onClose, company, onUpdate }: EditInsuranceCompanyModalProps) {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { mutateAsync: updateCompany, isPending: loading } = useUpdateInsuranceCompany();
   const [formData, setFormData] = useState<CreateInsuranceCompanyRequest>({
     name: '',
     insurer_code: '',
@@ -47,36 +47,24 @@ export function EditInsuranceCompanyModal({ isOpen, onClose, company, onUpdate }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.name.trim() || !formData.insurer_code.trim()) {
-      setError('Le nom et le code assureur sont obligatoires');
+      toast.error('Le nom et le code assureur sont obligatoires');
       return;
     }
 
     try {
-      setLoading(true);
-      setError(null);
-      
-      const updatedCompany = await InsuranceCompaniesService.updateInsuranceCompany(company.id_, formData);
-      onUpdate(updatedCompany);
+      await updateCompany({ id: company.id_, data: formData });
+      onUpdate();
       onClose();
     } catch (err: any) {
-      console.error('Failed to update insurance company:', err);
-      setError(err.message || 'Erreur lors de la mise à jour');
-    } finally {
-      setLoading(false);
+      // Handled by hook
     }
   };
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Modifier la compagnie d'assurance" size="md">
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Error */}
-        {error && (
-          <div className="p-4 border border-red-300 rounded-lg bg-red-50 text-red-700">
-            {error}
-          </div>
-        )}
 
         {/* Name */}
         <div className="space-y-2">

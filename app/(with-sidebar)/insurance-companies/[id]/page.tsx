@@ -7,65 +7,46 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
-import { 
-  ArrowLeft, 
-  Edit, 
-  Trash2, 
-  ToggleLeft, 
+import {
+  ArrowLeft,
+  Edit,
+  Trash2,
+  ToggleLeft,
   ToggleRight,
   Building2,
   Phone,
   Calendar,
   Save
 } from "lucide-react";
-import { InsuranceCompaniesService } from "@/features/insurance-companies/services/insurance-companies.service";
-import { InsuranceCompany } from "@/features/insurance-companies/types/insurance-companies.types";
+import {
+  useInsuranceCompany,
+  useToggleInsuranceCompanyStatus,
+  useDeleteInsuranceCompany
+} from "@/features/insurance-companies/hooks/use-insurance-companies";
+import { type InsuranceCompany } from "@/features/insurance-companies/types/insurance-companies.types";
 import { useAuthRefresh } from "@/hooks/use-auth-refresh";
 import Link from "next/link";
+import { toast } from "sonner";
 
 export default function InsuranceCompanyDetailPage() {
   const router = useRouter();
   const params = useParams();
+  const idValue = params.id as string;
   const { isLoading: authLoading } = useAuthRefresh();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [company, setCompany] = useState<InsuranceCompany | null>(null);
 
-  const fetchCompany = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const companyData = await InsuranceCompaniesService.getInsuranceCompanyById(params.id as string);
-      setCompany(companyData);
-    } catch (err: any) {
-      console.error('Failed to fetch insurance company:', err);
-      setError(err.message || 'Erreur lors du chargement de la compagnie d\'assurance');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (!authLoading && params.id) {
-      fetchCompany();
-    }
-  }, [authLoading, params.id]);
+  const { data: company, isLoading: loading, error } = useInsuranceCompany(idValue);
+  const { mutateAsync: toggleStatus, isPending: togglingStatus } = useToggleInsuranceCompanyStatus();
+  const { mutateAsync: deleteCompany, isPending: deleting } = useDeleteInsuranceCompany();
 
   const handleToggleStatus = async () => {
     if (!company) return;
-
     try {
-      setLoading(true);
-      setError(null);
-      
-      await InsuranceCompaniesService.toggleInsuranceCompanyStatus(company.id_, !company.is_active);
-      await fetchCompany(); // Refresh data
-    } catch (err: any) {
-      console.error('Failed to toggle status:', err);
-      setError(err.message || 'Erreur lors du changement de statut');
-    } finally {
-      setLoading(false);
+      await toggleStatus({
+        id: company.id_,
+        isActive: !company.is_active
+      });
+    } catch (err) {
+      // Handled by hook
     }
   };
 
@@ -77,16 +58,10 @@ export default function InsuranceCompanyDetailPage() {
     }
 
     try {
-      setLoading(true);
-      setError(null);
-      
-      await InsuranceCompaniesService.deleteInsuranceCompany(company.id_);
+      await deleteCompany(company.id_);
       router.push('/insurance-companies');
     } catch (err: any) {
-      console.error('Failed to delete insurance company:', err);
-      setError(err.message || 'Erreur lors de la suppression');
-    } finally {
-      setLoading(false);
+      // Handled by hook
     }
   };
 
@@ -102,15 +77,11 @@ export default function InsuranceCompanyDetailPage() {
 
   if (error && !company) {
     return (
-      <div className="container mx-auto py-8">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <div className="text-red-600 mb-4">{error}</div>
-            <Link href="/insurance-companies">
-              <Button>Retour à la liste</Button>
-            </Link>
-          </div>
-        </div>
+      <div className="container mx-auto py-8 text-center">
+        <div className="text-red-600 mb-4">Erreur lors du chargement</div>
+        <Link href="/insurance-companies">
+          <Button>Retour à la liste</Button>
+        </Link>
       </div>
     );
   }
@@ -151,7 +122,7 @@ export default function InsuranceCompanyDetailPage() {
           <Button
             variant="outline"
             onClick={handleToggleStatus}
-            disabled={loading}
+            disabled={loading || togglingStatus}
           >
             {company.is_active ? (
               <>
@@ -168,7 +139,7 @@ export default function InsuranceCompanyDetailPage() {
           <Button
             variant="outline"
             onClick={handleDelete}
-            disabled={loading}
+            disabled={loading || deleting}
             className="text-red-600 hover:text-red-700"
           >
             <Trash2 className="h-4 w-4 mr-2" />
@@ -177,12 +148,6 @@ export default function InsuranceCompanyDetailPage() {
         </div>
       </div>
 
-      {/* Error */}
-      {error && (
-        <div className="p-4 border border-red-300 rounded-lg bg-red-50 text-red-700">
-          {error}
-        </div>
-      )}
 
       {/* Company Details */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -258,7 +223,7 @@ export default function InsuranceCompanyDetailPage() {
                 className="w-full"
                 variant="outline"
                 onClick={handleToggleStatus}
-                disabled={loading}
+                disabled={loading || togglingStatus}
               >
                 {company.is_active ? (
                   <>
@@ -276,7 +241,7 @@ export default function InsuranceCompanyDetailPage() {
                 className="w-full text-red-600 hover:text-red-700"
                 variant="outline"
                 onClick={handleDelete}
-                disabled={loading}
+                disabled={loading || deleting}
               >
                 <Trash2 className="h-4 w-4 mr-2" />
                 Supprimer la compagnie

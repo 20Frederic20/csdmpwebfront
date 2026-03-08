@@ -8,17 +8,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft, Save, Building2, Phone } from "lucide-react";
-import { InsuranceCompaniesService } from "@/features/insurance-companies/services/insurance-companies.service";
+import { useCreateInsuranceCompany } from "@/features/insurance-companies/hooks/use-insurance-companies";
 import { CreateInsuranceCompanyRequest } from "@/features/insurance-companies/types/insurance-companies.types";
 import { useAuthRefresh } from "@/hooks/use-auth-refresh";
+import { toast } from "sonner";
 import Link from "next/link";
 
 export default function AddInsuranceCompanyPage() {
   const router = useRouter();
   const { isLoading: authLoading } = useAuthRefresh();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  
+  const { mutateAsync: createCompany, isPending: loading } = useCreateInsuranceCompany();
+
   const [formData, setFormData] = useState<CreateInsuranceCompanyRequest>({
     name: '',
     insurer_code: '',
@@ -35,23 +35,17 @@ export default function AddInsuranceCompanyPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.name.trim() || !formData.insurer_code.trim()) {
-      setError('Le nom et le code assureur sont obligatoires');
+      toast.error('Le nom et le code assureur sont obligatoires');
       return;
     }
 
     try {
-      setLoading(true);
-      setError(null);
-      
-      await InsuranceCompaniesService.createInsuranceCompany(formData);
+      await createCompany(formData);
       router.push('/insurance-companies');
     } catch (err: any) {
-      console.error('Failed to create insurance company:', err);
-      setError(err.message || 'Erreur lors de la création de la compagnie d\'assurance');
-    } finally {
-      setLoading(false);
+      // Handled by hook
     }
   };
 
@@ -80,13 +74,6 @@ export default function AddInsuranceCompanyPage() {
           <p className="text-gray-600 mt-2">Créer une nouvelle compagnie d'assurance</p>
         </div>
       </div>
-
-      {/* Error */}
-      {error && (
-        <div className="p-4 border border-red-300 rounded-lg bg-red-50 text-red-700">
-          {error}
-        </div>
-      )}
 
       {/* Form */}
       <Card>
