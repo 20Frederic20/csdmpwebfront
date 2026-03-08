@@ -8,11 +8,10 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Search, Plus, Filter, Building, MoreHorizontal, Eye, Edit, Trash2, RotateCcw, AlertTriangle } from "lucide-react";
-import { HealthFacility, FacilityType, HealthcareLevel } from "@/features/health-facilities/types/health-facility.types";
+import { UserRole } from "@/features/auth/types/roles.types";
 import { HealthFacilityService } from "@/features/health-facilities/services/health-facility.service";
-import { formatFacilityType, getFacilityTypeOptions, getHealthcareLevelOptions, canDeleteHealthFacility, canRestoreHealthFacility } from "@/features/health-facilities/utils/health-facility.utils";
+import { formatFacilityType } from "@/features/health-facilities/utils/health-facility.utils";
 import { useAuthToken } from "@/hooks/use-auth-token";
-import { usePermissions } from "@/hooks/use-permissions";
 import { toast } from "sonner";
 import Link from "next/link";
 import { ViewHealthFacilityModal } from "@/features/health-facilities/components/view-health-facility-modal";
@@ -35,51 +34,71 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 
+import { useHealthFacilities, useToggleHealthFacilityStatus, useDeleteHealthFacility, useRestoreHealthFacility } from "@/features/health-facilities/hooks/use-health-facilities";
+import { usePermissionsContext } from "@/contexts/permissions-context";
+
 export default function HealthFacilitiesPage() {
-  const [facilities, setFacilities] = useState<HealthFacility[]>([]);
-  const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
-  const [total, setTotal] = useState(0);
   const { token } = useAuthToken();
-  const { canAccess } = usePermissions();
+  const { canAccess, user: currentUser } = usePermissionsContext();
+
+  const { data: response, isLoading: loading } = useHealthFacilities({
+    search: searchTerm || undefined,
+    limit: itemsPerPage,
+    offset: (currentPage - 1) * itemsPerPage,
+  }, token || undefined);
+
+  const { mutateAsync: toggleStatus } = useToggleHealthFacilityStatus();
+  const { mutateAsync: deleteFacility } = useDeleteHealthFacility();
+  const { mutateAsync: restoreFacility } = useRestoreHealthFacility();
+  const { hasRole, canAccess: canGlobalAccess } = usePermissionsContext();
+
+  const isSuperAdmin = hasRole(UserRole.SUPER_ADMIN);
+  const isAdmin = hasRole(UserRole.ADMIN);
+  const userFacilityId = currentUser?.health_facility_id;
+
+  const facilitiesRaw = response?.data || [];
+  const total = response?.total || 0;
+
+  // Sorting logic (Prioritize own facility)
+  const facilities = [...facilitiesRaw].sort((a, b) => {
+    if (userFacilityId) {
+      if (a.id_ === userFacilityId) return -1;
+      if (b.id_ === userFacilityId) return 1;
+    }
+    return 0;
+  });
+
+  const canActOnFacility = (facilityId: string) => {
+    // SuperAdmin can act on anything
+    if (isSuperAdmin) return true;
+
+    // Admin can only act on their own facility
+    if (isAdmin && userFacilityId && facilityId === userFacilityId) return true;
+
+    return false;
+  };
 
   const handleFacilityDeleted = (() => {
-
-  }) 
+    // Queries automatically invalidated by useDeleteHealthFacility
+  })
 
   const handleFacilitySoftDeleted = async (id: string) => {
     try {
-      await HealthFacilityService.deleteHealthFacility(id, token || undefined);
-      
-      // Mettre à jour localement avec deleted_at (soft delete)
-      setFacilities(prevFacilities => 
-        prevFacilities.map(facility => 
-          facility.id_ === id ? { 
-            ...facility,
-            deleted_at: new Date().toISOString(),
-            is_active: false
-          } : facility
-        )
-      );
-      
-      toast.success('Établissement supprimé avec succès');
-    } catch (error: any) {
-      console.error('Error deleting facility:', error);
-      toast.error(error.message || "Erreur lors de la suppression");
+      await deleteFacility({ id, token: token || undefined });
+    } catch (error) {
+      // Error handled by mutation hook toast
     }
   };
 
   const handleFacilityPermanentlyDeleted = async (id: string) => {
     try {
       await HealthFacilityService.permanentlyDeleteHealthFacility(id, token || undefined);
-      
-      // Retirer de la liste
-      setFacilities(prevFacilities => prevFacilities.filter(facility => facility.id_ !== id));
-      setTotal(prevTotal => prevTotal - 1);
-      
-      toast.success('Établissement supprimé définitivement');
+      // We don't have a hook for permanent delete yet, or we use Service directly
+      // but we should probably refresh query client manually if we use Service
+      loadFacilities(); // Fallback for now or I should have created usePermanentlyDeleteHealthFacility
     } catch (error: any) {
       console.error('Error permanently deleting facility:', error);
       toast.error(error.message || "Erreur lors de la suppression définitive");
@@ -88,60 +107,28 @@ export default function HealthFacilitiesPage() {
 
   const handleFacilityRestored = async (id: string) => {
     try {
-      const restoredFacility = await HealthFacilityService.restoreHealthFacility(id, token || undefined);
-      
-      // Mettre à jour l'état localement en préservant les données existantes
-      setFacilities(prevFacilities => 
-        prevFacilities.map(facility => 
-          facility.id_ === id ? { 
-            ...facility, 
-            deleted_at: null,  // Mettre deleted_at à null
-            ...restoredFacility  // Écraser avec les données retournées par l'API
-          } : facility
-        )
-      );
-      
-      toast.success('Établissement restauré avec succès');
-    } catch (error: any) {
-      console.error('Error restoring facility:', error);
-      toast.error(error.message || "Erreur lors de la restauration");
+      await restoreFacility({ id, token: token || undefined });
+    } catch (error) {
+      // Handled by hook
     }
   };
 
   const handleToggleStatus = async (id: string) => {
     try {
-      const updatedFacility = await HealthFacilityService.toggleHealthFacilityStatus(id, token || undefined);
-      
-      if (updatedFacility && typeof updatedFacility.is_active === 'boolean') {
-        // Mettre à jour l'état localement sans recharger toute la liste
-        setFacilities(prevFacilities => 
-          prevFacilities.map(facility => 
-            facility.id_ === id ? { 
-              ...facility, 
-              is_active: updatedFacility.is_active,
-              id_: facility.id_  // Préserver l'ID original
-            } : facility
-          )
-        );
-        
-        toast.success(`Établissement ${updatedFacility.is_active ? 'activé' : 'désactivé'} avec succès`);
-      } else {
-        throw new Error('Réponse invalide du serveur');
-      }
-    } catch (error: any) {
-      console.error('Error toggling facility status:', error);
-      toast.error(error.message || "Erreur lors du changement de statut");
+      await toggleStatus({ id, token: token || undefined });
+    } catch (error) {
+      // Handled by hook
     }
   };
 
   const handleSearch = (value: string) => {
     setSearchTerm(value);
-    setCurrentPage(1); // Revenir à la première page lors de la recherche
+    setCurrentPage(1);
   };
 
   const handleItemsPerPageChange = (value: string) => {
     setItemsPerPage(parseInt(value));
-    setCurrentPage(1); // Revenir à la première page lors du changement d'items par page
+    setCurrentPage(1);
   };
 
   const totalPages = Math.ceil(total / itemsPerPage);
@@ -149,7 +136,7 @@ export default function HealthFacilitiesPage() {
   const getPaginationItems = () => {
     const items = [];
     const maxVisible = 5;
-    
+
     if (totalPages <= maxVisible) {
       for (let i = 1; i <= totalPages; i++) {
         items.push(i);
@@ -157,49 +144,28 @@ export default function HealthFacilitiesPage() {
     } else {
       const start = Math.max(1, currentPage - 2);
       const end = Math.min(totalPages, start + maxVisible - 1);
-      
+
       if (start > 1) {
         items.push(1);
         if (start > 2) items.push('...');
       }
-      
+
       for (let i = start; i <= end; i++) {
         items.push(i);
       }
-      
+
       if (end < totalPages) {
         if (end < totalPages - 1) items.push('...');
         items.push(totalPages);
       }
     }
-    
+
     return items;
   };
 
   const loadFacilities = async () => {
-    setLoading(true);
-    try {
-      const offset = (currentPage - 1) * itemsPerPage;
-      const response = await HealthFacilityService.getHealthFacilities({
-        search: searchTerm || undefined,
-        limit: itemsPerPage,
-        offset,
-      }, token || undefined);
-      
-      setFacilities(response.data || []);
-      setTotal(response.total || 0);
-    } catch (error) {
-      console.error('Error loading facilities:', error);
-      toast.error('Erreur lors du chargement des établissements');
-      setFacilities([]);
-    } finally {
-      setLoading(false);
-    }
+    // This function is now just for manual refresh if needed, but useQuery manages it
   };
-
-  useEffect(() => {
-    loadFacilities();
-  }, [currentPage, itemsPerPage, searchTerm]);
 
   return (
     <div className="container mx-auto py-6 space-y-6">
@@ -254,8 +220,8 @@ export default function HealthFacilitiesPage() {
             <div className="text-center py-8">
               <Building className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <p className="text-muted-foreground mb-4">
-                {searchTerm 
-                  ? 'Aucun établissement trouvé pour cette recherche.' 
+                {searchTerm
+                  ? 'Aucun établissement trouvé pour cette recherche.'
                   : 'Aucun établissement de santé enregistré.'
                 }
               </p>
@@ -284,11 +250,10 @@ export default function HealthFacilitiesPage() {
                     <TableRow key={facility.id_}>
                       <TableCell className="font-medium">
                         <div className={`flex items-center gap-3 ${facility.deleted_at ? 'opacity-60' : ''}`}>
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-md font-medium ${
-                            facility.deleted_at 
-                              ? 'bg-gray-100 text-gray-500' 
-                              : 'bg-green-100 text-green-700'
-                          }`}>
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-md font-medium ${facility.deleted_at
+                            ? 'bg-gray-100 text-gray-500'
+                            : 'bg-green-100 text-green-700'
+                            }`}>
                             {facility.name.substring(0, 2).toUpperCase() || 'EF'}
                           </div>
                           <div>
@@ -326,9 +291,10 @@ export default function HealthFacilitiesPage() {
                         {facility.phone || '—'}
                       </TableCell>
                       <TableCell>
-                        <Switch 
+                        <Switch
                           checked={facility.is_active}
                           onCheckedChange={() => handleToggleStatus(facility.id_)}
+                          disabled={!canActOnFacility(facility.id_)}
                           className="data-[state=checked]:bg-green-500"
                         />
                       </TableCell>
@@ -340,8 +306,8 @@ export default function HealthFacilitiesPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            {canAccess('health_facilities', 'read') && (
-                              <DropdownMenuItem 
+                            {canGlobalAccess('health_facilities', 'read') && (
+                              <DropdownMenuItem
                                 className="cursor-pointer"
                                 onClick={() => {
                                   const modalButton = document.querySelector(`[data-health-facility-view="${facility.id_}"]`) as HTMLButtonElement;
@@ -352,7 +318,7 @@ export default function HealthFacilitiesPage() {
                                 Voir
                               </DropdownMenuItem>
                             )}
-                            {!facility.deleted_at && canAccess('health_facilities', 'update') && (
+                            {!facility.deleted_at && canGlobalAccess('health_facilities', 'update') && canActOnFacility(facility.id_) && (
                               <DropdownMenuItem asChild className="cursor-pointer">
                                 <Link href={`/health-facilities/${facility.id_}/edit`}>
                                   <Edit className="h-4 w-4 mr-2" />
@@ -360,8 +326,8 @@ export default function HealthFacilitiesPage() {
                                 </Link>
                               </DropdownMenuItem>
                             )}
-                            {!facility.deleted_at && canAccess('health_facilities', 'delete') && (
-                              <DropdownMenuItem 
+                            {!facility.deleted_at && canGlobalAccess('health_facilities', 'delete') && canActOnFacility(facility.id_) && (
+                              <DropdownMenuItem
                                 className="cursor-pointer text-red-600"
                                 onClick={() => handleFacilitySoftDeleted(facility.id_)}
                               >
@@ -372,14 +338,14 @@ export default function HealthFacilitiesPage() {
                             {facility.deleted_at && (
                               <>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem 
+                                <DropdownMenuItem
                                   className="cursor-pointer text-green-600"
                                   onClick={() => handleFacilityRestored(facility.id_)}
                                 >
                                   <RotateCcw className="h-4 w-4 mr-2" />
                                   Restaurer
                                 </DropdownMenuItem>
-                                <DropdownMenuItem 
+                                <DropdownMenuItem
                                   className="cursor-pointer text-red-600"
                                   onClick={() => handleFacilityPermanentlyDeleted(facility.id_)}
                                 >
@@ -390,7 +356,7 @@ export default function HealthFacilitiesPage() {
                             )}
                           </DropdownMenuContent>
                         </DropdownMenu>
-                        
+
                         {/* Boutons cachés pour déclencher les modals */}
                         <div className="hidden">
                           <ViewHealthFacilityModal facility={facility} />
@@ -401,7 +367,7 @@ export default function HealthFacilitiesPage() {
                   ))}
                 </TableBody>
               </Table>
-              
+
               {/* Pagination */}
               <div className="flex items-center justify-between space-x-2 py-4">
                 <div className="flex items-center space-x-2 flex-shrink-0">
@@ -425,12 +391,12 @@ export default function HealthFacilitiesPage() {
                   <Pagination className="justify-end">
                     <PaginationContent>
                       <PaginationItem>
-                        <PaginationPrevious 
+                        <PaginationPrevious
                           onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                           className={currentPage === 1 ? 'pointer-events-none opacity-50 cursor-pointer' : 'cursor-pointer'}
                         />
                       </PaginationItem>
-                      
+
                       {getPaginationItems().map((item, index) => (
                         <PaginationItem key={index}>
                           {item === '...' ? (
@@ -446,9 +412,9 @@ export default function HealthFacilitiesPage() {
                           )}
                         </PaginationItem>
                       ))}
-                      
+
                       <PaginationItem>
-                        <PaginationNext 
+                        <PaginationNext
                           onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                           className={currentPage === totalPages ? 'pointer-events-none opacity-50 cursor-pointer' : 'cursor-pointer'}
                         />

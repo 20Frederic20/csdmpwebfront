@@ -5,12 +5,12 @@ import { useEffect, useState } from "react"
 // Client-side wrapper for Collapsible to handle hydration
 function ClientCollapsible({ children, defaultOpen, ...props }: React.ComponentProps<typeof Collapsible> & { defaultOpen?: boolean }) {
   const [isOpen, setIsOpen] = useState(false)
-  
+
   // Use useEffect to set initial state only on client side, preventing SSR mismatch
   useEffect(() => {
     setIsOpen(!!defaultOpen)
   }, [defaultOpen])
-  
+
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen} {...props}>
       {children}
@@ -19,18 +19,18 @@ function ClientCollapsible({ children, defaultOpen, ...props }: React.ComponentP
 }
 
 import {
-    Sidebar,
-    SidebarContent,
-    SidebarFooter,
-    SidebarGroup,
-    SidebarGroupLabel,
-    SidebarHeader,
-    SidebarMenu,
-    SidebarMenuButton,
-    SidebarMenuItem,
-    SidebarMenuSub,
-    SidebarMenuSubItem,
-    SidebarMenuSubButton,
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubItem,
+  SidebarMenuSubButton,
 } from "@/components/ui/sidebar"
 import {
   Collapsible,
@@ -87,7 +87,7 @@ function NavMain({
   canAccess?: (resource: string, action: string) => boolean
 }) {
   const pathname = usePathname();
-  
+
   // Afficher le menu même pendant le chargement, mais sans filtrer les permissions
   if (loading) {
     return (
@@ -103,7 +103,7 @@ function NavMain({
             >
               <SidebarMenuItem>
                 <CollapsibleTrigger asChild>
-                  <SidebarMenuButton tooltip={item.title}>
+                  <SidebarMenuButton tooltip={item.title} isActive={item.isActive}>
                     {item.icon && <item.icon />}
                     <span>{item.title}</span>
                     {item.items && item.items.length > 0 && (
@@ -115,7 +115,7 @@ function NavMain({
                   <SidebarMenuSub>
                     {item.items?.map((subItem) => (
                       <SidebarMenuSubItem key={subItem.title}>
-                        <SidebarMenuSubButton asChild>
+                        <SidebarMenuSubButton asChild isActive={pathname === subItem.url}>
                           <Link href={subItem.url}>
                             {subItem.icon && <subItem.icon />}
                             <span>{subItem.title}</span>
@@ -132,7 +132,7 @@ function NavMain({
       </SidebarGroup>
     );
   }
-  
+
   return (
     <SidebarGroup>
       <SidebarGroupLabel>Navigation</SidebarGroupLabel>
@@ -142,7 +142,7 @@ function NavMain({
           if (item.requiredPermission && canAccess && !canAccess(item.requiredPermission.resource, item.requiredPermission.action)) {
             return null;
           }
-          
+
           // Filter sub-items based on permissions
           const filteredSubItems = item.items ? item.items.filter(subItem => {
             if (subItem.requiredPermission && canAccess && !canAccess(subItem.requiredPermission.resource, subItem.requiredPermission.action)) {
@@ -150,7 +150,7 @@ function NavMain({
             }
             return true;
           }) : [];
-          
+
           return (
             <ClientCollapsible
               key={item.title}
@@ -160,7 +160,7 @@ function NavMain({
             >
               <SidebarMenuItem>
                 <CollapsibleTrigger asChild>
-                  <SidebarMenuButton tooltip={item.title}>
+                  <SidebarMenuButton tooltip={item.title} isActive={item.isActive}>
                     {item.icon && <item.icon />}
                     <span>{item.title}</span>
                     {filteredSubItems.length > 0 && (
@@ -173,11 +173,8 @@ function NavMain({
                     <SidebarMenuSub>
                       {filteredSubItems.map((subItem) => (
                         <SidebarMenuSubItem key={subItem.title}>
-                          <SidebarMenuSubButton asChild>
-                            <Link 
-                              href={subItem.url}
-                              className={pathname === subItem.url ? "bg-green-100 text-green-700 hover:bg-green-200" : "hover:bg-gray-50"}
-                            >
+                          <SidebarMenuSubButton asChild isActive={pathname === subItem.url}>
+                            <Link href={subItem.url}>
                               {subItem.icon && <subItem.icon />}
                               <span>{subItem.title}</span>
                             </Link>

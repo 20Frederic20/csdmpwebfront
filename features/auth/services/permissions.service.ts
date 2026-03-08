@@ -2,23 +2,23 @@ import { FetchService } from '@/features/core/services/fetch.service';
 import { UserWithRoles, PermissionsResponse, UserRole } from '../types/roles.types';
 
 export class PermissionsService {
-  
+
   static async getUserPermissions(): Promise<UserWithRoles> {
     try {
       const result = await FetchService.get<UserWithRoles>('me/permissions', 'User permissions');
       return result;
     } catch (error) {
       console.error('Failed to fetch user permissions:', error);
-      
+
       // Si l'erreur est liée à l'authentification, ne pas retourner de faux utilisateur
       if (error instanceof Error && (
-        error.message.includes('401') || 
+        error.message.includes('401') ||
         error.message.includes('Failed to refresh token') ||
         error.message.includes('Unauthorized')
       )) {
         throw error; // Propager l'erreur pour déclencher la redirection vers login
       }
-      
+
       // Pour les autres erreurs, retourner un utilisateur par défaut
       return {
         id: '',
@@ -51,6 +51,6 @@ export class PermissionsService {
   }
 
   static canAccess(user: UserWithRoles, resource: string, action: string = 'read'): boolean {
-    return this.hasPermission(user, resource, action) || this.hasRole(user, UserRole.ADMIN);
+    return this.hasPermission(user, resource, action) || this.hasRole(user, UserRole.SUPER_ADMIN);
   }
 }

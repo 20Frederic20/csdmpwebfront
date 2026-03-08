@@ -7,10 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import CustomSelect from "@/components/ui/custom-select";
-import { PhoneInput } from "@/components/ui/phone-input";
-import { ArrowLeft, Building, User, Phone, MapPin, Users } from "lucide-react";
+import { ArrowLeft, Building, User, MapPin } from "lucide-react";
 import { CreateHealthFacilityRequest, AdminUser, FacilityType, HealthcareLevel } from "@/features/health-facilities/types/health-facility.types";
-import { HealthFacilityService } from "@/features/health-facilities/services/health-facility.service";
 import { UserService } from "@/features/users/services/user.service";
 import { getFacilityTypeOptions, getHealthcareLevelOptions } from "@/features/health-facilities/utils/health-facility.utils";
 import LocationService from "@/features/location/services/location.service";
@@ -20,12 +18,20 @@ import { useAuthToken } from "@/hooks/use-auth-token";
 import { toast } from "sonner";
 import Link from "next/link";
 
+import { useHealthFacility, useUpdateHealthFacility } from "@/features/health-facilities/hooks/use-health-facilities";
+import { usePermissionsContext } from "@/contexts/permissions-context";
+import { UserRole } from "@/features/auth/types/roles.types";
+
 export default function EditHealthFacilityPage() {
   const params = useParams();
   const router = useRouter();
   const { token } = useAuthToken();
-  const [loading, setLoading] = useState(false);
-  const [fetchLoading, setFetchLoading] = useState(true);
+  const facilityId = params.id as string;
+
+  const { data: facilityData, isLoading: fetchLoading } = useHealthFacility(facilityId, token || undefined);
+  const { mutateAsync: updateFacility, isPending: loading } = useUpdateHealthFacility();
+  const { hasRole, loading: permissionsLoading, user: currentUser } = usePermissionsContext();
+
   const [adminMode, setAdminMode] = useState<'create' | 'select'>('select');
   const [availableUsers, setAvailableUsers] = useState<any[]>([]);
   const [countries, setCountries] = useState<Country[]>([]);
@@ -33,17 +39,26 @@ export default function EditHealthFacilityPage() {
   const [cities, setCities] = useState<City[]>([]);
   const [filteredCities, setFilteredCities] = useState<City[]>([]);
   const [selectedCountry, setSelectedCountry] = useState<Country | null>(null);
-  const facilityId = params.id as string;
 
-  // Options pour le type d'établissement
-  const facilityTypeOptions = [
-    { value: "university_hospital", label: "Hôpital universitaire" },
-    { value: "departmental_hospital", label: "Hôpital départemental" },
-    { value: "zone_hospital", label: "Hôpital de zone" },
-    { value: "health_center", label: "Centre de santé" },
-    { value: "dispensary", label: "Dispensaire" },
-    { value: "private_clinic", label: "Clinique privée" },
-  ];
+  // Protection de la route
+  useEffect(() => {
+    if (!permissionsLoading && !fetchLoading && facilityData) {
+      const isSuperAdmin = hasRole(UserRole.SUPER_ADMIN);
+      const isAdmin = hasRole(UserRole.ADMIN);
+      const userFacilityId = currentUser?.health_facility_id;
+
+      const canEdit = isSuperAdmin || (isAdmin && userFacilityId === facilityId);
+
+      if (!canEdit) {
+        toast.error("Vous n'avez pas les droits pour modifier cet établissement");
+        router.push("/health-facilities");
+      }
+    }
+  }, [permissionsLoading, fetchLoading, facilityData, hasRole, facilityId, currentUser, router]);
+
+  if (permissionsLoading || fetchLoading) {
+    return <div className="flex h-[450px] items-center justify-center">Chargement...</div>;
+  }
 
   // Options pour les utilisateurs disponibles
   const userOptions = availableUsers.map((user) => ({
@@ -80,93 +95,83 @@ export default function EditHealthFacilityPage() {
     roles: ["user"],
   });
 
-  // Charger les données de l'établissement et de localisation
+  // Charger les données de localisation
   useEffect(() => {
-    const loadData = async () => {
+    const loadLocationData = async () => {
       try {
-        // Charger les données de localisation (Bénin par défaut)
         const locationData = await LocationService.fetchLocationData('BJ');
         setCountries(locationData.countries);
         setDepartments(locationData.departments);
         setCities(locationData.cities);
         setFilteredCities(locationData.cities);
-        
-        // Set default country (Bénin)
+
         const benin = locationData.countries.find(c => c.country_code === 'BJ');
-        if (benin) {
-          setSelectedCountry(benin);
-        }
-
-        // Charger les données de l'établissement
-        const facilityData = await HealthFacilityService.getHealthFacilityById(facilityId, token || undefined);
-        
-        let phoneDisplay = facilityData.phone || "";
-        if (phoneDisplay && benin) {
-          if (phoneDisplay.startsWith(benin.phone_prefix)) {
-            phoneDisplay = phoneDisplay.substring(benin.phone_prefix.length);
-          }
-        }
-
-        const deptCode = facilityData.district ? 
-          locationData.departments.find(d => d.name === facilityData.district)?.code || "" : "";
-        
-        const cityCode = facilityData.region ? 
-          locationData.cities.find(c => c.name === facilityData.region)?.code || "" : "";
-
-        setFormData({
-          name: facilityData.name,
-          code: facilityData.code,
-          facility_type: facilityData.facility_type,
-          healthcare_level: facilityData.healthcare_level,
-          region: facilityData.region || "",
-          district: facilityData.district || "",
-          health_zone: facilityData.health_zone || "",
-          snis_code: facilityData.snis_code,
-          tax_id: facilityData.tax_id,
-          authorization_decree_number: facilityData.authorization_decree_number,
-          authorization_decree_date: facilityData.authorization_decree_date,
-          commune_code: facilityData.commune_code,
-          latitude: facilityData.latitude,
-          longitude: facilityData.longitude,
-          phone: phoneDisplay,
-          admin_user_id: facilityData.admin_user_id || null,
-          admin_user: null,
-          is_active: facilityData.is_active,
-        });
-
-        if (deptCode) {
-          const deptCities = locationData.cities.filter(city => city.state_code === deptCode);
-          setFilteredCities(deptCities);
-        }
-
-      } catch (error: any) {
-        toast.error('Erreur lors du chargement de l\'établissement');
-        router.push('/health-facilities');
-      } finally {
-        setFetchLoading(false);
+        if (benin) setSelectedCountry(benin);
+      } catch (error) {
+        console.error('Error loading location data:', error);
       }
     };
+    loadLocationData();
+  }, []);
 
-    loadData();
-  }, [facilityId, token]);
+  // Synchroniser les données de l'établissement une fois chargées
+  useEffect(() => {
+    if (facilityData && countries.length > 0) {
+      const benin = countries.find(c => c.country_code === 'BJ');
+
+      let phoneDisplay = facilityData.phone || "";
+      if (phoneDisplay && benin) {
+        if (phoneDisplay.startsWith(benin.phone_prefix)) {
+          phoneDisplay = phoneDisplay.substring(benin.phone_prefix.length);
+        }
+      }
+
+      const deptCode = facilityData.district ?
+        departments.find(d => d.name === facilityData.district)?.code || "" : "";
+
+      setFormData({
+        name: facilityData.name,
+        code: facilityData.code,
+        facility_type: facilityData.facility_type,
+        healthcare_level: facilityData.healthcare_level,
+        region: facilityData.region || "",
+        district: facilityData.district || "",
+        health_zone: facilityData.health_zone || "",
+        snis_code: facilityData.snis_code,
+        tax_id: facilityData.tax_id,
+        authorization_decree_number: facilityData.authorization_decree_number,
+        authorization_decree_date: facilityData.authorization_decree_date,
+        commune_code: facilityData.commune_code,
+        latitude: facilityData.latitude,
+        longitude: facilityData.longitude,
+        phone: phoneDisplay,
+        admin_user_id: facilityData.admin_user_id || null,
+        admin_user: null,
+        is_active: facilityData.is_active,
+      });
+
+      if (deptCode) {
+        const deptCities = cities.filter(city => city.state_code === deptCode);
+        setFilteredCities(deptCities);
+      }
+    }
+  }, [facilityData, countries, departments, cities]);
 
   // Handler pour le changement de pays
   const handleCountryChange = async (country: Country) => {
     setSelectedCountry(country);
     handleInputChange("country_code", country.country_code);
-    
-    // Charger les départements et villes du nouveau pays
+
     try {
       const [newDepartments, newCities] = await Promise.all([
         LocationService.fetchDepartments(country.country_code),
         LocationService.fetchCities(country.country_code)
       ]);
-      
+
       setDepartments(newDepartments);
       setCities(newCities);
-      setFilteredCities(newCities); // Réinitialiser avec toutes les villes du nouveau pays
-      
-      // Réinitialiser les sélections
+      setFilteredCities(newCities);
+
       setFormData(prev => ({
         ...prev,
         district: "",
@@ -176,7 +181,6 @@ export default function EditHealthFacilityPage() {
       }));
     } catch (error) {
       console.error('Error loading country data:', error);
-      toast.error('Erreur lors du chargement des données du pays');
     }
   };
 
@@ -184,27 +188,26 @@ export default function EditHealthFacilityPage() {
   const handleDistrictChange = (value: string) => {
     const dept = departments.find(d => d.name === value);
     const deptCode = dept?.code || "";
-    
+
     setFormData(prev => ({
       ...prev,
       district: value,
       department_code: deptCode,
-      region: "", // Réinitialiser la ville
-      city_code: "" // Réinitialiser le code ville
+      region: "",
+      city_code: ""
     }));
-    
-    // Filtrer les villes par département
+
     if (deptCode) {
       const deptCities = cities.filter(city => city.state_code === deptCode);
-      setFilteredCities(deptCities); // Mettre à jour les villes filtrées
+      setFilteredCities(deptCities);
     } else {
-      setFilteredCities(cities); // Si pas de département, montrer toutes les villes
+      setFilteredCities(cities);
     }
   };
 
   // Handler pour synchroniser region et city_code
   const handleRegionChange = (value: string) => {
-    const city = filteredCities.find(c => c.name === value); // Chercher dans les villes filtrées
+    const city = filteredCities.find(c => c.name === value);
     setFormData(prev => ({
       ...prev,
       region: value,
@@ -252,19 +255,15 @@ export default function EditHealthFacilityPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
 
     try {
-      // Validation : un admin est obligatoire
       if (adminMode === 'select' && !formData.admin_user_id) {
         toast.error("Veuillez sélectionner un administrateur existant");
-        setLoading(false);
         return;
       }
 
       if (adminMode === 'create' && !adminUserData.given_name && !adminUserData.family_name) {
         toast.error("Veuillez remplir les informations de l'administrateur");
-        setLoading(false);
         return;
       }
 
@@ -274,14 +273,10 @@ export default function EditHealthFacilityPage() {
         admin_user_id: adminMode === 'select' ? formData.admin_user_id : null,
       };
 
-      await HealthFacilityService.updateHealthFacility(facilityId, submitData, token || undefined);
-      toast.success("Établissement de santé mis à jour avec succès");
+      await updateFacility({ id: facilityId, data: submitData, token: token || undefined });
       router.push("/health-facilities");
     } catch (error) {
-      console.error('Error updating health facility:', error);
-      toast.error(error instanceof Error ? error.message : 'Une erreur est survenue lors de la mise à jour de l\'établissement');
-    } finally {
-      setLoading(false);
+      // Handled by hook
     }
   };
 
@@ -407,10 +402,10 @@ export default function EditHealthFacilityPage() {
                 <Input
                   id="phone"
                   type="tel"
-                  value={formData.phone && selectedCountry ? 
-                    formData.phone.startsWith(selectedCountry.phone_prefix) ? 
-                      formData.phone.substring(selectedCountry.phone_prefix.length) : 
-                      formData.phone.replace(/\D/g, '') : 
+                  value={formData.phone && selectedCountry ?
+                    formData.phone.startsWith(selectedCountry.phone_prefix) ?
+                      formData.phone.substring(selectedCountry.phone_prefix.length) :
+                      formData.phone.replace(/\D/g, '') :
                     formData.phone || ""}
                   onChange={(e) => {
                     const cleanPhone = e.target.value.replace(/\D/g, '');
@@ -551,7 +546,7 @@ export default function EditHealthFacilityPage() {
           <CardContent className="space-y-4">
             <div className="space-y-4">
               <Label className="text-base font-medium">Choix de l'administrateur <span className="text-red-500">*</span></Label>
-              
+
               <div className="flex gap-4">
                 <label className="flex items-center space-x-2 cursor-pointer">
                   <input
