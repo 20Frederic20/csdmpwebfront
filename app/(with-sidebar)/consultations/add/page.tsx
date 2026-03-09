@@ -9,28 +9,19 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft, Save } from "lucide-react";
-import { toast } from "sonner";
 import { CreateConsultationRequest, ConsultationStatus, VitalSigns } from "@/features/consultations/types/consultations.types";
 import { useCreateConsultation } from "@/features/consultations/hooks/use-consultations";
-import { useAuthToken } from "@/hooks/use-auth-token";
-import { Patient, PatientsQueryParams } from "@/features/patients";
-import { PatientService } from "@/features/patients";
-import { User } from "@/features/users";
-import { HospitalStaff, HospitalStaffQueryParams } from "@/features/hospital-staff";
-import { HospitalStaffService } from "@/features/hospital-staff";
 import CustomSelect from '@/components/ui/custom-select';
 import { HealthFacilitySelect } from "@/features/health-facilities/components/health-facility-select";
 import { DepartmentSelect } from "@/features/departments/components/department-select";
-import { InsuranceCompanySelect } from "@/features/insurance-companies/components/insurance-company-select";
 import { HospitalStaffSelect } from "@/features/hospital-staff/components/hospital-staff-select";
 import { PatientSelect } from "@/features/patients/components/patient-select";
+import { usePermissionsContext } from "@/contexts/permissions-context";
 
 export default function AddConsultationPage() {
   const router = useRouter();
   const { mutateAsync: createConsultation, isPending: loading } = useCreateConsultation();
-  const [loadingStaff, setLoadingStaff] = useState(false);
-  const [patients, setPatients] = useState<Patient[]>([]);
-  const [hospitalStaff, setHospitalStaff] = useState<HospitalStaff[]>([]);
+  const { user } = usePermissionsContext();
   const [errors, setErrors] = useState<Record<string, string | undefined>>({});
 
   const [formData, setFormData] = useState<CreateConsultationRequest>({
@@ -38,7 +29,6 @@ export default function AddConsultationPage() {
     chief_complaint: "",
     health_facility_id: "",
     department_id: "",
-    insurance_company_id: undefined,
     physical_examination: "",
     triage_by_id: undefined,
     consulted_by_id: undefined,
@@ -57,30 +47,9 @@ export default function AddConsultationPage() {
     follow_up_notes: "",
     follow_up_date: undefined,
     status: ConsultationStatus.SCHEDULED,
-    billing_code: "",
-    amount_paid: undefined,
     is_confidential: false,
   });
 
-  const { token } = useAuthToken();
-
-  // Convertir les patients en options pour CustomSelect (kept for compatibility)
-  const patientOptions = [
-    { value: '', label: 'Sélectionner un patient' },
-    ...patients.map((patient) => ({
-      value: patient.id_,
-      label: `${patient.given_name} ${patient.family_name}`
-    }))
-  ];
-
-  // Convertir le personnel hospitalier en options
-  const staffOptions = [
-    { value: '', label: 'Aucun' },
-    ...hospitalStaff.map((staff) => ({
-      value: staff.id_,
-      label: `${staff.matricule}`
-    }))
-  ];
 
   // Options pour le statut de consultation
   const statusOptions = [
@@ -91,50 +60,17 @@ export default function AddConsultationPage() {
     { value: 'no_show', label: 'Absent' }
   ];
 
-  // Charger tous les patients actifs au démarrage
+
+  // Injecter automatiquement l'établissement de santé si l'utilisateur y est rattaché
   useEffect(() => {
-    const loadPatients = async () => {
-      setLoadingPatients(true);
-      try {
-        const params: PatientsQueryParams = {
-          limit: 50, // Plus de résultats pour la recherche
-        };
-        console.log('Loading patients with params:', params);
-        const response = await PatientService.getPatients(params, token || undefined);
-        console.log('Patients response:', response);
-        // La réponse utilise 'patients' comme clé, pas 'data'
-        setPatients(response.data || []);
-      } catch (error) {
-        console.error('Error loading patients:', error);
-        toast.error('Erreur lors du chargement des patients');
-      } finally {
-        setLoadingPatients(false);
-      }
-    };
-
-    loadPatients();
-  }, [token]);
-
-  // Charger tout le personnel hospitalier actif au démarrage
-  useEffect(() => {
-    const loadHospitalStaff = async () => {
-      setLoadingStaff(true);
-      try {
-        const params: HospitalStaffQueryParams = {
-          limit: 50, // Plus de résultats pour la recherche
-        };
-        const response = await HospitalStaffService.getHospitalStaff(params);
-        setHospitalStaff(response.data || []);
-      } catch (error) {
-        console.error('Error loading hospital staff:', error);
-        toast.error('Erreur lors du chargement du personnel hospitalier');
-      } finally {
-        setLoadingStaff(false);
-      }
-    };
-
-    loadHospitalStaff();
-  }, [token]);
+    if (user?.health_facility_id && !formData.health_facility_id) {
+      // eslint-disable-next-line
+      setFormData(prev => ({
+        ...prev,
+        health_facility_id: user.health_facility_id || ""
+      }));
+    }
+  }, [user, formData.health_facility_id]);
 
   const validateForm = () => {
     const newErrors: Record<string, string | undefined> = {};
@@ -187,14 +123,6 @@ export default function AddConsultationPage() {
     }));
   };
 
-  const handleNumberChange = (field: string, value: string) => {
-    const numValue = value === '' ? null : parseFloat(value);
-    setFormData(prev => ({
-      ...prev,
-      [field]: numValue
-    }));
-  };
-
   const handleBooleanChange = (field: string, value: boolean) => {
     setFormData(prev => ({
       ...prev,
@@ -213,21 +141,6 @@ export default function AddConsultationPage() {
     }));
   };
 
-  const getPatientName = (patientId: string) => {
-    const patient = patients.find(p => p.id_ === patientId);
-    if (patient) {
-      return `${patient.given_name} ${patient.family_name}`;
-    }
-    return patientId;
-  };
-
-  const getUserName = (userId: string) => {
-    const user = users.find(u => u.id_ === userId);
-    if (user) {
-      return `${user.given_name} ${user.family_name}`;
-    }
-    return userId;
-  };
 
   return (
     <div className="container mx-auto py-6 space-y-6">
@@ -309,15 +222,20 @@ export default function AddConsultationPage() {
         {/* Informations de localisation */}
         <Card>
           <CardHeader>
-            <CardTitle>Localisation et assurance</CardTitle>
+            <CardTitle>Localisation</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <Label htmlFor="health_facility_id">Établissement de santé</Label>
                 <HealthFacilitySelect
                   value={formData.health_facility_id}
-                  onChange={(value) => handleInputChange('health_facility_id', value)}
+                  onChange={(value) => {
+                    handleInputChange('health_facility_id', value);
+                    handleInputChange('department_id', "");
+                    handleInputChange('triage_by_id', "");
+                    handleInputChange('consulted_by_id', "");
+                  }}
                   placeholder="Sélectionner un établissement"
                   disabled={loading}
                   className="w-full"
@@ -331,16 +249,6 @@ export default function AddConsultationPage() {
                   placeholder="Sélectionner un département"
                   disabled={loading}
                   healthFacilityId={formData.health_facility_id}
-                  className="w-full"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="insurance_company_id">Compagnie d'assurance</Label>
-                <InsuranceCompanySelect
-                  value={formData.insurance_company_id || ""}
-                  onChange={(value) => handleInputChange('insurance_company_id', value)}
-                  placeholder="Sélectionner une compagnie"
-                  disabled={loading}
                   className="w-full"
                 />
               </div>
@@ -441,6 +349,7 @@ export default function AddConsultationPage() {
                   onChange={(value) => handleInputChange('triage_by_id', value)}
                   placeholder="Sélectionner un membre du personnel"
                   disabled={loading}
+                  healthFacilityId={formData.health_facility_id}
                   className="w-full"
                 />
               </div>
@@ -451,6 +360,7 @@ export default function AddConsultationPage() {
                   onChange={(value) => handleInputChange('consulted_by_id', value)}
                   placeholder="Sélectionner un membre du personnel"
                   disabled={loading}
+                  healthFacilityId={formData.health_facility_id}
                   className="w-full"
                 />
               </div>
@@ -509,54 +419,31 @@ export default function AddConsultationPage() {
           </CardContent>
         </Card>
 
-        {/* Informations de facturation */}
+        {/* Statut et confidentialité */}
         <Card>
           <CardHeader>
-            <CardTitle>Informations de facturation</CardTitle>
+            <CardTitle>Statut et confidentialité</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label htmlFor="billing_code">Code de facturation</Label>
-                <Input
-                  id="billing_code"
-                  value={formData.billing_code || ""}
-                  onChange={(e) => handleInputChange('billing_code', e.target.value)}
-                  placeholder="Code de facturation..."
+            <div className="grid grid-cols-1 gap-6">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="is_confidential"
+                  checked={formData.is_confidential || false}
+                  onCheckedChange={(checked: boolean) => handleBooleanChange('is_confidential', checked)}
+                />
+                <Label htmlFor="is_confidential">Consultation confidentielle</Label>
+              </div>
+              <div className="space-y-2 pt-2">
+                <Label htmlFor="status">Statut</Label>
+                <CustomSelect
+                  options={statusOptions}
+                  value={formData.status}
+                  onChange={(value) => handleInputChange('status', value)}
+                  placeholder="Sélectionner un statut"
                   className="h-12"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="amount_paid">Montant payé (XOF)</Label>
-                <Input
-                  id="amount_paid"
-                  type="number"
-                  value={formData.amount_paid || ""}
-                  onChange={(e) => handleNumberChange('amount_paid', e.target.value)}
-                  placeholder="0"
-                  className="h-12"
-                />
-              </div>
-              <div className="md:col-span-2">
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="is_confidential"
-                    checked={formData.is_confidential || false}
-                    onCheckedChange={(checked: boolean) => handleBooleanChange('is_confidential', checked)}
-                  />
-                  <Label htmlFor="is_confidential">Consultation confidentielle</Label>
-                </div>
-              </div>
-            </div>
-            <div className="space-y-2 md:col-span-2 pt-6">
-              <Label htmlFor="status">Statut</Label>
-              <CustomSelect
-                options={statusOptions}
-                value={formData.status}
-                onChange={(value) => handleInputChange('status', value)}
-                placeholder="Sélectionner un statut"
-                className="h-12"
-              />
             </div>
           </CardContent>
           <CardFooter className=" flex justify-end pt-6">
