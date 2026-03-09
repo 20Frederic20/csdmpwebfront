@@ -208,6 +208,27 @@ export function AppSidebar() {
       ]
     },
     {
+      title: "Chambres",
+      url: "/rooms",
+      icon: Building,
+      isActive: pathname.startsWith("/rooms"),
+      requiredPermission: {
+        resource: "rooms",
+        action: "list"
+      },
+      items: [
+        {
+          title: "Liste des chambres",
+          url: "/rooms",
+          icon: Building,
+          requiredPermission: {
+            resource: "rooms",
+            action: "list"
+          }
+        }
+      ]
+    },
+    {
       title: "Établissements",
       url: "/health-facilities",
       icon: Building2,
