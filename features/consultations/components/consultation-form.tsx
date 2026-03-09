@@ -22,7 +22,7 @@ import { PatientSelect } from "@/features/patients/components/patient-select";
 import { PrescriptionsTable } from "./prescriptions-table";
 import { usePermissionsContext } from "@/contexts/permissions-context";
 
-type ConsultationFormData = CreateConsultationRequest | UpdateConsultationRequest;
+export type ConsultationFormData = CreateConsultationRequest | UpdateConsultationRequest;
 
 interface ConsultationFormProps {
     initialData?: ConsultationFormData;
@@ -30,6 +30,8 @@ interface ConsultationFormProps {
     isSubmitting: boolean;
     mode: 'add' | 'edit';
     onCancel: () => void;
+    showPrescriptions?: boolean;
+    disableConsultedBy?: boolean;
 }
 
 export function ConsultationForm({
@@ -37,7 +39,9 @@ export function ConsultationForm({
     onSubmit,
     isSubmitting,
     mode,
-    onCancel
+    onCancel,
+    showPrescriptions = true,
+    disableConsultedBy = false
 }: ConsultationFormProps) {
     const { user } = usePermissionsContext();
     const [formData, setFormData] = useState<ConsultationFormData>(initialData || {
@@ -77,13 +81,14 @@ export function ConsultationForm({
         }
     }, [initialData]);
 
-    // Auto-inject health facility for new consultations
+    // Auto-inject health facility and medical staff for new consultations
     useEffect(() => {
-        if (mode === 'add' && user?.health_facility_id && !formData.health_facility_id) {
+        if (mode === 'add' && user && !formData.health_facility_id) {
             // eslint-disable-next-line
             setFormData((prev) => ({
                 ...prev,
-                health_facility_id: user.health_facility_id || ""
+                health_facility_id: user.health_facility_id || "",
+                consulted_by_id: user.hospital_staff_id || prev.consulted_by_id
             }));
         }
     }, [user, formData.health_facility_id, mode]);
@@ -327,7 +332,7 @@ export function ConsultationForm({
                                 value={formData.consulted_by_id || undefined}
                                 onChange={(value) => handleInputChange('consulted_by_id', value || undefined)}
                                 healthFacilityId={formData.health_facility_id || undefined}
-                                disabled={isSubmitting}
+                                disabled={isSubmitting || disableConsultedBy}
                             />
                         </div>
                     </div>
@@ -385,11 +390,13 @@ export function ConsultationForm({
             </Card>
 
             {/* Prescriptions */}
-            <PrescriptionsTable
-                prescriptions={formData.prescriptions || []}
-                onChange={(prescriptions) => handleInputChange('prescriptions', prescriptions)}
-                disabled={isSubmitting}
-            />
+            {showPrescriptions && (
+                <PrescriptionsTable
+                    prescriptions={formData.prescriptions || []}
+                    onChange={(prescriptions) => handleInputChange('prescriptions', prescriptions)}
+                    disabled={isSubmitting}
+                />
+            )}
 
             {/* Statut et confidentialité */}
             <Card>
