@@ -77,10 +77,30 @@ export function PatientForm({
   });
   const { token } = useAuthToken();
 
-  // Charger les utilisateurs et les villes
+  // Charger les villes
   useEffect(() => {
-    const loadData = async () => {
-      // Charger les utilisateurs
+    const loadCities = async () => {
+      // Charger les villes (Bénin par défaut)
+      try {
+        const locationData = await LocationService.fetchLocationData('BJ');
+        setCities(locationData.cities);
+      } catch (error) {
+        console.error('Error loading cities:', error);
+        toast.error('Erreur lors du chargement des villes');
+      }
+    };
+
+    loadCities();
+  }, []);
+
+  // Charger les utilisateurs
+  useEffect(() => {
+    const loadUsers = async () => {
+      // Ne charger que si on a besoin de sélectionner un utilisateur existant
+      // (soit on n'est pas en création de nouvel utilisateur, soit on modifie un patient)
+      if (createUser) return;
+      if (users.length > 0) return;
+
       setLoadingUsers(true);
       try {
         let allUsers: User[] = [];
@@ -111,19 +131,10 @@ export function PatientForm({
       } finally {
         setLoadingUsers(false);
       }
-
-      // Charger les villes (Bénin par défaut)
-      try {
-        const locationData = await LocationService.fetchLocationData('BJ');
-        setCities(locationData.cities);
-      } catch (error) {
-        console.error('Error loading cities:', error);
-        toast.error('Erreur lors du chargement des villes');
-      }
     };
 
-    loadData();
-  }, [token]);
+    loadUsers();
+  }, [token, createUser, users.length]);
 
   // Si on est en mode modification, on ne propose pas de créer un utilisateur
   useEffect(() => {
