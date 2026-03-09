@@ -7,7 +7,7 @@ import { Plus } from "lucide-react";
 import { AppointmentService } from "@/features/appointments/services/appointment.service";
 import { Appointment, AppointmentFilterParams } from "@/features/appointments/types/appointments.types";
 import { useAuthRefresh } from "@/hooks/use-auth-refresh";
-import { usePermissions } from "@/hooks/use-permissions";
+import { usePermissionsContext } from "@/contexts/permissions-context";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { ViewAppointmentModal } from "@/features/appointments/components/view-appointment-modal";
 import { EditAppointmentModal } from "@/features/appointments/components/edit-appointment-modal";
@@ -21,13 +21,13 @@ import { toast } from "sonner";
 export default function AppointmentsPage() {
   const router = useRouter();
   const { isLoading: authLoading } = useAuthRefresh();
-  const { canAccess } = usePermissions();
+  const { canAccess } = usePermissionsContext();
   const { token } = useAuthToken();
-  
+
   const [appointmentsData, setAppointmentsData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
   const [filters, setFilters] = useState<AppointmentFilterParams>({
@@ -94,7 +94,7 @@ export default function AppointmentsPage() {
     // Recharger les données après mise à jour
     setAppointmentsData((prev: any) => prev ? {
       ...prev,
-      data: prev.data.map((apt: any) => 
+      data: prev.data.map((apt: any) =>
         apt.id_ === updatedAppointment.id_ ? updatedAppointment : apt
       )
     } : null);
@@ -129,14 +129,14 @@ export default function AppointmentsPage() {
     const loadAppointments = async () => {
       setLoading(true);
       setError(null);
-      
+
       try {
         const params = {
           limit: itemsPerPage,
           offset: (currentPage - 1) * itemsPerPage,
           ...filters,
         };
-        
+
         const response = await AppointmentService.getAppointments(params);
         setAppointmentsData(response);
       } catch (error: any) {
@@ -184,7 +184,7 @@ export default function AppointmentsPage() {
           </p>
         </div>
         {canAccess('appointments', 'create') && (
-          <Button 
+          <Button
             className="cursor-pointer"
             onClick={() => setIsAddModalOpen(true)}
           >

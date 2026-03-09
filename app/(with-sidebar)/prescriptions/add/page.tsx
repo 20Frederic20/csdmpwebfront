@@ -6,15 +6,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { 
-  CreatePrescriptionRequest, 
-  CreatePrescriptionResponse 
+import {
+  CreatePrescriptionRequest,
+  CreatePrescriptionResponse
 } from "@/features/prescriptions/types/prescriptions.types";
 import { PrescriptionService } from "@/features/prescriptions/services/prescriptions.service";
 import { toast } from "sonner";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { PrescriptionForm } from "@/features/prescriptions/components/prescription-form";
-import { usePermissions } from "@/hooks/use-permissions";
+import { usePermissionsContext } from "@/contexts/permissions-context";
 
 export default function AddPrescriptionPage() {
   const router = useRouter();
@@ -32,12 +32,12 @@ export default function AddPrescriptionPage() {
   });
 
   const { token } = useAuthToken();
-  const { canAccess } = usePermissions();
+  const { canAccess } = usePermissionsContext();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    
+
     try {
       const response = await PrescriptionService.createPrescription(formData, token || undefined);
       toast.success('Prescription créée avec succès');
@@ -89,7 +89,7 @@ export default function AddPrescriptionPage() {
               isActive={formData.is_active}
               onFieldChange={handleFieldChange}
             />
-            
+
             <div className="flex justify-end space-x-4">
               <Button type="submit" disabled={loading}>
                 {loading ? 'Création...' : 'Créer la prescription'}

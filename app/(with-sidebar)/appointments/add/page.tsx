@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowLeft, Calendar, Clock, User, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { useAuthToken } from "@/hooks/use-auth-token";
-import { usePermissions } from "@/hooks/use-permissions";
+import { usePermissionsContext } from "@/contexts/permissions-context";
 import { CreateAppointmentRequest, AppointmentStatus, AppointmentType, PaymentMethod } from "@/features/appointments/types/appointments.types";
 import { AppointmentService } from "@/features/appointments/services/appointment.service";
 import { Patient } from "@/features/patients";
@@ -24,7 +24,7 @@ import CustomSelect from '@/components/ui/custom-select';
 export default function AddAppointmentPage() {
   const router = useRouter();
   const { token } = useAuthToken();
-  const { user } = usePermissions();
+  const { user } = usePermissionsContext();
 
   const [loading, setLoading] = useState(false);
   const [loadingPatients, setLoadingPatients] = useState(false);

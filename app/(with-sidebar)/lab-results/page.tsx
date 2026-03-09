@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { 
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -15,10 +15,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import CustomSelect from "@/components/ui/custom-select";
 import { DataPagination } from "@/components/ui/data-pagination";
-import { 
-  Plus, 
-  Edit, 
-  Trash2, 
+import {
+  Plus,
+  Edit,
+  Trash2,
   CheckCircle,
   AlertTriangle,
   Eye,
@@ -30,8 +30,8 @@ import {
 import { LabResult, ListLabResultQM, ListLabResultQueryParams, TestType } from "@/features/lab-results/types/lab-results.types";
 import { LabResultsService } from "@/features/lab-results/services/lab-results.service";
 import { useAuthToken } from "@/hooks/use-auth-token";
-import { usePermissions } from "@/hooks/use-permissions";
-import { 
+import { usePermissionsContext } from "@/contexts/permissions-context";
+import {
   getTestTypeOptions,
   canDeleteLabResult,
   canRestoreLabResult,
@@ -50,13 +50,13 @@ export default function LabResultsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
   const { token } = useAuthToken();
-  const { canAccess } = usePermissions();
+  const { canAccess } = usePermissionsContext();
 
   const loadLabResults = async () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const params: ListLabResultQueryParams = {
         limit: itemsPerPage,
         offset: (currentPage - 1) * itemsPerPage,
@@ -89,12 +89,12 @@ export default function LabResultsPage() {
   const handleLabResultRestored = async (labResult: LabResult) => {
     try {
       const restoredLabResult = await LabResultsService.restoreLabResult(labResult.id_);
-      
+
       if (labResultsData) {
         setLabResultsData({
           ...labResultsData,
           data: labResultsData.data.map(lr =>
-            lr.id_ === labResult.id_ ? { 
+            lr.id_ === labResult.id_ ? {
               ...lr, // Conserve toutes les données existantes
               deleted_at: undefined, // Met à jour seulement deleted_at
               is_active: true // Met à jour seulement is_active
@@ -102,7 +102,7 @@ export default function LabResultsPage() {
           )
         });
       }
-      
+
       toast.success('Résultat de laboratoire restauré avec succès');
     } catch (error) {
       console.error('Error restoring lab result:', error);
@@ -115,22 +115,22 @@ export default function LabResultsPage() {
       const labResult = labResultsData?.data.find(lr => lr.id_ === id);
       if (!labResult) return;
 
-      const updatedLabResult = await LabResultsService.updateLabResult(id, { 
-        is_active: !labResult.is_active 
+      const updatedLabResult = await LabResultsService.updateLabResult(id, {
+        is_active: !labResult.is_active
       });
-      
+
       if (labResultsData) {
         setLabResultsData({
           ...labResultsData,
           data: labResultsData.data.map(lr =>
-            lr.id_ === id ? { 
+            lr.id_ === id ? {
               ...lr, // Conserve toutes les données existantes
               is_active: updatedLabResult.is_active // Met à jour seulement le statut
             } : lr
           )
         });
       }
-      
+
       toast.success(`Résultat de laboratoire ${updatedLabResult.is_active ? 'activé' : 'désactivé'} avec succès`);
     } catch (error) {
       console.error('Error toggling lab result status:', error);
@@ -141,7 +141,7 @@ export default function LabResultsPage() {
   const handlePermanentlyDeleted = async (labResult: LabResult) => {
     try {
       await LabResultsService.permanentlyDeleteLabResult(labResult.id_);
-      
+
       if (labResultsData) {
         setLabResultsData({
           ...labResultsData,
@@ -149,7 +149,7 @@ export default function LabResultsPage() {
           total: labResultsData.total - 1
         });
       }
-      
+
       toast.success('Résultat de laboratoire supprimé définitivement');
     } catch (error) {
       console.error('Error permanently deleting lab result:', error);
@@ -160,20 +160,20 @@ export default function LabResultsPage() {
   const handleLabResultDeleted = async (labResult: LabResult) => {
     try {
       await LabResultsService.deleteLabResult(labResult.id_);
-      
+
       if (labResultsData) {
         setLabResultsData({
           ...labResultsData,
           data: labResultsData.data.map(lr =>
-            lr.id_ === labResult.id_ ? { 
-              ...lr, 
+            lr.id_ === labResult.id_ ? {
+              ...lr,
               deleted_at: new Date().toISOString(),
               is_active: false
             } : lr
           )
         });
       }
-      
+
       toast.success('Résultat de laboratoire supprimé avec succès');
     } catch (error) {
       console.error('Error deleting lab result:', error);
@@ -325,18 +325,18 @@ export default function LabResultsPage() {
                           {formatDate(labResult.date_performed)}
                         </TableCell>
                         <TableCell>
-                        {canAccess('lab_results', 'toggle') && !isDeleted ? (
-                          <Switch 
-                            checked={labResult.is_active}
-                            onCheckedChange={() => handleToggleStatus(labResult.id_)}
-                            className="data-[state=checked]:bg-green-500"
-                          />
-                        ) : (
-                          <Badge variant={labResult.is_active ? "default" : "secondary"}>
-                            {labResult.is_active ? 'Oui' : 'Non'}
-                          </Badge>
-                        )}
-                      </TableCell>
+                          {canAccess('lab_results', 'toggle') && !isDeleted ? (
+                            <Switch
+                              checked={labResult.is_active}
+                              onCheckedChange={() => handleToggleStatus(labResult.id_)}
+                              className="data-[state=checked]:bg-green-500"
+                            />
+                          ) : (
+                            <Badge variant={labResult.is_active ? "default" : "secondary"}>
+                              {labResult.is_active ? 'Oui' : 'Non'}
+                            </Badge>
+                          )}
+                        </TableCell>
                         <TableCell className="text-right">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -361,7 +361,7 @@ export default function LabResultsPage() {
                               )}
                               <DropdownMenuSeparator />
                               {!isDeleted && canDeleteLabResult(labResult) && (
-                                <DropdownMenuItem 
+                                <DropdownMenuItem
                                   className="cursor-pointer text-red-600"
                                   onClick={() => handleLabResultDeleted(labResult)}
                                 >
@@ -370,7 +370,7 @@ export default function LabResultsPage() {
                                 </DropdownMenuItem>
                               )}
                               {isDeleted && canRestoreLabResult(labResult) && (
-                                <DropdownMenuItem 
+                                <DropdownMenuItem
                                   className="cursor-pointer"
                                   onClick={() => handleLabResultRestored(labResult)}
                                 >
@@ -379,7 +379,7 @@ export default function LabResultsPage() {
                                 </DropdownMenuItem>
                               )}
                               {isDeleted && (
-                                <DropdownMenuItem 
+                                <DropdownMenuItem
                                   className="cursor-pointer text-red-600"
                                   onClick={() => handlePermanentlyDeleted(labResult)}
                                 >

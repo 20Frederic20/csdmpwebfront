@@ -3,13 +3,13 @@
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { 
-  Prescription 
+import {
+  Prescription
 } from "@/features/prescriptions/types/prescriptions.types";
 import { PrescriptionService } from "@/features/prescriptions/services/prescriptions.service";
 import { toast } from "sonner";
 import { useAuthToken } from "@/hooks/use-auth-token";
-import { usePermissions } from "@/hooks/use-permissions";
+import { usePermissionsContext } from "@/contexts/permissions-context";
 import { DataTableWithFilters } from "@/components/ui/data-table-with-filters";
 import { prescriptionsColumns } from "@/features/prescriptions/components/prescriptions-columns";
 import { PrescriptionFiltersWrapper } from "@/features/prescriptions/components/prescriptions-filters-wrapper";
@@ -32,13 +32,13 @@ export default function PrescriptionsPage() {
   const [error, setError] = useState<string | null>(null);
 
   const { token } = useAuthToken();
-  const { canAccess } = usePermissions();
+  const { canAccess } = usePermissionsContext();
 
   const loadPrescriptions = async () => {
     setLoading(true);
     try {
       const offset = (currentPage - 1) * itemsPerPage;
-      
+
       const response = await PrescriptionService.getPrescriptions({
         search: filters.search || undefined,
         consultation_id: filters.consultation_id || undefined,
@@ -48,7 +48,7 @@ export default function PrescriptionsPage() {
         sort_by: sortingColumn,
         sort_order: sortingOrder,
       }, token || undefined);
-      
+
       setPrescriptions(response.data || []);
       setTotal(response.total || 0);
     } catch (error) {
