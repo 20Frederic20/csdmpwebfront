@@ -37,12 +37,12 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <PermissionsProvider>
-            <QueryProvider>
+          <QueryProvider>
+            <PermissionsProvider>
               {children}
               <Toaster />
-            </QueryProvider>
-          </PermissionsProvider>
+            </PermissionsProvider>
+          </QueryProvider>
         </ThemeProvider>
       </body>
     </html>

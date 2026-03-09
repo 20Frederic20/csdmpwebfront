@@ -1,7 +1,6 @@
 'use client';
 
-import { useState, useEffect } from "react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -11,11 +10,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { 
-  User, 
-  Settings, 
-  LogOut, 
-  ChevronDown 
+import {
+  User,
+  Settings,
+  LogOut,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAuthToken } from "@/hooks/use-auth-token";
@@ -30,10 +28,10 @@ export function UserAvatarDropdown() {
   const handleLogout = () => {
     // Supprimer le token du localStorage
     clearToken();
-    
-    // Nettoyer le cache des permissions du sessionStorage
+
+    // Nettoyer le cache des permissions (React Query)
     clearPermissionsCache();
-    
+
     // Rediriger vers la page de login
     router.push('/login');
   };
@@ -48,7 +46,7 @@ export function UserAvatarDropdown() {
 
   if (!user) {
     return (
-      <Button 
+      <Button
         onClick={() => router.push('/login')}
         variant="outline"
         size="sm"
@@ -70,8 +68,8 @@ export function UserAvatarDropdown() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button 
-          variant="ghost" 
+        <Button
+          variant="ghost"
           className="relative h-10 w-10 rounded-full p-0 hover:bg-muted/50"
         >
           <Avatar className="h-10 w-10">
