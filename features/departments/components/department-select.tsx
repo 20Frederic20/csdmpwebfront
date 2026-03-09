@@ -34,21 +34,27 @@ export function DepartmentSelect({
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!healthFacilityId) {
+      setDepartments([]);
+      setLoading(false);
+      return;
+    }
+
     const controller = new AbortController();
 
     const loadDepartments = async () => {
       try {
         setLoading(true);
         const params = {
-          health_facility_id: healthFacilityId || undefined,
+          health_facility_id: healthFacilityId,
           is_active: onlyActive ? true : undefined,
           limit: 100,
         };
 
         const response = await DepartmentService.getDepartments(params, controller.signal);
         setDepartments(response.data);
-      } catch (error: any) {
-        if (error.name === 'AbortError') return;
+      } catch (error: unknown) {
+        if (error instanceof Error && error.name === 'AbortError') return;
         console.error('Error loading departments:', error);
         setDepartments([]);
       } finally {
@@ -84,8 +90,8 @@ export function DepartmentSelect({
         options={options}
         value={value}
         onChange={handleChange}
-        placeholder={placeholder}
-        isDisabled={disabled}
+        placeholder={!healthFacilityId ? "Choisir d'abord un établissement" : placeholder}
+        isDisabled={disabled || !healthFacilityId}
         isLoading={loading}
         height={height}
       />

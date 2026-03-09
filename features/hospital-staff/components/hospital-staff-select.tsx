@@ -16,7 +16,6 @@ interface HospitalStaffSelectProps {
   height?: string;
   onlyActive?: boolean;
   healthFacilityId?: string | null;
-  departmentId?: string | null;
 }
 
 export function HospitalStaffSelect({
@@ -29,23 +28,28 @@ export function HospitalStaffSelect({
   height = "h-10",
   onlyActive = true,
   healthFacilityId = null,
-  departmentId = null,
 }: HospitalStaffSelectProps) {
   const [staff, setStaff] = useState<HospitalStaff[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!healthFacilityId) {
+      setStaff([]);
+      setLoading(false);
+      return;
+    }
+
     const loadStaff = async () => {
       try {
         setLoading(true);
         const params: HospitalStaffQueryParams = {
-          health_facility_id: healthFacilityId || undefined,
+          health_facility_id: healthFacilityId,
           limit: 100,
         };
-        
+
         const response = await HospitalStaffService.getHospitalStaff(params);
         setStaff(response.data);
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('Error loading hospital staff:', error);
         setStaff([]);
       } finally {
@@ -77,8 +81,8 @@ export function HospitalStaffSelect({
         options={options}
         value={value}
         onChange={handleChange}
-        placeholder={placeholder}
-        isDisabled={disabled}
+        placeholder={!healthFacilityId ? "Choisir d'abord un établissement" : placeholder}
+        isDisabled={disabled || !healthFacilityId}
         isLoading={loading}
         height={height}
       />
