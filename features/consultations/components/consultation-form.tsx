@@ -128,7 +128,12 @@ export function ConsultationForm({
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (validate()) {
-            await onSubmit(formData);
+            // Strip empty strings from the payload so optional fields
+            // are omitted rather than sent as "" (which fails API date validation, etc.)
+            const cleanedData = Object.fromEntries(
+                Object.entries(formData).filter(([, v]) => v !== "" && v !== undefined)
+            ) as typeof formData;
+            await onSubmit(cleanedData);
         }
     };
 

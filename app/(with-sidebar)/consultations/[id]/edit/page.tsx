@@ -59,6 +59,7 @@ export default function EditConsultationPage() {
   const initialData = {
     ...consultation,
     follow_up_date: consultation.follow_up_date ? consultation.follow_up_date.split('T')[0] : "",
+    prescriptions: consultation.prescription?.items || [],
   };
 
   return (

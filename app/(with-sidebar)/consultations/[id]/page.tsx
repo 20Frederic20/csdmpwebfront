@@ -20,7 +20,8 @@ import {
   Ruler,
   CheckCircle,
   AlertTriangle,
-  CheckSquare
+  CheckSquare,
+  Pill
 } from "lucide-react";
 import { UpdateConsultationRequest, ConsultationStatus } from "@/features/consultations";
 import {
@@ -481,6 +482,48 @@ export default function ViewConsultationPage() {
             )}
           </CardContent>
         </Card>
+
+        {/* Prescriptions */}
+        {consultation.prescription && consultation.prescription.items && consultation.prescription.items.length > 0 && (
+          <Card className="lg:col-span-2">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Pill className="h-5 w-5" />
+                Prescriptions
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="rounded-md border overflow-x-auto">
+                <table className="min-w-full divide-y divide-border">
+                  <thead className="bg-muted/50">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Médicament</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Dosage</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Fréquence</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Durée</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Voie</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Instructions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-background divide-y divide-border">
+                    {consultation.prescription.items.map((item, index) => (
+                      <tr key={item.id || index} className="hover:bg-muted/50 transition-colors">
+                        <td className="px-4 py-3 text-sm font-medium">{item.medication_name}</td>
+                        <td className="px-4 py-3 text-sm">{item.dosage}</td>
+                        <td className="px-4 py-3 text-sm">{item.frequency}</td>
+                        <td className="px-4 py-3 text-sm whitespace-nowrap">{item.duration_days} jours</td>
+                        <td className="px-4 py-3 text-sm capitalize">{item.route_of_administration}</td>
+                        <td className="px-4 py-3 text-sm text-muted-foreground italic">
+                          {item.special_instructions || <span className="text-gray-300">Aucune</span>}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Facturation */}
         <Card>

@@ -1,14 +1,44 @@
-import { UUID } from "@/features/hospital-staff/types/hospital-staff.types";
+// Removed unused UUID import
+
+export enum RouteOfAdministration {
+  ORAL = 'oral',
+  INTRAVENOUS = 'intravenous',
+  SUBCUTANEOUS = 'subcutaneous',
+  TOPICAL = 'topical',
+  INHALATION = 'inhalation'
+}
 
 export interface Prescription {
+  id?: string | null;
+  order_id?: string | null;
   medication_name: string;
-  dosage_instructions: string;
-  form?: string;
-  strength?: string;
-  duration_days?: number;
+  dosage: string;
+  frequency: string;
+  duration_days: number;
+  route_of_administration: RouteOfAdministration;
   special_instructions?: string;
+}
+
+export interface PrescriptionItemResponse {
+  id: string;
+  order_id: string;
+  medication_name: string;
+  dosage: string;
+  frequency: string;
+  duration_days: number;
+  route_of_administration: RouteOfAdministration;
+  special_instructions?: string;
+  updated_at?: string;
+}
+
+export interface PrescriptionOrderResponse {
+  id: string;
+  consultation_id: string;
+  doctor_id: string;
   is_confidential: boolean;
-  is_active: boolean;
+  is_locked: boolean;
+  items: PrescriptionItemResponse[];
+  created_at?: string;
 }
 
 export enum ConsultationStatus {
@@ -109,6 +139,7 @@ export interface Consultation {
   is_confidential: boolean;
   is_active: boolean;
   deleted_at?: string;
+  prescription?: PrescriptionOrderResponse;
 }
 
 export interface ConsultationQM {
@@ -139,6 +170,7 @@ export interface ConsultationQM {
   is_confidential: boolean;
   is_active: boolean;
   deleted_at?: string;
+  prescription?: PrescriptionOrderResponse;
 }
 
 export interface ListConsultationsQM {
