@@ -1,18 +1,16 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthToken } from '@/hooks/use-auth-token';
-import { 
-  Users, 
-  Stethoscope, 
-  Heart, 
-  Shield, 
+import {
+  Users,
+  Stethoscope,
+  Heart,
+  Shield,
   Activity,
   Clock,
-  CheckCircle,
   ArrowRight,
-  User,
   UserCheck,
   Briefcase,
   LogIn,
@@ -25,24 +23,16 @@ import {
 export default function Home() {
   const [activeTab, setActiveTab] = useState('doctor');
   const router = useRouter();
-  const { token } = useAuthToken();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const { token, clearToken } = useAuthToken();
+  const isLoggedIn = !!token;
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-  useEffect(() => {
-    setIsLoggedIn(!!token);
-  }, [token]);
-
   const handleLogout = () => {
-    // Supprimer le token du localStorage
-    localStorage.removeItem('auth_token');
-    setIsLoggedIn(false);
+    clearToken();
     setIsDropdownOpen(false);
-    // Rediriger vers la page d'accueil
     router.push('/');
   };
 
-  // Statistiques mockées pour le teaser
   const stats = {
     patients: 1248,
     appointments: 89,
@@ -117,7 +107,7 @@ export default function Home() {
                   Mon compte
                   <ChevronDown className={`h-4 w-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
-                
+
                 {isDropdownOpen && (
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
                     <button
@@ -174,25 +164,24 @@ export default function Home() {
                 <Heart className="h-12 w-12 text-blue-600" />
               </div>
             </div>
-            
+
             <h1 className="text-5xl font-bold text-gray-900 mb-6">
               CSDMP : Votre Carnet de Santé Complet
             </h1>
-            
+
             <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
               Plateforme professionnelle pour les médecins et le personnel de santé. Coordination efficace des parcours patients et traitement sécurisé des données médicales.
             </p>
-            
+
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               {userTypes.map((type) => (
                 <button
                   key={type.id}
                   onClick={() => setActiveTab(type.id)}
-                  className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all transform hover:scale-105 ${
-                    activeTab === type.id
-                      ? 'bg-blue-600 text-white shadow-lg'
-                      : 'bg-white border-2 border-gray-200 text-gray-700 hover:border-blue-300'
-                  }`}
+                  className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all transform hover:scale-105 ${activeTab === type.id
+                    ? 'bg-blue-600 text-white shadow-lg'
+                    : 'bg-white border-2 border-gray-200 text-gray-700 hover:border-blue-300'
+                    }`}
                 >
                   <type.icon className="h-5 w-5" />
                   {type.title}
@@ -214,7 +203,7 @@ export default function Home() {
               Un aperçu rapide de l'activité du système de santé
             </p>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="bg-blue-50 p-6 rounded-xl border border-blue-100">
               <div className="flex items-center justify-between mb-4">
@@ -224,7 +213,7 @@ export default function Home() {
               <h3 className="font-semibold text-blue-900">Patients suivis</h3>
               <p className="text-blue-700 text-sm">Dossiers actifs</p>
             </div>
-            
+
             <div className="bg-green-50 p-6 rounded-xl border border-green-100">
               <div className="flex items-center justify-between mb-4">
                 <Clock className="h-8 w-8 text-green-600" />
@@ -233,7 +222,7 @@ export default function Home() {
               <h3 className="font-semibold text-green-900">Rendez-vous aujourd'hui</h3>
               <p className="text-green-700 text-sm">Consultations programmées</p>
             </div>
-            
+
             <div className="bg-purple-50 p-6 rounded-xl border border-purple-100">
               <div className="flex items-center justify-between mb-4">
                 <Stethoscope className="h-8 w-8 text-purple-600" />
@@ -242,7 +231,7 @@ export default function Home() {
               <h3 className="font-semibold text-purple-900">Médecins actifs</h3>
               <p className="text-purple-700 text-sm">Professionnels disponibles</p>
             </div>
-            
+
             <div className="bg-orange-50 p-6 rounded-xl border border-orange-100">
               <div className="flex items-center justify-between mb-4">
                 <Activity className="h-8 w-8 text-orange-600" />
@@ -266,7 +255,7 @@ export default function Home() {
               Une solution complète pour la gestion moderne des soins de santé
             </p>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {features.map((feature, index) => (
               <div key={index} className="text-center group">
@@ -292,14 +281,13 @@ export default function Home() {
               Une interface dédiée aux médecins et au personnel soignant pour une gestion optimisée
             </p>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {userTypes.map((type) => (
               <div
                 key={type.id}
-                className={`p-6 rounded-xl border-2 transition-all cursor-pointer hover:shadow-lg ${
-                  activeTab === type.id ? 'border-blue-500 bg-blue-50' : 'border-gray-200 bg-white'
-                }`}
+                className={`p-6 rounded-xl border-2 transition-all cursor-pointer hover:shadow-lg ${activeTab === type.id ? 'border-blue-500 bg-blue-50' : 'border-gray-200 bg-white'
+                  }`}
                 onClick={() => setActiveTab(type.id)}
               >
                 <div className="flex items-start gap-4">
@@ -334,7 +322,7 @@ export default function Home() {
                 Carnet de Santé et Dossier Médical Patient - Solution complète pour la gestion moderne des soins.
               </p>
             </div>
-            
+
             <div>
               <h4 className="font-semibold mb-4">Services</h4>
               <ul className="space-y-2 text-gray-400 text-sm">
@@ -344,7 +332,7 @@ export default function Home() {
                 <li>Coordination des soins</li>
               </ul>
             </div>
-            
+
             <div>
               <h4 className="font-semibold mb-4">Sécurité</h4>
               <ul className="space-y-2 text-gray-400 text-sm">
@@ -354,7 +342,7 @@ export default function Home() {
                 <li>Contrôle d'accès</li>
               </ul>
             </div>
-            
+
             <div>
               <h4 className="font-semibold mb-4">Support</h4>
               <ul className="space-y-2 text-gray-400 text-sm">
@@ -365,7 +353,7 @@ export default function Home() {
               </ul>
             </div>
           </div>
-          
+
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400 text-sm">
             <p>&copy; 2024 CSDMP. Tous droits réservés. | Conformité RGPD et sécurité des données de santé.</p>
           </div>
