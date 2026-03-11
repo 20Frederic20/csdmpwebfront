@@ -13,7 +13,6 @@ import {
   Trash2,
   Activity,
   Shield,
-  DollarSign,
   Thermometer,
   Heart,
   Weight,
@@ -35,7 +34,6 @@ import {
   getConsultationStatusLabel,
   getConsultationStatusBadge,
   formatVitalSigns,
-  formatAmount,
   formatDate,
   isConsultationActive,
   canDeleteConsultation,
@@ -57,14 +55,12 @@ export default function ViewConsultationPage() {
 
   const [formData, setFormData] = useState<UpdateConsultationRequest>({
     diagnosis: "",
-    treatment_plan: "",
   });
 
   // Pre-fill form when consultation data loads
-  if (consultation && !formData.diagnosis && !formData.treatment_plan && (consultation.diagnosis || consultation.treatment_plan)) {
+  if (consultation && !formData.diagnosis && consultation.diagnosis) {
     setFormData({
       diagnosis: consultation.diagnosis || "",
-      treatment_plan: consultation.treatment_plan || "",
     });
   }
 
@@ -113,7 +109,6 @@ export default function ViewConsultationPage() {
     const validationErrors = validateConsultationData({
       ...consultation,
       diagnosis: formData.diagnosis || undefined,
-      treatment_plan: formData.treatment_plan || undefined,
     });
 
     if (validationErrors.length > 0) {
@@ -125,7 +120,6 @@ export default function ViewConsultationPage() {
         id: consultation.id_,
         data: {
           diagnosis: formData.diagnosis || undefined,
-          treatment_plan: formData.treatment_plan || undefined,
           status: ConsultationStatus.COMPLETED,
         },
       });
@@ -134,7 +128,7 @@ export default function ViewConsultationPage() {
     }
   };
 
-  const handleFieldChange = (field: 'diagnosis' | 'treatment_plan', value: string) => {
+  const handleFieldChange = (field: 'diagnosis', value: string) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -148,7 +142,6 @@ export default function ViewConsultationPage() {
         id: consultation.id_,
         data: {
           diagnosis: formData.diagnosis || undefined,
-          treatment_plan: formData.treatment_plan || undefined,
         },
       });
     } catch {
@@ -233,16 +226,13 @@ export default function ViewConsultationPage() {
       )}
 
       {/* Alertes de validation */}
-      {canComplete && (!consultation.diagnosis || !consultation.treatment_plan) && (
+      {canComplete && !consultation.diagnosis && (
         <Card className="border-yellow-200 bg-yellow-50">
           <CardContent className="pt-6">
             <div className="flex items-center gap-2 text-yellow-800">
               <AlertTriangle className="h-5 w-5" />
               <span className="font-medium">
-                Pour terminer cette consultation, veuillez remplir les champs obligatoires :
-                {!consultation.diagnosis && ' Diagnostic'}
-                {!consultation.diagnosis && !consultation.treatment_plan && ' et '}
-                {!consultation.treatment_plan && ' Plan de traitement'}
+                Pour terminer cette consultation, veuillez remplir le champ obligatoire : Diagnostic
               </span>
             </div>
           </CardContent>
@@ -304,12 +294,12 @@ export default function ViewConsultationPage() {
           </CardContent>
         </Card>
 
-        {/* Localisation et assurance */}
+        {/* Localisation */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Activity className="h-5 w-5" />
-              Localisation et assurance
+              Localisation
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -321,11 +311,6 @@ export default function ViewConsultationPage() {
             <div>
               <h4 className="font-medium text-sm text-muted-foreground">Département</h4>
               <p className="mt-1 text-sm">{consultation.department_id || 'Non spécifié'}</p>
-            </div>
-
-            <div>
-              <h4 className="font-medium text-sm text-muted-foreground">Compagnie d'assurance</h4>
-              <p className="mt-1 text-sm">{consultation.insurance_company_id || 'Non spécifié'}</p>
             </div>
           </CardContent>
         </Card>
@@ -438,28 +423,13 @@ export default function ViewConsultationPage() {
               )}
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="treatment_plan">Plan de traitement</Label>
-              <Textarea
-                id="treatment_plan"
-                value={formData.treatment_plan || ""}
-                onChange={(e) => handleFieldChange('treatment_plan', e.target.value)}
-                placeholder="Définir le plan de traitement..."
-                rows={3}
-                disabled={isCompleted}
-                className={isCompleted ? 'bg-gray-100 text-gray-700 cursor-not-allowed' : ''}
-              />
-              {isCompleted && (
-                <p className="text-sm text-gray-500">La consultation est terminée - ce champ ne peut plus être modifié</p>
-              )}
-            </div>
 
             {!isCompleted && canComplete && (
               <div className="flex gap-2 pt-2">
                 <Button
                   variant="outline"
                   onClick={handleSaveFields}
-                  disabled={!formData.diagnosis && !formData.treatment_plan}
+                  disabled={!formData.diagnosis}
                 >
                   <Edit className="h-4 w-4 mr-2" />
                   Sauvegarder
@@ -525,30 +495,6 @@ export default function ViewConsultationPage() {
           </Card>
         )}
 
-        {/* Facturation */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <DollarSign className="h-5 w-5" />
-              Facturation
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {consultation.billing_code && (
-              <div>
-                <h4 className="font-medium text-sm text-muted-foreground">Code de facturation</h4>
-                <p className="mt-1 text-sm">{consultation.billing_code}</p>
-              </div>
-            )}
-
-            <div>
-              <h4 className="font-medium text-sm text-muted-foreground">Montant payé</h4>
-              <p className="mt-1 text-sm font-medium">
-                {formatAmount(consultation.amount_paid)}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
 
         {/* Actions */}
         <Card>

@@ -13,7 +13,6 @@ import {
 import {
     getConsultationStatusLabel,
     getConsultationStatusBadge,
-    formatAmount,
     canDeleteConsultation,
     canRestoreConsultation,
 } from "@/features/consultations/utils/consultation.utils";
@@ -157,14 +156,6 @@ export const consultationColumns: ColumnDef<ConsultationQM>[] = [
         },
     },
 
-    // Colonne Montant
-    {
-        accessorKey: "amount_paid",
-        header: "Montant",
-        cell: ({ row }) => (
-            <span className="text-sm">{formatAmount(row.getValue("amount_paid"))}</span>
-        ),
-    },
 
     // Colonne Active (switch)
     {

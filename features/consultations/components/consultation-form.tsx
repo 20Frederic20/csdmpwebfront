@@ -63,7 +63,6 @@ export function ConsultationForm({
             height: undefined,
         },
         diagnosis: "",
-        treatment_plan: "",
         follow_up_notes: "",
         follow_up_date: undefined,
         status: ConsultationStatus.SCHEDULED,
@@ -357,16 +356,6 @@ export function ConsultationForm({
                             value={formData.diagnosis || ""}
                             onChange={(e) => handleInputChange('diagnosis', e.target.value)}
                             placeholder="Diagnostic..."
-                            rows={3}
-                        />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="treatment_plan">Plan de traitement</Label>
-                        <Textarea
-                            id="treatment_plan"
-                            value={formData.treatment_plan || ""}
-                            onChange={(e) => handleInputChange('treatment_plan', e.target.value)}
-                            placeholder="Traitement..."
                             rows={3}
                         />
                     </div>

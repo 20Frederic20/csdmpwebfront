@@ -124,9 +124,6 @@ export const validateConsultationData = (data: Partial<Consultation>): string[] 
     errors.push('Le diagnostic ne peut pas dépasser 2000 caractères');
   }
   
-  if (data.treatment_plan && data.treatment_plan.length > 2000) {
-    errors.push('Le plan de traitement ne peut pas dépasser 2000 caractères');
-  }
   
   return errors;
 };

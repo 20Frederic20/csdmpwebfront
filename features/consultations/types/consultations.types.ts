@@ -64,7 +64,6 @@ export interface CreateConsultationRequest {
   chief_complaint: string;
   health_facility_id: string;
   department_id: string;
-  insurance_company_id?: string | null;
   physical_examination?: string | null;
   triage_by_id?: string | null;
   consulted_by_id?: string | null;
@@ -72,12 +71,9 @@ export interface CreateConsultationRequest {
   other_symptoms?: string | null;
   vital_signs?: VitalSigns;
   diagnosis?: string | null;
-  treatment_plan?: string | null;
   follow_up_notes?: string | null;
   follow_up_date?: string | null;
   status?: ConsultationStatus;
-  billing_code?: string | null;
-  amount_paid?: number | null;
   is_confidential?: boolean | null;
   prescriptions?: Prescription[];
 }
@@ -85,7 +81,6 @@ export interface CreateConsultationRequest {
 export interface UpdateConsultationRequest {
   patient_id?: string;
   chief_complaint?: string;
-  insurance_company_id?: string | null;
   health_facility_id?: string;
   department_id?: string;
   physical_examination?: string | null;
@@ -95,24 +90,18 @@ export interface UpdateConsultationRequest {
   other_symptoms?: string | null;
   vital_signs?: VitalSigns;
   diagnosis?: string | null;
-  treatment_plan?: string | null;
   follow_up_notes?: string | null;
   follow_up_date?: string | null;
   status?: ConsultationStatus;
-  billing_code?: string | null;
-  amount_paid?: number | null;
   is_confidential?: boolean | null;
   prescriptions?: Prescription[];
 }
 
 export interface CompleteConsultationRequest {
   diagnosis?: string | null;
-  treatment_plan?: string | null;
   follow_up_notes?: string | null;
   follow_up_date?: string | null;
   status?: ConsultationStatus;
-  billing_code?: string | null;
-  amount_paid?: number | null;
   is_confidential?: boolean | null;
 }
 
@@ -120,7 +109,6 @@ export interface Consultation {
   id_: string;
   patient_id: string;
   chief_complaint: string;
-  insurance_company_id?: string;
   health_facility_id?: string;
   department_id?: string;
   physical_examination?: string;
@@ -130,12 +118,9 @@ export interface Consultation {
   other_symptoms?: string;
   vital_signs?: VitalSigns;
   diagnosis?: string;
-  treatment_plan?: string;
   follow_up_notes?: string;
   follow_up_date?: string;
   status: ConsultationStatus;
-  billing_code?: string;
-  amount_paid?: number;
   is_confidential: boolean;
   is_active: boolean;
   deleted_at?: string;
@@ -145,8 +130,6 @@ export interface Consultation {
 export interface ConsultationQM {
   id_: string;
   patient_id: string;
-  insurance_company_id?: string;
-  insurance_company_name?: string;
   health_facility_id?: string;
   health_facility_name?: string;
   department_id?: string;
@@ -161,12 +144,9 @@ export interface ConsultationQM {
   other_symptoms?: string;
   vital_signs?: VitalSigns;
   diagnosis?: string;
-  treatment_plan?: string;
   follow_up_notes?: string;
   follow_up_date?: string;
   status: ConsultationStatus;
-  billing_code?: string;
-  amount_paid?: number;
   is_confidential: boolean;
   is_active: boolean;
   deleted_at?: string;
