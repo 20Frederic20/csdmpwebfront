@@ -95,7 +95,7 @@ export function DataTableActions({ row, actions, canAccess, resourceName = "reso
 
 export function createNameColumn<T extends { id_: string; deleted_at?: string | null }>(
   getName: (item: T) => string,
-  getDetailUrl: (item: T) => string,
+  getDetailUrl?: (item: T) => string,
   options?: {
     showStatus?: boolean;
     statusField?: keyof T;
@@ -111,11 +111,8 @@ export function createNameColumn<T extends { id_: string; deleted_at?: string | 
       const name = getName(item);
       const initial = options?.getInitial ? options.getInitial(item) : name.charAt(0).toUpperCase();
       
-      return (
-        <Link 
-          href={getDetailUrl(item)}
-          className={`flex items-center gap-3 hover:opacity-80 transition-opacity ${item.deleted_at ? 'opacity-60' : ''}`}
-        >
+      const content = (
+        <>
           <div className={`w-8 h-8 rounded-full flex items-center justify-center text-md font-medium ${
             item.deleted_at
               ? 'bg-gray-100 text-gray-500'
@@ -141,8 +138,20 @@ export function createNameColumn<T extends { id_: string; deleted_at?: string | 
             </div>
             <div className="text-md text-muted-foreground">ID: {item.id_?.substring(0, 8) || 'N/A'}</div>
           </div>
-        </Link>
+        </>
       );
+
+      const className = `flex items-center gap-3 transition-opacity ${item.deleted_at ? 'opacity-60' : ''} ${getDetailUrl ? 'hover:opacity-80' : ''}`;
+
+      if (getDetailUrl) {
+        return (
+          <Link href={getDetailUrl(item)} className={className}>
+            {content}
+          </Link>
+        );
+      }
+
+      return <div className={className}>{content}</div>;
     },
   };
 }
