@@ -123,6 +123,7 @@ export interface Consultation {
   status: ConsultationStatus;
   is_confidential: boolean;
   is_active: boolean;
+  created_at?: string,
   deleted_at?: string;
   prescription?: PrescriptionOrderResponse;
 }
@@ -149,6 +150,7 @@ export interface ConsultationQM {
   status: ConsultationStatus;
   is_confidential: boolean;
   is_active: boolean;
+  created_at?: string,
   deleted_at?: string;
   prescription?: PrescriptionOrderResponse;
 }
