@@ -31,6 +31,7 @@ import {
   Link as LinkIcon,
   Building,
   FileText as PrescriptionIcon,
+  Receipt,
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -467,6 +468,37 @@ export function AppSidebar() {
           }
         }
       ]
+    },
+    {
+      title: "Facturation",
+      url: "/billing",
+      icon: Receipt,
+      isActive: pathname.startsWith("/billing"),
+      requiredPermission: {
+        resource: "invoices",
+        action: "list"
+      },
+      items: [
+        {
+          title: "Liste des factures",
+          url: "/billing",
+          icon: Receipt,
+          requiredPermission: {
+            resource: "invoices",
+            action: "list"
+          }
+        }
+      ]
+    },
+    {
+      title: "Services médicaux",
+      url: "/medical-services",
+      icon: Stethoscope,
+      isActive: pathname.startsWith("/medical-services"),
+      requiredPermission: {
+        resource: "invoices",
+        action: "list"
+      }
     },
     {
       title: "Activités",
