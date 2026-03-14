@@ -1,13 +1,7 @@
 "use client";
 
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import CustomSelect from "@/components/ui/custom-select";
 import { ServiceCategory } from "../types/medical-service.types";
 
 interface MedicalServiceFiltersProps {
@@ -19,6 +13,14 @@ export function MedicalServiceFilters({
   filters,
   onFiltersChange,
 }: MedicalServiceFiltersProps) {
+  const categoryOptions = [
+    { value: "ALL", label: "Toutes les catégories" },
+    ...Object.values(ServiceCategory).map((cat) => ({
+      value: cat,
+      label: cat,
+    })),
+  ];
+
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
       <div className="flex-1">
@@ -26,31 +28,22 @@ export function MedicalServiceFilters({
           placeholder="Rechercher par code ou désignation..."
           value={filters.search || ""}
           onChange={(e) => onFiltersChange({ ...filters, search: e.target.value })}
-          className="max-w-xs"
+          className="max-w-xs h-10"
         />
       </div>
-      <div className="w-[200px]">
-        <Select
+      <div className="w-[250px]">
+        <CustomSelect
+          options={categoryOptions}
           value={filters.category || "ALL"}
-          onValueChange={(value) =>
+          onChange={(value) =>
             onFiltersChange({
               ...filters,
               category: value === "ALL" ? undefined : value,
             })
           }
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Toutes les catégories" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="ALL">Toutes les catégories</SelectItem>
-            {Object.values(ServiceCategory).map((cat) => (
-              <SelectItem key={cat} value={cat}>
-                {cat}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          placeholder="Filtrer par catégorie"
+          height="h-10"
+        />
       </div>
     </div>
   );
