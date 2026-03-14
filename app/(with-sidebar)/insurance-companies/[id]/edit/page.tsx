@@ -1,23 +1,27 @@
 'use client';
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect } from 'react';
+import { useRouter, useParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft, Save, Building2, Phone } from "lucide-react";
-import { useCreateInsuranceCompany } from "@/features/insurance-companies/hooks/use-insurance-companies";
+import { useInsuranceCompany, useUpdateInsuranceCompany } from "@/features/insurance-companies/hooks/use-insurance-companies";
 import { CreateInsuranceCompanyRequest } from "@/features/insurance-companies/types/insurance-companies.types";
 import { useAuthRefresh } from "@/hooks/use-auth-refresh";
 import { toast } from "sonner";
 import Link from "next/link";
 
-export default function AddInsuranceCompanyPage() {
+export default function EditInsuranceCompanyPage() {
   const router = useRouter();
+  const params = useParams();
+  const idValue = params.id as string;
   const { isLoading: authLoading } = useAuthRefresh();
-  const { mutateAsync: createCompany, isPending: loading } = useCreateInsuranceCompany();
+  
+  const { data: company, isLoading: fetchingCompany, error } = useInsuranceCompany(idValue);
+  const { mutateAsync: updateCompany, isPending: updating } = useUpdateInsuranceCompany();
 
   const [formData, setFormData] = useState<CreateInsuranceCompanyRequest>({
     name: '',
@@ -26,6 +30,18 @@ export default function AddInsuranceCompanyPage() {
     coverage_rate: null,
     is_active: true
   });
+
+  useEffect(() => {
+    if (company) {
+      setFormData({
+        name: company.name,
+        insurer_code: company.insurer_code,
+        contact_phone: company.contact_phone || '',
+        coverage_rate: company.coverage_rate ?? null,
+        is_active: company.is_active
+      });
+    }
+  }, [company]);
 
   const handleInputChange = (field: keyof CreateInsuranceCompanyRequest, value: any) => {
     setFormData(prev => ({
@@ -43,14 +59,14 @@ export default function AddInsuranceCompanyPage() {
     }
 
     try {
-      await createCompany(formData);
-      router.push('/insurance-companies');
+      await updateCompany({ id: idValue, data: formData });
+      router.push(`/insurance-companies/${idValue}`);
     } catch (err: any) {
       // Handled by hook
     }
   };
 
-  if (authLoading) {
+  if (authLoading || fetchingCompany) {
     return (
       <div className="container mx-auto py-8">
         <div className="flex items-center justify-center h-64">
@@ -60,19 +76,30 @@ export default function AddInsuranceCompanyPage() {
     );
   }
 
+  if (error || !company) {
+    return (
+      <div className="container mx-auto py-8 text-center">
+        <div className="text-red-600 mb-4">Erreur lors du chargement de la compagnie d'assurance</div>
+        <Link href="/insurance-companies">
+          <Button>Retour à la liste</Button>
+        </Link>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto py-8 space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Link href="/insurance-companies">
+        <Link href={`/insurance-companies/${idValue}`}>
           <Button variant="outline" size="sm">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Retour
           </Button>
         </Link>
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Ajouter une Compagnie d'Assurance</h1>
-          <p className="text-gray-600 mt-2">Créer une nouvelle compagnie d'assurance</p>
+          <h1 className="text-3xl font-bold text-gray-900">Modifier la Compagnie d'Assurance</h1>
+          <p className="text-gray-600 mt-2">Modifier les informations de {company.name}</p>
         </div>
       </div>
 
@@ -81,7 +108,7 @@ export default function AddInsuranceCompanyPage() {
         <CardHeader>
           <CardTitle>Informations de la compagnie</CardTitle>
           <CardDescription>
-            Remplissez les informations de la nouvelle compagnie d'assurance
+            Mettez à jour les informations de la compagnie d'assurance
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -164,19 +191,19 @@ export default function AddInsuranceCompanyPage() {
             <div className="flex items-center gap-4 pt-4">
               <Button
                 type="submit"
-                disabled={loading}
+                disabled={updating}
                 className="bg-green-600 hover:bg-green-700"
               >
-                {loading ? (
-                  'Création en cours...'
+                {updating ? (
+                  'Mise à jour en cours...'
                 ) : (
                   <>
                     <Save className="h-4 w-4 mr-2" />
-                    Créer la compagnie
+                    Enregistrer les modifications
                   </>
                 )}
               </Button>
-              <Link href="/insurance-companies">
+              <Link href={`/insurance-companies/${idValue}`}>
                 <Button variant="outline" type="button">
                   Annuler
                 </Button>

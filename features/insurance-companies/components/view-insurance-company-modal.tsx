@@ -37,6 +37,12 @@ export function ViewInsuranceCompanyModal({ isOpen, onClose, company }: ViewInsu
               <p className="text-lg font-semibold">{company.insurer_code}</p>
             </div>
             <div>
+              <label className="text-sm font-medium text-gray-500">Taux de couverture</label>
+              <p className="text-lg font-semibold">
+                {company.coverage_rate != null ? `${company.coverage_rate}%` : '-'}
+              </p>
+            </div>
+            <div>
               <label className="text-sm font-medium text-gray-500">Statut</label>
               <div className="mt-1">
                 <Badge variant={company.is_active ? "default" : "secondary"}>

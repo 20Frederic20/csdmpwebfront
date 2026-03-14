@@ -16,14 +16,13 @@ import { useAuthRefresh } from "@/hooks/use-auth-refresh";
 import { usePermissionsContext } from "@/contexts/permissions-context";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import Link from "next/link";
-import { ViewInsuranceCompanyModal } from "@/features/insurance-companies/components/view-insurance-company-modal";
-import { EditInsuranceCompanyModal } from "@/features/insurance-companies/components/edit-insurance-company-modal";
 import { ConfirmModal } from "@/components/ui/modal";
 import { DataTableWithFilters } from "@/components/ui/data-table-with-filters";
 import { insuranceCompanyColumns } from "@/features/insurance-companies/components/insurance-company-columns";
 import { InsuranceCompanyFiltersWrapper } from "@/features/insurance-companies/components/insurance-company-filters-wrapper";
 
 export default function InsuranceCompaniesPage() {
+  const router = useRouter();
   const { isLoading: authLoading } = useAuthRefresh();
   const { canAccess } = usePermissionsContext();
   const { token } = useAuthToken();
@@ -33,8 +32,6 @@ export default function InsuranceCompaniesPage() {
   const [filters, setFilters] = useState<Record<string, any>>({});
 
   // Modal states
-  const [viewModalOpen, setViewModalOpen] = useState(false);
-  const [editModalOpen, setEditModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedCompany, setSelectedCompany] = useState<InsuranceCompany | null>(null);
 
@@ -116,17 +113,11 @@ export default function InsuranceCompaniesPage() {
   };
 
   const handleView = (company: InsuranceCompany) => {
-    setSelectedCompany(company);
-    setViewModalOpen(true);
+    router.push(`/insurance-companies/${company.id_}`);
   };
 
   const handleEdit = (company: InsuranceCompany) => {
-    setSelectedCompany(company);
-    setEditModalOpen(true);
-  };
-
-  const handleUpdate = () => {
-    setEditModalOpen(false);
+    router.push(`/insurance-companies/${company.id_}/edit`);
   };
 
   if (authLoading) {
@@ -182,30 +173,15 @@ export default function InsuranceCompaniesPage() {
 
       {/* Modals */}
       {selectedCompany && (
-        <>
-          <ViewInsuranceCompanyModal
-            isOpen={viewModalOpen}
-            onClose={() => setViewModalOpen(false)}
-            company={selectedCompany}
-          />
-
-          <EditInsuranceCompanyModal
-            isOpen={editModalOpen}
-            onClose={() => setEditModalOpen(false)}
-            company={selectedCompany}
-            onUpdate={handleUpdate}
-          />
-
-          <ConfirmModal
-            isOpen={deleteModalOpen}
-            onClose={() => setDeleteModalOpen(false)}
-            onConfirm={confirmDelete}
-            title="Supprimer la compagnie d'assurance"
-            message={`Êtes-vous sûr de vouloir supprimer la compagnie d'assurance "${selectedCompany.name}" ? Cette action est irréversible.`}
-            confirmText="Supprimer"
-            loading={loading}
-          />
-        </>
+        <ConfirmModal
+          isOpen={deleteModalOpen}
+          onClose={() => setDeleteModalOpen(false)}
+          onConfirm={confirmDelete}
+          title="Supprimer la compagnie d'assurance"
+          message={`Êtes-vous sûr de vouloir supprimer la compagnie d'assurance "${selectedCompany.name}" ? Cette action est irréversible.`}
+          confirmText="Supprimer"
+          loading={loading}
+        />
       )}
     </div>
   );

@@ -11,14 +11,15 @@ import {
   DataTableActions
 } from "@/components/ui/generic-columns";
 
-export function getInsuranceCompanyActions(company: InsuranceCompany, canAccess: (resource: string, action: string) => boolean): ActionConfig[] {
+export function getInsuranceCompanyActions(company: InsuranceCompany, meta: any): ActionConfig[] {
   const actions: ActionConfig[] = [];
+  const canAccess = meta?.canAccess || (() => false);
 
   if (canAccess('insurance_companies', 'read')) {
     actions.push({
       label: "Voir",
       icon: <Eye className="h-4 w-4" />,
-      onClick: (meta) => meta?.onView?.(company),
+      href: `/insurance-companies/${company.id_}`,
     });
   }
 
@@ -26,7 +27,7 @@ export function getInsuranceCompanyActions(company: InsuranceCompany, canAccess:
     actions.push({
       label: "Modifier",
       icon: <Edit className="h-4 w-4" />,
-      onClick: (meta) => meta?.onEdit?.(company),
+      href: `/insurance-companies/${company.id_}/edit`,
     });
   }
 
@@ -36,7 +37,7 @@ export function getInsuranceCompanyActions(company: InsuranceCompany, canAccess:
       {
         label: "Supprimer",
         icon: <Trash2 className="h-4 w-4" />,
-        onClick: (meta) => meta?.onDelete?.(company),
+        onClick: () => meta?.onDelete?.(company),
         variant: 'destructive',
       }
     );
@@ -48,7 +49,7 @@ export function getInsuranceCompanyActions(company: InsuranceCompany, canAccess:
       {
         label: "Restaurer",
         icon: <RotateCcw className="h-4 w-4" />,
-        onClick: (meta) => meta?.onRestore?.(company.id_),
+        onClick: () => meta?.onRestore?.(company.id_),
         variant: 'success',
       }
     );
@@ -60,7 +61,7 @@ export function getInsuranceCompanyActions(company: InsuranceCompany, canAccess:
       {
         label: "Supprimer définitivement",
         icon: <AlertTriangle className="h-4 w-4" />,
-        onClick: (meta) => meta?.onPermanentlyDelete?.(company.id_),
+        onClick: () => meta?.onPermanentlyDelete?.(company.id_),
         variant: 'destructive',
       }
     );
@@ -87,7 +88,7 @@ export function getInsuranceCompanyInitial(company: InsuranceCompany): string {
 export const insuranceCompanyColumns: ColumnDef<InsuranceCompany>[] = [
   createNameColumn(
     getInsuranceCompanyName,
-    undefined, // No href, handled by modal
+    (company) => `/insurance-companies/${company.id_}`,
     {
       showStatus: true,
       statusField: 'is_active',
@@ -118,6 +119,15 @@ export const insuranceCompanyColumns: ColumnDef<InsuranceCompany>[] = [
       ) : (
         <span className="text-gray-400">-</span>
       );
+    },
+  },
+
+  {
+    accessorKey: "coverage_rate",
+    header: "Couverture",
+    cell: ({ row }) => {
+      const company = row.original;
+      return company.coverage_rate != null ? `${company.coverage_rate}%` : '-';
     },
   },
 
@@ -154,7 +164,7 @@ export const insuranceCompanyColumns: ColumnDef<InsuranceCompany>[] = [
       return (
         <DataTableActions
           row={row}
-          actions={getInsuranceCompanyActions(company, meta?.canAccess || (() => true))}
+          actions={getInsuranceCompanyActions(company, meta)}
           canAccess={meta?.canAccess}
           resourceName="insurance_companies"
         />

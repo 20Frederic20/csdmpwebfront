@@ -24,6 +24,7 @@ export function EditInsuranceCompanyModal({ isOpen, onClose, company, onUpdate }
     name: '',
     insurer_code: '',
     contact_phone: '',
+    coverage_rate: null,
     is_active: true
   });
 
@@ -33,6 +34,7 @@ export function EditInsuranceCompanyModal({ isOpen, onClose, company, onUpdate }
         name: company.name,
         insurer_code: company.insurer_code,
         contact_phone: company.contact_phone || '',
+        coverage_rate: company.coverage_rate ?? null,
         is_active: company.is_active
       });
     }
@@ -108,6 +110,23 @@ export function EditInsuranceCompanyModal({ isOpen, onClose, company, onUpdate }
             placeholder="Numéro de téléphone (optionnel)"
             value={formData.contact_phone || ''}
             onChange={(e) => handleInputChange('contact_phone', e.target.value)}
+          />
+        </div>
+
+        {/* Coverage Rate */}
+        <div className="space-y-2">
+          <Label htmlFor="coverage_rate" className="flex items-center gap-1">
+            Taux de couverture (%)
+          </Label>
+          <Input
+            id="coverage_rate"
+            type="number"
+            min="0"
+            max="100"
+            step="0.01"
+            placeholder="Ex: 80"
+            value={formData.coverage_rate ?? ''}
+            onChange={(e) => handleInputChange('coverage_rate', e.target.value ? parseFloat(e.target.value) : null)}
           />
         </div>
 

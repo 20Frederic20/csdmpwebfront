@@ -2,6 +2,7 @@ export interface CreateInsuranceCompanyRequest {
   name: string;
   insurer_code: string;
   contact_phone?: string | null;
+  coverage_rate?: number | null;
   is_active?: boolean;
 }
 
@@ -10,6 +11,7 @@ export interface InsuranceCompany {
   name: string;
   insurer_code: string;
   contact_phone?: string | null;
+  coverage_rate?: number | null;
   is_active: boolean;
   deleted_at?: string | null;
 }
