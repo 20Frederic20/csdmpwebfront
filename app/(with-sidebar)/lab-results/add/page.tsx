@@ -2,64 +2,73 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Save, Calendar, Building, FileText } from "lucide-react";
-import { LabResultsService } from "@/features/lab-results/services/lab-results.service";
-import { CreateLabResultRequest, TestType, HospitalStaff, Patient, HealthFacility } from "@/features/lab-results/types/lab-results.types";
+import { ArrowLeft, Save, Calendar, FileText } from "lucide-react";
+import { TestType, HospitalStaff, HealthFacility } from "@/features/lab-results/types/lab-results.types";
 import { useAuthRefresh } from "@/hooks/use-auth-refresh";
 import Link from "next/link";
 import CustomSelect from '@/components/ui/custom-select';
 import { FetchService } from "@/features/core/services/fetch.service";
+import { PatientSelect } from "@/features/patients/components/patient-select";
+import { labResultSchema, LabResultFormValues } from "@/features/lab-results/schemas/lab-results.schema";
+import { useCreateLabResult } from "@/features/lab-results/hooks/use-lab-results";
+import { getTestTypeOptions } from "@/features/lab-results/utils/lab-results.utils";
+import { usePermissionsContext } from "@/contexts/permissions-context";
 
 export default function AddLabResultPage() {
   const router = useRouter();
   const { isLoading: authLoading } = useAuthRefresh();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { user } = usePermissionsContext();
+  const createMutation = useCreateLabResult();
   
-  const [formData, setFormData] = useState<CreateLabResultRequest>({
-    patient_id: '',
-    performer_id: '',
-    test_type: TestType.BLOOD_COUNT,
-    date_performed: new Date().toISOString().split('T')[0],
-    date_reported: new Date().toISOString().split('T')[0],
-    issuing_facility: '',
-    document_id: '',
-    extracted_values: null,
-    is_active: true
-  });
-
   const [hospitalStaff, setHospitalStaff] = useState<HospitalStaff[]>([]);
   const [staffLoading, setStaffLoading] = useState(false);
-  const [patients, setPatients] = useState<Patient[]>([]);
-  const [patientsLoading, setPatientsLoading] = useState(false);
   const [healthFacilities, setHealthFacilities] = useState<HealthFacility[]>([]);
   const [facilitiesLoading, setFacilitiesLoading] = useState(false);
 
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    formState: { errors }
+  } = useForm<LabResultFormValues>({
+    resolver: zodResolver(labResultSchema),
+    defaultValues: {
+      patient_id: '',
+      performer_id: '',
+      test_type: TestType.BLOOD_COUNT,
+      date_performed: new Date().toISOString().split('T')[0],
+      date_reported: new Date().toISOString().split('T')[0],
+      issuing_facility: '',
+      document_id: '',
+      extracted_values: null,
+      is_active: true
+    }
+  });
+
+  const issuingFacility = watch('issuing_facility');
+  const patientId = watch('patient_id');
+  const testType = watch('test_type');
+  const isActive = watch('is_active');
+
   const fetchHospitalStaff = async () => {
-    if (!formData.issuing_facility) {
+    if (!issuingFacility) {
       setHospitalStaff([]);
       return;
     }
     
     await FetchService.fetchData(
-      `hospital-staff?health_facility_id=${formData.issuing_facility}`,
+      `hospital-staff?health_facility_id=${issuingFacility}`,
       setHospitalStaff,
       setStaffLoading,
       'Hospital staff'
-    );
-  };
-
-  const fetchPatients = async () => {
-    await FetchService.fetchData(
-      'patients',
-      setPatients,
-      setPatientsLoading,
-      'Patients'
     );
   };
 
@@ -73,65 +82,49 @@ export default function AddLabResultPage() {
   };
 
   useEffect(() => {
-    fetchPatients();
     fetchHealthFacilities();
   }, []);
 
+  // Auto-inject health facility and performer for new lab results
+  useEffect(() => {
+    if (user && !issuingFacility) {
+      setValue('issuing_facility', user.health_facility_id || "");
+      if (user.hospital_staff_id && !watch('performer_id')) {
+        setValue('performer_id', user.hospital_staff_id, { shouldValidate: true });
+      }
+    }
+  }, [user, issuingFacility, setValue, watch]);
+
   useEffect(() => {
     fetchHospitalStaff();
-    // Réinitialiser le performer_id quand l'établissement change
-    setFormData(prev => ({ ...prev, performer_id: '' }));
-  }, [formData.issuing_facility]);
+    // Only reset performer_id if it's not the same as user's staff id when facility changes
+    if (issuingFacility !== user?.health_facility_id) {
+       setValue('performer_id', '');
+    }
+  }, [issuingFacility, setValue, user?.health_facility_id]);
 
-  const testTypeOptions = Object.values(TestType);
-
-  const getTestTypeLabel = (testType: TestType) => {
-    const labels: Record<TestType, string> = {
-      [TestType.BLOOD_COUNT]: 'Numération sanguine',
-      [TestType.CHEMISTRY]: 'Chimie',
-      [TestType.HEMATOLOGY]: 'Hématologie',
-      [TestType.MICROBIOLOGY]: 'Microbiologie',
-      [TestType.PATHOLOGY]: 'Pathologie',
-      [TestType.IMMUNOLOGY]: 'Immunologie',
-      [TestType.GENETICS]: 'Génétique',
-      [TestType.TOXICOLOGY]: 'Toxicologie',
-      [TestType.ENDOCRINOLOGY]: 'Endocrinologie',
-      [TestType.CARDIOLOGY]: 'Cardiologie',
-      [TestType.URINALYSIS]: 'Analyse d\'urine',
-      [TestType.STOOL_ANALYSIS]: 'Analyse de selles',
-      [TestType.IMAGING]: 'Imagerie',
-      [TestType.OTHER]: 'Autre'
-    };
-    return labels[testType] || testType;
-  };
-
-  const handleInputChange = (field: keyof CreateLabResultRequest, value: any) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-
+  const onSubmit = async (data: LabResultFormValues) => {
     try {
-      // Convert dates to ISO format
-      const submitData: CreateLabResultRequest = {
-        ...formData,
-        date_performed: new Date(formData.date_performed).toISOString(),
-        date_reported: new Date(formData.date_reported).toISOString(),
-        extracted_values: formData.extracted_values ? JSON.parse(formData.extracted_values as unknown as string) : null
+      let extractedValues = data.extracted_values;
+      if (typeof extractedValues === 'string' && extractedValues.trim() !== '') {
+        try {
+          extractedValues = JSON.parse(extractedValues);
+        } catch {
+          // Validation should already handle this
+        }
+      }
+
+      const submitData = {
+        ...data,
+        date_performed: new Date(data.date_performed).toISOString(),
+        date_reported: new Date(data.date_reported).toISOString(),
+        extracted_values: extractedValues
       };
 
-      await LabResultsService.createLabResult(submitData);
+      await createMutation.mutateAsync(submitData);
       router.push('/lab-results');
-    } catch (err: any) {
-      setError(err.message || 'Failed to create lab result');
-    } finally {
-      setLoading(false);
+    } catch (err) {
+      console.error('Failed to create lab result:', err);
     }
   };
 
@@ -142,6 +135,8 @@ export default function AddLabResultPage() {
       </div>
     );
   }
+
+  const testTypeOptions = getTestTypeOptions();
 
   return (
     <div className="space-y-6">
@@ -171,31 +166,17 @@ export default function AddLabResultPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Error */}
-            {error && (
-              <div className="p-4 border border-destructive rounded-lg text-destructive">
-                {error}
-              </div>
-            )}
-
-            {/* Patient ID */}
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            {/* Patient Selection */}
             <div className="space-y-2">
-              <Label htmlFor="patient_id" className="flex items-center gap-1">
-                Patient <span className="text-red-500">*</span>
-              </Label>
-              <CustomSelect
-                options={Array.isArray(patients) ? patients.map((patient) => ({
-                  value: patient.id_,
-                  label: `${patient.given_name} ${patient.family_name}`
-                })) : []}
-                value={formData.patient_id}
-                onChange={(value) => handleInputChange('patient_id', value)}
-                placeholder="Sélectionner le patient..."
-                isDisabled={patientsLoading}
-                isLoading={patientsLoading}
-                height="h-10"
+              <PatientSelect
+                value={patientId}
+                onChange={(value) => setValue('patient_id', value || '', { shouldValidate: true })}
+                required
               />
+              {errors.patient_id && (
+                <p className="text-sm text-red-500">{errors.patient_id.message}</p>
+              )}
             </div>
 
             {/* Issuing Facility and Performer */}
@@ -208,8 +189,8 @@ export default function AddLabResultPage() {
                     value: facility.id_,
                     label: `${facility.code} - ${facility.name}`
                   })) : []}
-                  value={formData.issuing_facility}
-                  onChange={(value) => handleInputChange('issuing_facility', value)}
+                  value={issuingFacility || ''}
+                  onChange={(value) => setValue('issuing_facility', value as string)}
                   placeholder="Sélectionner l'établissement..."
                   isDisabled={facilitiesLoading}
                   isLoading={facilitiesLoading}
@@ -227,15 +208,18 @@ export default function AddLabResultPage() {
                     value: staff.id_,
                     label: `${staff.given_name} ${staff.family_name} - ${staff.matricule}`
                   })) : []}
-                  value={formData.performer_id}
-                  onChange={(value) => handleInputChange('performer_id', value)}
+                  value={watch('performer_id')}
+                  onChange={(value) => setValue('performer_id', value as string, { shouldValidate: true })}
                   placeholder="Sélectionner le personnel..."
-                  isDisabled={staffLoading || !formData.issuing_facility}
+                  isDisabled={staffLoading || !issuingFacility}
                   isLoading={staffLoading}
                   height="h-10"
                 />
-                {!formData.issuing_facility && (
+                {!issuingFacility && (
                   <p className="text-sm text-muted-foreground">Veuillez d'abord sélectionner un établissement</p>
+                )}
+                {errors.performer_id && (
+                  <p className="text-sm text-red-500">{errors.performer_id.message}</p>
                 )}
               </div>
             </div>
@@ -246,15 +230,15 @@ export default function AddLabResultPage() {
                 Type de test <span className="text-red-500">*</span>
               </Label>
               <CustomSelect
-                options={testTypeOptions.map((type) => ({
-                  value: type,
-                  label: getTestTypeLabel(type)
-                }))}
-                value={formData.test_type}
-                onChange={(value) => handleInputChange('test_type', value)}
+                options={testTypeOptions}
+                value={testType}
+                onChange={(value) => setValue('test_type', value as TestType)}
                 placeholder="Sélectionner le type de test..."
                 height="h-10"
               />
+              {errors.test_type && (
+                <p className="text-sm text-red-500">{errors.test_type.message}</p>
+              )}
             </div>
 
             {/* Dates */}
@@ -267,10 +251,11 @@ export default function AddLabResultPage() {
                 <Input
                   id="date_performed"
                   type="date"
-                  value={formData.date_performed}
-                  onChange={(e) => handleInputChange('date_performed', e.target.value)}
-                  required
+                  {...register('date_performed')}
                 />
+                {errors.date_performed && (
+                  <p className="text-sm text-red-500">{errors.date_performed.message}</p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="date_reported" className="flex items-center gap-2">
@@ -280,10 +265,11 @@ export default function AddLabResultPage() {
                 <Input
                   id="date_reported"
                   type="date"
-                  value={formData.date_reported}
-                  onChange={(e) => handleInputChange('date_reported', e.target.value)}
-                  required
+                  {...register('date_reported')}
                 />
+                {errors.date_reported && (
+                  <p className="text-sm text-red-500">{errors.date_reported.message}</p>
+                )}
               </div>
             </div>
 
@@ -292,10 +278,8 @@ export default function AddLabResultPage() {
               <Label htmlFor="document_id">ID Document</Label>
               <Input
                 id="document_id"
-                type="text"
+                {...register('document_id')}
                 placeholder="ID du document (optionnel)"
-                value={formData.document_id || ''}
-                onChange={(e) => handleInputChange('document_id', e.target.value)}
               />
             </div>
 
@@ -305,22 +289,16 @@ export default function AddLabResultPage() {
               <Textarea
                 id="extracted_values"
                 placeholder='{"key": "value", "result": 123.45}'
-                value={formData.extracted_values ? JSON.stringify(formData.extracted_values as unknown, null, 2) : ''}
-                onChange={(e) => {
-                  try {
-                    const jsonValue = e.target.value ? JSON.parse(e.target.value) : null;
-                    handleInputChange('extracted_values', jsonValue);
-                  } catch {
-                    // Keep the raw text for editing
-                    handleInputChange('extracted_values', e.target.value as any);
-                  }
-                }}
+                {...register('extracted_values')}
                 rows={6}
                 className="font-mono"
               />
               <p className="text-sm text-muted-foreground">
                 Format JSON. Exemple: {`{"hemoglobin": 14.5, "platelets": 250000}`}
               </p>
+              {errors.extracted_values && (
+                <p className="text-sm text-red-500">{errors.extracted_values.message as string}</p>
+              )}
             </div>
 
             {/* Is Active */}
@@ -328,8 +306,8 @@ export default function AddLabResultPage() {
               <input
                 type="checkbox"
                 id="is_active"
-                checked={formData.is_active}
-                onChange={(e) => handleInputChange('is_active', e.target.checked)}
+                checked={isActive}
+                onChange={(e) => setValue('is_active', e.target.checked)}
                 className="rounded"
               />
               <Label htmlFor="is_active">Résultat actif</Label>
@@ -342,9 +320,9 @@ export default function AddLabResultPage() {
                   Annuler
                 </Button>
               </Link>
-              <Button type="submit" disabled={loading}>
+              <Button type="submit" disabled={createMutation.isPending}>
                 <Save className="mr-2 h-4 w-4" />
-                {loading ? 'Enregistrement...' : 'Enregistrer'}
+                {createMutation.isPending ? 'Enregistrement...' : 'Enregistrer'}
               </Button>
             </div>
           </form>

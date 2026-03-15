@@ -1,158 +1,132 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Calendar, Save, Beaker } from "lucide-react";
-import { LabResult, CreateLabResultRequest, TestType } from "../types/lab-results.types";
-import { LabResultsService } from "../services/lab-results.service";
+import { Calendar, Save } from "lucide-react";
+import { LabResult, TestType } from "../types/lab-results.types";
 import { Modal } from "@/components/ui/modal";
+import { PatientSelect } from "@/features/patients/components/patient-select";
+import { labResultSchema, LabResultFormValues } from "../schemas/lab-results.schema";
+import { useUpdateLabResult } from "../hooks/use-lab-results";
+import { getTestTypeOptions } from "../utils/lab-results.utils";
+import { usePermissionsContext } from "@/contexts/permissions-context";
 
 interface EditLabResultModalProps {
   isOpen: boolean;
   onClose: () => void;
   labResult: LabResult;
-  onUpdate: (updatedLabResult: LabResult) => void;
+  onUpdate?: (updatedLabResult: LabResult) => void;
 }
 
 export function EditLabResultModal({ isOpen, onClose, labResult, onUpdate }: EditLabResultModalProps) {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [formData, setFormData] = useState<CreateLabResultRequest>({
-    patient_id: '',
-    performer_id: '',
-    test_type: TestType.BLOOD_COUNT,
-    date_performed: '',
-    date_reported: '',
-    issuing_facility: '',
-    document_id: '',
-    extracted_values: null,
-    is_active: true
+  const updateMutation = useUpdateLabResult();
+  const { user } = usePermissionsContext();
+
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    reset,
+    formState: { errors }
+  } = useForm<LabResultFormValues>({
+    resolver: zodResolver(labResultSchema),
+    defaultValues: {
+      patient_id: '',
+      performer_id: '',
+      test_type: TestType.BLOOD_COUNT,
+      date_performed: '',
+      date_reported: '',
+      issuing_facility: '',
+      document_id: '',
+      extracted_values: null,
+      is_active: true
+    }
   });
-
-  const testTypeOptions = Object.values(TestType);
-
-  const getTestTypeLabel = (testType: TestType) => {
-    const labels: Record<TestType, string> = {
-      [TestType.BLOOD_COUNT]: 'Numération sanguine',
-      [TestType.CHEMISTRY]: 'Chimie',
-      [TestType.HEMATOLOGY]: 'Hématologie',
-      [TestType.MICROBIOLOGY]: 'Microbiologie',
-      [TestType.PATHOLOGY]: 'Pathologie',
-      [TestType.IMMUNOLOGY]: 'Immunologie',
-      [TestType.GENETICS]: 'Génétique',
-      [TestType.TOXICOLOGY]: 'Toxicologie',
-      [TestType.ENDOCRINOLOGY]: 'Endocrinologie',
-      [TestType.CARDIOLOGY]: 'Cardiologie',
-      [TestType.URINALYSIS]: 'Urinanalyse',
-      [TestType.STOOL_ANALYSIS]: 'Analyse des selles',
-      [TestType.IMAGING]: 'Imagerie',
-      [TestType.OTHER]: 'Autre'
-    };
-    return labels[testType] || testType;
-  };
 
   useEffect(() => {
     if (labResult) {
-      setFormData({
+      reset({
         patient_id: labResult.patient_id,
-        performer_id: labResult.performer_id,
+        performer_id: labResult.performer_id || user?.hospital_staff_id || '',
         test_type: labResult.test_type,
         date_performed: labResult.date_performed.split('T')[0],
         date_reported: labResult.date_reported.split('T')[0],
-        issuing_facility: labResult.issuing_facility || '',
+        issuing_facility: labResult.issuing_facility || user?.health_facility_id || '',
         document_id: labResult.document_id || '',
         extracted_values: labResult.extracted_values,
         is_active: labResult.is_active
       });
     }
-  }, [labResult]);
+  }, [labResult, reset, user]);
 
-  const handleInputChange = (field: keyof CreateLabResultRequest, value: any) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
+  const patientId = watch('patient_id');
+  const isActive = watch('is_active');
+  const testType = watch('test_type');
 
-  const handleExtractedValuesChange = (value: string) => {
+  const onSubmit = async (data: LabResultFormValues) => {
     try {
-      if (value.trim() === '') {
-        handleInputChange('extracted_values', null);
-      } else {
-        const parsed = JSON.parse(value);
-        handleInputChange('extracted_values', parsed);
+      let extractedValues = data.extracted_values;
+      if (typeof extractedValues === 'string') {
+        try {
+          extractedValues = JSON.parse(extractedValues);
+        } catch {
+          // Validation should already handled this
+        }
       }
-    } catch (err) {
-      // Ne pas mettre à jour si le JSON est invalide
-    }
-  };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!formData.patient_id.trim() || !formData.performer_id.trim()) {
-      setError('Les champs patient et performer sont obligatoires');
-      return;
-    }
-
-    try {
-      setLoading(true);
-      setError(null);
+      const result = await updateMutation.mutateAsync({
+        id: labResult.id_,
+        data: {
+          ...data,
+          extracted_values: extractedValues
+        }
+      });
       
-      const updatedLabResult = await LabResultsService.updateLabResult(labResult.id_, formData);
-      onUpdate(updatedLabResult);
+      if (onUpdate) onUpdate(result);
       onClose();
-    } catch (err: any) {
+    } catch (err) {
       console.error('Failed to update lab result:', err);
-      setError(err.message || 'Erreur lors de la mise à jour');
-    } finally {
-      setLoading(false);
     }
   };
+
+  const testTypeOptions = getTestTypeOptions();
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Modifier le résultat de laboratoire" size="lg">
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Error */}
-        {error && (
-          <div className="p-4 border border-red-300 rounded-lg bg-red-50 text-red-700">
-            {error}
-          </div>
-        )}
-
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Patient ID */}
+          {/* Patient Selection */}
           <div className="space-y-2">
-            <Label htmlFor="patient_id" className="flex items-center gap-1">
-              Patient <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              id="patient_id"
-              type="text"
-              placeholder="UUID du patient"
-              value={formData.patient_id || ''}
-              onChange={(e) => handleInputChange('patient_id', e.target.value)}
+            <PatientSelect
+              value={patientId}
+              onChange={(value) => setValue('patient_id', value || '', { shouldValidate: true })}
               required
             />
+            {errors.patient_id && (
+              <p className="text-sm text-red-500">{errors.patient_id.message}</p>
+            )}
           </div>
 
-          {/* Performer ID */}
+          {/* Performer ID (In a real app, this might also be a searchable select) */}
           <div className="space-y-2">
             <Label htmlFor="performer_id" className="flex items-center gap-1">
               Performer <span className="text-red-500">*</span>
             </Label>
             <Input
               id="performer_id"
-              type="text"
+              {...register('performer_id')}
               placeholder="UUID du performer"
-              value={formData.performer_id || ''}
-              onChange={(e) => handleInputChange('performer_id', e.target.value)}
-              required
             />
+            {errors.performer_id && (
+              <p className="text-sm text-red-500">{errors.performer_id.message}</p>
+            )}
           </div>
 
           {/* Test Type */}
@@ -162,17 +136,18 @@ export function EditLabResultModal({ isOpen, onClose, labResult, onUpdate }: Edi
             </Label>
             <select
               id="test_type"
-              value={formData.test_type}
-              onChange={(e) => handleInputChange('test_type', e.target.value)}
+              {...register('test_type')}
               className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
-              required
             >
-              {testTypeOptions.map((type) => (
-                <option key={type} value={type}>
-                  {getTestTypeLabel(type)}
+              {testTypeOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
                 </option>
               ))}
             </select>
+            {errors.test_type && (
+              <p className="text-sm text-red-500">{errors.test_type.message}</p>
+            )}
           </div>
 
           {/* Issuing Facility */}
@@ -180,10 +155,8 @@ export function EditLabResultModal({ isOpen, onClose, labResult, onUpdate }: Edi
             <Label htmlFor="issuing_facility">Établissement émetteur</Label>
             <Input
               id="issuing_facility"
-              type="text"
+              {...register('issuing_facility')}
               placeholder="Établissement émetteur"
-              value={formData.issuing_facility || ''}
-              onChange={(e) => handleInputChange('issuing_facility', e.target.value)}
             />
           </div>
 
@@ -196,10 +169,11 @@ export function EditLabResultModal({ isOpen, onClose, labResult, onUpdate }: Edi
             <Input
               id="date_performed"
               type="date"
-              value={formData.date_performed}
-              onChange={(e) => handleInputChange('date_performed', e.target.value)}
-              required
+              {...register('date_performed')}
             />
+            {errors.date_performed && (
+              <p className="text-sm text-red-500">{errors.date_performed.message}</p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -210,10 +184,11 @@ export function EditLabResultModal({ isOpen, onClose, labResult, onUpdate }: Edi
             <Input
               id="date_reported"
               type="date"
-              value={formData.date_reported}
-              onChange={(e) => handleInputChange('date_reported', e.target.value)}
-              required
+              {...register('date_reported')}
             />
+            {errors.date_reported && (
+              <p className="text-sm text-red-500">{errors.date_reported.message}</p>
+            )}
           </div>
         </div>
 
@@ -222,10 +197,8 @@ export function EditLabResultModal({ isOpen, onClose, labResult, onUpdate }: Edi
           <Label htmlFor="document_id">ID Document</Label>
           <Input
             id="document_id"
-            type="text"
+            {...register('document_id')}
             placeholder="ID du document (optionnel)"
-            value={formData.document_id || ''}
-            onChange={(e) => handleInputChange('document_id', e.target.value)}
           />
         </div>
 
@@ -235,18 +208,23 @@ export function EditLabResultModal({ isOpen, onClose, labResult, onUpdate }: Edi
           <Textarea
             id="extracted_values"
             placeholder='{"key": "value", "result": 123.45}'
-            value={formData.extracted_values ? JSON.stringify(formData.extracted_values as unknown, null, 2) : ''}
-            onChange={(e) => handleExtractedValuesChange(e.target.value)}
+            {...register('extracted_values', {
+                setValueAs: (v) => v === "" ? null : v
+            })}
+            defaultValue={labResult.extracted_values ? JSON.stringify(labResult.extracted_values, null, 2) : ''}
             rows={4}
           />
+          {errors.extracted_values && (
+            <p className="text-sm text-red-500">{errors.extracted_values.message as string}</p>
+          )}
         </div>
 
         {/* Active Status */}
         <div className="flex items-center space-x-2">
           <Checkbox
             id="is_active"
-            checked={formData.is_active}
-            onCheckedChange={(checked) => handleInputChange('is_active', checked)}
+            checked={isActive}
+            onCheckedChange={(checked) => setValue('is_active', !!checked)}
           />
           <Label htmlFor="is_active" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
             Résultat actif
@@ -257,10 +235,10 @@ export function EditLabResultModal({ isOpen, onClose, labResult, onUpdate }: Edi
         <div className="flex items-center gap-4 pt-4 border-t">
           <Button
             type="submit"
-            disabled={loading}
+            disabled={updateMutation.isPending}
             className="bg-green-600 hover:bg-green-700"
           >
-            {loading ? (
+            {updateMutation.isPending ? (
               'Mise à jour en cours...'
             ) : (
               <>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -27,9 +27,7 @@ import {
   Activity,
   FileText
 } from "lucide-react";
-import { LabResult, ListLabResultQM, ListLabResultQueryParams, TestType } from "@/features/lab-results/types/lab-results.types";
-import { LabResultsService } from "@/features/lab-results/services/lab-results.service";
-import { useAuthToken } from "@/hooks/use-auth-token";
+import { LabResult, ListLabResultQueryParams, TestType } from "@/features/lab-results/types/lab-results.types";
 import { usePermissionsContext } from "@/contexts/permissions-context";
 import {
   getTestTypeOptions,
@@ -38,49 +36,41 @@ import {
   formatTestType,
   formatDate
 } from "@/features/lab-results/utils/lab-results.utils";
-import { toast } from "sonner";
 import Link from "next/link";
+import { 
+  useLabResults, 
+  useDeleteLabResult, 
+  useRestoreLabResult, 
+  usePermanentlyDeleteLabResult,
+  useToggleLabResultStatus
+} from "@/features/lab-results/hooks/use-lab-results";
+import { EditLabResultModal } from "@/features/lab-results/components/edit-lab-result-modal";
 
 export default function LabResultsPage() {
-  const [labResultsData, setLabResultsData] = useState<ListLabResultQM | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [filterTestType, setFilterTestType] = useState<TestType | ''>('');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
-  const { token } = useAuthToken();
   const { canAccess } = usePermissionsContext();
 
-  const loadLabResults = async () => {
-    try {
-      setLoading(true);
-      setError(null);
+  const [selectedLabResult, setSelectedLabResult] = useState<LabResult | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-      const params: ListLabResultQueryParams = {
-        limit: itemsPerPage,
-        offset: (currentPage - 1) * itemsPerPage,
-        search: search.length >= 3 ? search : undefined,
-        test_type: filterTestType || undefined,
-        sort_by: 'date_performed',
-        sort_order: 'desc'
-      };
-
-      const data = await LabResultsService.getLabResults(params);
-      setLabResultsData(data);
-    } catch (error) {
-      console.error('Error loading lab results:', error);
-      setError('Erreur lors du chargement des résultats de laboratoire');
-    } finally {
-      setLoading(false);
-    }
+  const queryParams: ListLabResultQueryParams = {
+    limit: itemsPerPage,
+    offset: (currentPage - 1) * itemsPerPage,
+    search: search.length >= 3 ? search : undefined,
+    test_type: filterTestType || undefined,
+    sort_by: 'date_performed',
+    sort_order: 'desc'
   };
 
-  useEffect(() => {
-    loadLabResults();
-  }, [currentPage, itemsPerPage, search, filterTestType]);
+  const { data: labResultsData, isLoading, error } = useLabResults(queryParams);
+  const deleteMutation = useDeleteLabResult();
+  const restoreMutation = useRestoreLabResult();
+  const permanentDeleteMutation = usePermanentlyDeleteLabResult();
+  const toggleStatusMutation = useToggleLabResultStatus();
 
-  // Reset page 1 quand le nombre d'éléments par page change
   const handleItemsPerPageChange = (value: number) => {
     setItemsPerPage(value);
     setCurrentPage(1);
@@ -88,97 +78,39 @@ export default function LabResultsPage() {
 
   const handleLabResultRestored = async (labResult: LabResult) => {
     try {
-      const restoredLabResult = await LabResultsService.restoreLabResult(labResult.id_);
-
-      if (labResultsData) {
-        setLabResultsData({
-          ...labResultsData,
-          data: labResultsData.data.map(lr =>
-            lr.id_ === labResult.id_ ? {
-              ...lr, // Conserve toutes les données existantes
-              deleted_at: undefined, // Met à jour seulement deleted_at
-              is_active: true // Met à jour seulement is_active
-            } : lr
-          )
-        });
-      }
-
-      toast.success('Résultat de laboratoire restauré avec succès');
+      await restoreMutation.mutateAsync(labResult.id_);
     } catch (error) {
       console.error('Error restoring lab result:', error);
-      toast.error('Erreur lors de la restauration du résultat de laboratoire');
     }
   };
 
-  const handleToggleStatus = async (id: string) => {
+  const handleToggleStatus = async (id: string, currentStatus: boolean) => {
     try {
-      const labResult = labResultsData?.data.find(lr => lr.id_ === id);
-      if (!labResult) return;
-
-      const updatedLabResult = await LabResultsService.updateLabResult(id, {
-        is_active: !labResult.is_active
-      });
-
-      if (labResultsData) {
-        setLabResultsData({
-          ...labResultsData,
-          data: labResultsData.data.map(lr =>
-            lr.id_ === id ? {
-              ...lr, // Conserve toutes les données existantes
-              is_active: updatedLabResult.is_active // Met à jour seulement le statut
-            } : lr
-          )
-        });
-      }
-
-      toast.success(`Résultat de laboratoire ${updatedLabResult.is_active ? 'activé' : 'désactivé'} avec succès`);
+      await toggleStatusMutation.mutateAsync({ id, isActive: !currentStatus });
     } catch (error) {
       console.error('Error toggling lab result status:', error);
-      toast.error('Erreur lors du changement de statut');
     }
   };
 
   const handlePermanentlyDeleted = async (labResult: LabResult) => {
     try {
-      await LabResultsService.permanentlyDeleteLabResult(labResult.id_);
-
-      if (labResultsData) {
-        setLabResultsData({
-          ...labResultsData,
-          data: labResultsData.data.filter(lr => lr.id_ !== labResult.id_),
-          total: labResultsData.total - 1
-        });
-      }
-
-      toast.success('Résultat de laboratoire supprimé définitivement');
+      await permanentDeleteMutation.mutateAsync(labResult.id_);
     } catch (error) {
       console.error('Error permanently deleting lab result:', error);
-      toast.error('Erreur lors de la suppression définitive du résultat de laboratoire');
     }
   };
 
   const handleLabResultDeleted = async (labResult: LabResult) => {
     try {
-      await LabResultsService.deleteLabResult(labResult.id_);
-
-      if (labResultsData) {
-        setLabResultsData({
-          ...labResultsData,
-          data: labResultsData.data.map(lr =>
-            lr.id_ === labResult.id_ ? {
-              ...lr,
-              deleted_at: new Date().toISOString(),
-              is_active: false
-            } : lr
-          )
-        });
-      }
-
-      toast.success('Résultat de laboratoire supprimé avec succès');
+      await deleteMutation.mutateAsync(labResult.id_);
     } catch (error) {
       console.error('Error deleting lab result:', error);
-      toast.error('Erreur lors de la suppression du résultat de laboratoire');
     }
+  };
+
+  const handleEditClick = (labResult: LabResult) => {
+    setSelectedLabResult(labResult);
+    setIsEditModalOpen(true);
   };
 
   const totalPages = labResultsData ? Math.ceil(labResultsData.total / itemsPerPage) : 0;
@@ -207,7 +139,7 @@ export default function LabResultsPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Search className="h-5 w-5" /> {/* Icône de recherche pour les filtres */}
+            <Search className="h-5 w-5" />
             Filtres
           </CardTitle>
         </CardHeader>
@@ -258,7 +190,7 @@ export default function LabResultsPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {loading ? (
+          {isLoading ? (
             <div className="flex items-center justify-center py-8">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
@@ -267,9 +199,9 @@ export default function LabResultsPage() {
             </div>
           ) : error ? (
             <div className="flex items-center justify-center py-8">
-              <div className="text-lg text-red-600">{error}</div>
+              <div className="text-lg text-red-600">{(error as Error).message}</div>
             </div>
-          ) : !loading && !error && labResults.length === 0 ? (
+          ) : !isLoading && labResults.length === 0 ? (
             <div className="flex items-center justify-center py-8">
               <div className="text-center">
                 <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -328,8 +260,9 @@ export default function LabResultsPage() {
                           {canAccess('lab_results', 'toggle') && !isDeleted ? (
                             <Switch
                               checked={labResult.is_active}
-                              onCheckedChange={() => handleToggleStatus(labResult.id_)}
+                              onCheckedChange={() => handleToggleStatus(labResult.id_, labResult.is_active)}
                               className="data-[state=checked]:bg-green-500"
+                              disabled={toggleStatusMutation.isPending}
                             />
                           ) : (
                             <Badge variant={labResult.is_active ? "default" : "secondary"}>
@@ -352,11 +285,12 @@ export default function LabResultsPage() {
                                 </Link>
                               </DropdownMenuItem>
                               {!isDeleted && (
-                                <DropdownMenuItem asChild>
-                                  <Link href={`/lab-results/${labResult.id_}/edit`} className="cursor-pointer">
-                                    <Edit className="h-4 w-4 mr-2" />
-                                    Modifier
-                                  </Link>
+                                <DropdownMenuItem 
+                                  className="cursor-pointer"
+                                  onClick={() => handleEditClick(labResult)}
+                                >
+                                  <Edit className="h-4 w-4 mr-2" />
+                                  Modifier
                                 </DropdownMenuItem>
                               )}
                               <DropdownMenuSeparator />
@@ -364,6 +298,7 @@ export default function LabResultsPage() {
                                 <DropdownMenuItem
                                   className="cursor-pointer text-red-600"
                                   onClick={() => handleLabResultDeleted(labResult)}
+                                  disabled={deleteMutation.isPending}
                                 >
                                   <Trash2 className="h-4 w-4 mr-2" />
                                   Supprimer
@@ -373,6 +308,7 @@ export default function LabResultsPage() {
                                 <DropdownMenuItem
                                   className="cursor-pointer"
                                   onClick={() => handleLabResultRestored(labResult)}
+                                  disabled={restoreMutation.isPending}
                                 >
                                   <CheckCircle className="h-4 w-4 mr-2" />
                                   Restaurer
@@ -382,6 +318,7 @@ export default function LabResultsPage() {
                                 <DropdownMenuItem
                                   className="cursor-pointer text-red-600"
                                   onClick={() => handlePermanentlyDeleted(labResult)}
+                                  disabled={permanentDeleteMutation.isPending}
                                 >
                                   <AlertTriangle className="h-4 w-4 mr-2" />
                                   Supprimer définitivement
@@ -396,7 +333,6 @@ export default function LabResultsPage() {
                 </TableBody>
               </Table>
 
-              {/* Pagination */}
               <DataPagination
                 currentPage={currentPage}
                 totalPages={totalPages}
@@ -409,6 +345,17 @@ export default function LabResultsPage() {
           )}
         </CardContent>
       </Card>
+
+      {selectedLabResult && (
+        <EditLabResultModal
+          isOpen={isEditModalOpen}
+          onClose={() => {
+            setIsEditModalOpen(false);
+            setSelectedLabResult(null);
+          }}
+          labResult={selectedLabResult}
+        />
+      )}
     </div>
   );
 }
