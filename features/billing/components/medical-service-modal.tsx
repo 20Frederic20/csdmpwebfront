@@ -16,7 +16,14 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import CustomSelect from "@/components/ui/custom-select";
-import { MedicalService, ServiceCategory } from "../types/medical-service.types";
+import {
+  MedicalService,
+  ServiceMainCategory,
+  ServiceCode,
+  MAIN_CATEGORY_LABELS,
+  SERVICE_CODE_LABELS,
+  CATEGORY_TO_CODES,
+} from "../types/medical-service.types";
 import { useCreateMedicalService, useUpdateMedicalService } from "../hooks/use-medical-services";
 import { useHealthFacilities } from "@/features/health-facilities/hooks/use-health-facilities";
 import { usePermissionsContext } from "@/contexts/permissions-context";
@@ -25,11 +32,8 @@ const medicalServiceSchema = z.object({
   health_facility_id: z.string().min(1, "L'établissement est requis"),
   code: z.string().min(1, "Le code est requis"),
   label: z.string().min(1, "La désignation est requise"),
-  base_price: z.preprocess(
-    (val) => (typeof val === "string" ? parseFloat(val) : val),
-    z.number().min(0, "Le prix doit être un nombre positif")
-  ),
-  category: z.nativeEnum(ServiceCategory),
+  base_price: z.coerce.number().min(0, "Le prix doit être un nombre positif"),
+  category: z.nativeEnum(ServiceMainCategory),
   is_active: z.boolean().default(true),
 });
 
@@ -57,6 +61,8 @@ export function MedicalServiceModal({
     handleSubmit,
     control,
     reset,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm<MedicalServiceFormValues>({
     resolver: zodResolver(medicalServiceSchema),
@@ -65,10 +71,30 @@ export function MedicalServiceModal({
       code: "",
       label: "",
       base_price: 0,
-      category: ServiceCategory.CONSULTATION,
+      category: ServiceMainCategory.CONSULTATION,
       is_active: true,
     },
   });
+
+  const watchCategory = watch("category");
+  const watchCode = watch("code");
+
+  // Auto-fill label when code changes
+  useEffect(() => {
+    if (watchCode && SERVICE_CODE_LABELS[watchCode as ServiceCode]) {
+      setValue("label", SERVICE_CODE_LABELS[watchCode as ServiceCode], { shouldValidate: true });
+    }
+  }, [watchCode, setValue]);
+
+  // Reset code when category changes if it's no longer valid
+  useEffect(() => {
+    if (watchCategory) {
+      const validCodes = CATEGORY_TO_CODES[watchCategory as ServiceMainCategory] || [];
+      if (watchCode && !validCodes.includes(watchCode as ServiceCode)) {
+        setValue("code", "");
+      }
+    }
+  }, [watchCategory, watchCode, setValue]);
 
   useEffect(() => {
     if (service) {
@@ -86,7 +112,7 @@ export function MedicalServiceModal({
         code: "",
         label: "",
         base_price: 0,
-        category: ServiceCategory.CONSULTATION,
+        category: ServiceMainCategory.CONSULTATION,
         is_active: true,
       });
     }
@@ -110,10 +136,15 @@ export function MedicalServiceModal({
     label: hf.name,
   })) || [];
 
-  const categoryOptions = Object.values(ServiceCategory).map((cat) => ({
-    value: cat,
-    label: cat,
+  const categoryOptions = Object.entries(MAIN_CATEGORY_LABELS).map(([value, label]) => ({
+    value,
+    label,
   }));
+
+  const codeOptions = CATEGORY_TO_CODES[watchCategory as ServiceMainCategory]?.map((code) => ({
+    value: code,
+    label: SERVICE_CODE_LABELS[code] || code,
+  })) || [];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -146,17 +177,6 @@ export function MedicalServiceModal({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="code">Code</Label>
-              <Input
-                id="code"
-                placeholder="SVC-001"
-                {...register("code")}
-              />
-              {errors.code && (
-                <p className="text-sm text-red-500">{errors.code.message}</p>
-              )}
-            </div>
-            <div className="space-y-2">
               <Label htmlFor="category">Catégorie</Label>
               <Controller
                 name="category"
@@ -166,13 +186,34 @@ export function MedicalServiceModal({
                     options={categoryOptions}
                     value={field.value}
                     onChange={field.onChange}
-                    placeholder="Catégorie"
+                    placeholder="Grandes Catégories"
                     height="h-10"
                   />
                 )}
               />
               {errors.category && (
                 <p className="text-sm text-red-500">{errors.category.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="code">Code (Sous-catégorie)</Label>
+              <Controller
+                name="code"
+                control={control}
+                render={({ field }) => (
+                  <CustomSelect
+                    options={codeOptions}
+                    value={field.value}
+                    onChange={field.onChange}
+                    placeholder="Sélectionner un code"
+                    height="h-10"
+                    isDisabled={!watchCategory}
+                  />
+                )}
+              />
+              {errors.code && (
+                <p className="text-sm text-red-500">{errors.code.message}</p>
               )}
             </div>
           </div>
