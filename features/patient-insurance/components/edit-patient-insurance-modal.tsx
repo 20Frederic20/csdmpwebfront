@@ -1,18 +1,31 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Save } from "lucide-react";
-import { PatientInsurance, CreatePatientInsuranceRequest } from "../types/patient-insurance.types";
+import { PatientInsurance } from "../types/patient-insurance.types";
 import { useUpdatePatientInsurance } from "../hooks/use-patient-insurances";
-import { usePatients } from "@/features/patients/hooks/use-patients";
 import { useInsuranceCompanies } from "@/features/insurance-companies/hooks/use-insurance-companies";
 import { Modal } from "@/components/ui/modal";
 import CustomSelect from "@/components/ui/custom-select";
+import { PatientSelect } from "@/features/patients/components/patient-select";
 import { toast } from "sonner";
+
+const editInsuranceSchema = z.object({
+  patient_id: z.string().min(1, 'Patient requis'),
+  insurance_id: z.string().min(1, 'Assurance requise'),
+  policy_number: z.string().min(1, 'Le numéro de police est requis'),
+  priority: z.number().min(1).max(10),
+  is_active: z.boolean(),
+});
+
+type EditInsuranceFormValues = z.infer<typeof editInsuranceSchema>;
 
 interface EditPatientInsuranceModalProps {
   isOpen: boolean;
@@ -24,26 +37,31 @@ interface EditPatientInsuranceModalProps {
 export function EditPatientInsuranceModal({ isOpen, onClose, patientInsurance, onUpdate }: EditPatientInsuranceModalProps) {
   const { mutateAsync: updateInsurance, isPending: loading } = useUpdatePatientInsurance();
 
-  // Queries for options
-  const { data: patientsData, isLoading: loadingPatients } = usePatients({ limit: 50 });
   const { data: insurancesData, isLoading: loadingInsurances } = useInsuranceCompanies({
-    limit: 50,
+    limit: 100,
     is_active: true
   });
 
-  const [formData, setFormData] = useState<CreatePatientInsuranceRequest>({
-    patient_id: '',
-    insurance_id: '',
-    policy_number: '',
-    priority: 1,
-    is_active: true
+  const {
+    register,
+    handleSubmit,
+    control,
+    reset,
+    formState: { errors },
+  } = useForm<EditInsuranceFormValues>({
+    resolver: zodResolver(editInsuranceSchema),
+    defaultValues: {
+      patient_id: '',
+      insurance_id: '',
+      policy_number: '',
+      priority: 1,
+      is_active: true
+    },
   });
-
-  const loadingData = loadingPatients || loadingInsurances;
 
   useEffect(() => {
-    if (patientInsurance) {
-      setFormData({
+    if (patientInsurance && isOpen) {
+      reset({
         patient_id: patientInsurance.patient_id,
         insurance_id: patientInsurance.insurance_id,
         policy_number: patientInsurance.policy_number,
@@ -51,36 +69,16 @@ export function EditPatientInsuranceModal({ isOpen, onClose, patientInsurance, o
         is_active: patientInsurance.is_active
       });
     }
-  }, [patientInsurance]);
-
-  // Transformer les données pour le CustomSelect
-  const patientOptions = (patientsData?.data || []).map(patient => ({
-    value: patient.id_,
-    label: `${patient.given_name} ${patient.family_name}`
-  }));
+  }, [patientInsurance, isOpen, reset]);
 
   const insuranceOptions = (insurancesData?.data || []).map(insurance => ({
     value: insurance.id_,
     label: insurance.name
   }));
 
-  const handleInputChange = (field: keyof CreatePatientInsuranceRequest, value: any) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!formData.patient_id || !formData.insurance_id || !formData.policy_number.trim()) {
-      toast.error('Le patient, l\'assurance et le numéro de police sont obligatoires');
-      return;
-    }
-
+  const onSubmit = async (data: EditInsuranceFormValues) => {
     try {
-      await updateInsurance({ id: patientInsurance.id_, data: formData });
+      await updateInsurance({ id: patientInsurance.id_, data });
       onUpdate();
       onClose();
     } catch (err: any) {
@@ -90,53 +88,63 @@ export function EditPatientInsuranceModal({ isOpen, onClose, patientInsurance, o
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Modifier l'assurance patient" size="md">
-      {loadingData ? (
+      {loadingInsurances ? (
         <div className="flex items-center justify-center py-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
           <span className="ml-2">Chargement des données...</span>
         </div>
       ) : (
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
 
           {/* Patient Selection - Read-only */}
           <div className="space-y-2">
-            <Label htmlFor="patient_id">Patient *</Label>
-            <CustomSelect
-              options={patientOptions}
-              value={formData.patient_id}
-              onChange={(value) => handleInputChange('patient_id', value)}
-              placeholder="Sélectionner un patient"
-              isDisabled={true}  // Toujours désactivé en édition
-              className="w-full"
+            <Label htmlFor="patient_id">Patient <span className="text-red-500">*</span></Label>
+            <Controller
+              control={control}
+              name="patient_id"
+              render={({ field }) => (
+                <PatientSelect
+                  value={field.value}
+                  onChange={field.onChange}
+                  disabled={true}
+                  required={true}
+                />
+              )}
             />
             <p className="text-xs text-gray-500">Le patient ne peut pas être modifié</p>
           </div>
 
           {/* Insurance Selection - Read-only */}
           <div className="space-y-2">
-            <Label htmlFor="insurance_id">Assurance *</Label>
-            <CustomSelect
-              options={insuranceOptions}
-              value={formData.insurance_id}
-              onChange={(value) => handleInputChange('insurance_id', value)}
-              placeholder="Sélectionner une assurance"
-              isDisabled={true}  // Toujours désactivé en édition
-              className="w-full"
+            <Label htmlFor="insurance_id">Assurance <span className="text-red-500">*</span></Label>
+            <Controller
+              control={control}
+              name="insurance_id"
+              render={({ field }) => (
+                <CustomSelect
+                  options={insuranceOptions}
+                  value={field.value}
+                  onChange={field.onChange}
+                  placeholder="Sélectionner une assurance"
+                  isDisabled={true}
+                  className="w-full"
+                />
+              )}
             />
             <p className="text-xs text-gray-500">L'assurance ne peut pas être modifiée</p>
           </div>
 
           {/* Policy Number */}
           <div className="space-y-2">
-            <Label htmlFor="policy_number">Numéro de police *</Label>
+            <Label htmlFor="policy_number">Numéro de police <span className="text-red-500">*</span></Label>
             <Input
               id="policy_number"
-              value={formData.policy_number}
-              onChange={(e) => handleInputChange('policy_number', e.target.value)}
+              {...register('policy_number')}
               placeholder="Entrez le numéro de police"
-              required
               disabled={loading}
+              className={errors.policy_number ? "border-red-500" : ""}
             />
+            {errors.policy_number && <p className="text-sm text-red-500">{errors.policy_number.message}</p>}
           </div>
 
           {/* Priority */}
@@ -147,20 +155,27 @@ export function EditPatientInsuranceModal({ isOpen, onClose, patientInsurance, o
               type="number"
               min="1"
               max="10"
-              value={formData.priority}
-              onChange={(e) => handleInputChange('priority', parseInt(e.target.value))}
+              {...register('priority', { valueAsNumber: true })}
               placeholder="Priorité (1-10)"
               disabled={loading}
+              className={errors.priority ? "border-red-500" : ""}
             />
+            {errors.priority && <p className="text-sm text-red-500">{errors.priority.message}</p>}
           </div>
 
           {/* Is Active */}
           <div className="flex items-center space-x-2">
-            <Checkbox
-              id="is_active"
-              checked={formData.is_active}
-              onCheckedChange={(checked) => handleInputChange('is_active', checked)}
-              disabled={loading}
+            <Controller
+              control={control}
+              name="is_active"
+              render={({ field }) => (
+                <Checkbox
+                  id="is_active"
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                  disabled={loading}
+                />
+              )}
             />
             <Label htmlFor="is_active">Actif</Label>
           </div>
