@@ -5,14 +5,12 @@ import { RoomOccupancy } from "../types/rooms.types";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { ArrowRightLeft, LogOut } from "lucide-react";
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger
-} from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
-import { MoreHorizontal, ArrowRightLeft, LogOut } from "lucide-react";
+    createActionsColumn,
+    ActionConfig
+} from "@/components/ui/generic-columns";
+
 
 export const occupancyColumns = (
     onTransfer: (occupancy: RoomOccupancy) => void,
@@ -22,7 +20,7 @@ export const occupancyColumns = (
             accessorKey: "patient_name",
             header: "Patient",
             cell: ({ row }) => (
-                <div className="font-medium">
+                <div className="font-medium text-blue-600">
                     {row.original.patient_name || row.original.patient_id.substring(0, 8)}
                 </div>
             ),
@@ -31,7 +29,7 @@ export const occupancyColumns = (
             accessorKey: "room_name",
             header: "Chambre",
             cell: ({ row }) => (
-                <Badge variant="outline">
+                <Badge variant="outline" className="bg-slate-50">
                     {row.original.room_name || row.original.room_id.substring(0, 8)}
                 </Badge>
             ),
@@ -40,7 +38,7 @@ export const occupancyColumns = (
             accessorKey: "admission_date",
             header: "Date d'admission",
             cell: ({ row }) => (
-                <div className="text-sm">
+                <div className="text-sm text-muted-foreground">
                     {format(new Date(row.original.admission_date), "dd MMM yyyy HH:mm", { locale: fr })}
                 </div>
             ),
@@ -49,39 +47,31 @@ export const occupancyColumns = (
             accessorKey: "is_active",
             header: "Statut",
             cell: ({ row }) => (
-                <Badge variant={row.original.is_active ? "default" : "secondary"}>
+                <Badge variant={row.original.is_active ? "default" : "secondary"} className={row.original.is_active ? "bg-green-100 text-green-700 border-green-200" : ""}>
                     {row.original.is_active ? "En cours" : "Terminé"}
                 </Badge>
             ),
         },
-        {
-            id: "actions",
-            cell: ({ row }) => {
-                const occupancy = row.original;
-                if (!occupancy.is_active) return null;
+        createActionsColumn<RoomOccupancy>(
+            (occupancy) => {
+                const actions: ActionConfig[] = [];
 
-                return (
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0">
-                                <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => onTransfer(occupancy)}>
-                                <ArrowRightLeft className="mr-2 h-4 w-4" />
-                                Transférer
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                                onClick={() => onDischarge(occupancy)}
-                                className="text-destructive focus:text-destructive"
-                            >
-                                <LogOut className="mr-2 h-4 w-4" />
-                                Enregistrer la sortie
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                );
-            },
-        },
+                if (occupancy.is_active) {
+                    actions.push({
+                        label: "Transférer",
+                        icon: <ArrowRightLeft className="mr-2 h-4 w-4" />,
+                        onClick: () => onTransfer(occupancy),
+                    });
+                    actions.push({
+                        label: "Enregistrer la sortie",
+                        icon: <LogOut className="mr-2 h-4 w-4" />,
+                        onClick: () => onDischarge(occupancy),
+                        variant: 'destructive',
+                    });
+                }
+
+                return actions;
+            }
+        ),
     ];
+

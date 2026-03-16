@@ -21,6 +21,7 @@ import { RoomFilters } from "@/features/rooms/components/room-filters";
 import { RoomFormModal } from "@/features/rooms/components/room-form-modal";
 import { DeleteRoomModal } from "@/features/rooms/components/delete-room-modal";
 import { OccupancyList } from "@/features/rooms/components/occupancy-list";
+import { AdmitPatientModal } from "@/features/rooms/components/admit-patient-modal";
 
 export default function RoomsPage() {
     const [currentPage, setCurrentPage] = useState(1);
@@ -43,6 +44,7 @@ export default function RoomsPage() {
     // State for modals
     const [isFormModalOpen, setIsFormModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [isAdmitModalOpen, setIsAdmitModalOpen] = useState(false);
     const [selectedRoom, setSelectedRoom] = useState<Room | undefined>(undefined);
 
     const handleCreate = () => {
@@ -58,6 +60,11 @@ export default function RoomsPage() {
     const handleDelete = (room: Room) => {
         setSelectedRoom(room);
         setIsDeleteModalOpen(true);
+    };
+
+    const handleAdmit = (room: Room) => {
+        setSelectedRoom(room);
+        setIsAdmitModalOpen(true);
     };
 
     const handleToggleStatus = async (id: string) => {
@@ -112,7 +119,7 @@ export default function RoomsPage() {
 
                     <DataTableWithFilters
                         title="Liste des chambres"
-                        columns={roomColumns(handleEdit, handleDelete, handleToggleStatus)}
+                        columns={roomColumns(handleEdit, handleDelete, handleToggleStatus, handleAdmit)}
                         data={rooms}
                         loading={isLoading}
                         error={error}
@@ -145,6 +152,15 @@ export default function RoomsPage() {
                     onClose={() => setIsDeleteModalOpen(false)}
                 />
             )}
+
+            <AdmitPatientModal
+                isOpen={isAdmitModalOpen}
+                onClose={() => {
+                    setIsAdmitModalOpen(false);
+                    setSelectedRoom(undefined);
+                }}
+                defaultRoomId={selectedRoom?.id_}
+            />
         </div>
     );
 }

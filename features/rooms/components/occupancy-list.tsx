@@ -22,9 +22,9 @@ export function OccupancyList() {
     });
 
     const [selectedOccupancy, setSelectedOccupancy] = useState<RoomOccupancy | null>(null);
-    const [isAdmitModalOpen, setIsAdmitModalOpen] = useState(false);
     const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
     const [isDischargeModalOpen, setIsDischargeModalOpen] = useState(false);
+
 
     const handleTransfer = (occupancy: RoomOccupancy) => {
         setSelectedOccupancy(occupancy);
@@ -51,11 +51,9 @@ export function OccupancyList() {
     return (
         <div className="space-y-4">
             <div className="flex justify-end">
-                <Button onClick={() => setIsAdmitModalOpen(true)}>
-                    <UserPlus className="mr-2 h-4 w-4" />
-                    Admettre un patient
-                </Button>
+                {/* L'admission est gérée au niveau de la page ou via la liste des chambres */}
             </div>
+
 
             <DataTableWithFilters
                 title="Liste des occupations"
@@ -72,12 +70,8 @@ export function OccupancyList() {
                 onFiltersChange={setFilters}
             />
 
-            <AdmitPatientModal
-                isOpen={isAdmitModalOpen}
-                onClose={() => setIsAdmitModalOpen(false)}
-            />
-
             {selectedOccupancy && (
+
                 <>
                     <TransferPatientModal
                         isOpen={isTransferModalOpen}

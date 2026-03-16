@@ -1,7 +1,7 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { Edit, Trash2 } from "lucide-react";
+import { Edit, Trash2, UserPlus } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Room, RoomType } from "../types/rooms.types";
@@ -29,7 +29,8 @@ export const getRoomTypeBadge = (type: RoomType) => {
 export const getRoomActions = (
     room: Room,
     onEdit: (room: Room) => void,
-    onDelete: (room: Room) => void
+    onDelete: (room: Room) => void,
+    onAdmit: (room: Room) => void
 ): ActionConfig[] => {
     return [
         {
@@ -38,18 +39,25 @@ export const getRoomActions = (
             onClick: () => onEdit(room),
         },
         {
+            label: "Admettre un patient",
+            icon: <UserPlus className="h-4 w-4" />,
+            onClick: () => onAdmit(room),
+        },
+        {
             label: "Supprimer",
             icon: <Trash2 className="h-4 w-4" />,
             onClick: () => onDelete(room),
             variant: 'destructive',
         }
+
     ];
 };
 
 export const roomColumns = (
     onEdit: (room: Room) => void,
     onDelete: (room: Room) => void,
-    onToggleStatus: (id: string) => void
+    onToggleStatus: (id: string) => void,
+    onAdmit: (room: Room) => void
 ): ColumnDef<Room>[] => [
         createNameColumn<Room>(
             (r) => r.name,
@@ -83,6 +91,6 @@ export const roomColumns = (
             ),
         },
         createActionsColumn<Room>(
-            (room) => getRoomActions(room, onEdit, onDelete)
+            (room) => getRoomActions(room, onEdit, onDelete, onAdmit)
         ),
     ];
