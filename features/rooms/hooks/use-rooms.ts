@@ -109,8 +109,8 @@ export const useAdmitPatient = () => {
             queryClient.invalidateQueries({ queryKey: ['rooms'] });
             toast.success("Patient admis avec succès");
         },
-        onError: (error: Error) => {
-            toast.error(`Erreur lors de l'admission: ${error.message}`);
+        onError: (error: any) => {
+            toast.error(error.message);
         },
     });
 };

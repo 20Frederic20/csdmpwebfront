@@ -57,15 +57,19 @@ export class RoomService {
 
     // Occupancy methods
     static async admitPatient(data: AdmitPatientRequest): Promise<RoomOccupancy> {
-        return FetchService.post<RoomOccupancy>(`${this.ENDPOINT}/admit`, data, 'RoomOccupancy');
+        return FetchService.post<RoomOccupancy>(`${this.ENDPOINT}/admit`, data, 'chambre', {
+            customMessages: {
+                409: "Il n'y a plus de place libre dans cette chambre"
+            }
+        });
     }
 
     static async transferPatient(data: TransferPatientRequest): Promise<RoomOccupancy> {
-        return FetchService.post<RoomOccupancy>(`${this.ENDPOINT}/transfer`, data, 'RoomOccupancy');
+        return FetchService.post<RoomOccupancy>(`${this.ENDPOINT}/transfer`, data, 'chambre');
     }
 
     static async dischargePatient(data: DischargePatientRequest): Promise<RoomOccupancy> {
-        return FetchService.post<RoomOccupancy>(`${this.ENDPOINT}/discharge`, data, 'RoomOccupancy');
+        return FetchService.post<RoomOccupancy>(`${this.ENDPOINT}/discharge`, data, 'chambre');
     }
 
     static async getOccupancies(params: RoomOccupancyQueryParams = {}): Promise<RoomOccupancyResponse> {
