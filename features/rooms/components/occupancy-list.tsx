@@ -74,7 +74,7 @@ export function OccupancyList() {
                             setSelectedOccupancy(null);
                         }}
                         patientId={selectedOccupancy.patient_id}
-                        patientName={selectedOccupancy.patient_name || "Patient"}
+                        patientName={selectedOccupancy.patient_full_name || "Patient"}
                         currentRoomId={selectedOccupancy.room_id}
                     />
                     <DischargePatientModal
@@ -84,7 +84,7 @@ export function OccupancyList() {
                             setSelectedOccupancy(null);
                         }}
                         patientId={selectedOccupancy.patient_id}
-                        patientName={selectedOccupancy.patient_name || "Patient"}
+                        patientName={selectedOccupancy.patient_full_name || "Patient"}
                         roomName={selectedOccupancy.room_name || "Chambre"}
                     />
                 </>

@@ -78,7 +78,7 @@ export interface RoomOccupancy {
     updated_at: string | null;
 
     // Joined data for UI
-    patient_name?: string;
+    patient_full_name?: string;
     room_name?: string;
 }
 

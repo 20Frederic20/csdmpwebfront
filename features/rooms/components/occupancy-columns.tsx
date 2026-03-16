@@ -40,11 +40,11 @@ export const occupancyColumns = (
     onDischarge: (occupancy: RoomOccupancy) => void
 ): ColumnDef<RoomOccupancy>[] => [
         {
-            accessorKey: "patient_name",
+            accessorKey: "patient_full_name",
             header: "Patient",
             cell: ({ row }) => (
                 <div className="font-medium text-blue-600">
-                    {row.original.patient_name || row.original.patient_id.substring(0, 8)}
+                    {row.original.patient_full_name?.substring(0, 20) || row.original.patient_id.substring(0, 8)}
                 </div>
             ),
         },
