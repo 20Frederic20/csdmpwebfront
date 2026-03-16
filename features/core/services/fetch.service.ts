@@ -1,12 +1,16 @@
 // Service générique pour les appels API avec authentification
 
 import { AuthClientService } from '@/features/core/auth/services/auth-client.service';
+import { handleFetchError } from '@/lib/error-handler';
 
 export interface FetchOptions {
   headers?: Record<string, string>;
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
   body?: any;
   signal?: AbortSignal;
+  resource?: string;
+  action?: string;
+  customMessages?: Record<number, string>;
 }
 
 export class FetchService {
@@ -36,7 +40,11 @@ export class FetchService {
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to fetch ${dataKey || 'data'}: ${response.statusText}`);
+        return handleFetchError(response, { 
+          resource: options?.resource || dataKey || 'données',
+          action: options?.action,
+          customMessages: options?.customMessages
+        });
       }
 
       if (response.status === 204) {
@@ -74,7 +82,11 @@ export class FetchService {
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to ${options.method} ${dataKey || 'data'}: ${response.statusText}`);
+        return handleFetchError(response, { 
+          resource: options.resource || dataKey || 'données',
+          action: options.action,
+          customMessages: options.customMessages
+        });
       }
 
       if (response.status === 204) {
