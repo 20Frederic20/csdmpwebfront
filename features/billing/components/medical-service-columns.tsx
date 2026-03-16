@@ -9,13 +9,33 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Edit, Trash } from "lucide-react";
+import { RotateCcw, MoreHorizontal, Edit, Trash2 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { MedicalService, ServiceCategory } from "../types/medical-service.types";
 
-export const getMedicalServiceColumns = (onEdit: (service: MedicalService) => void, onDelete: (service: MedicalService) => void): ColumnDef<MedicalService>[] => [
+export const getMedicalServiceColumns = (
+  onEdit: (service: MedicalService) => void,
+  onDelete: (service: MedicalService) => void,
+  onToggleStatus: (id: string) => void,
+  onRestore: (id: string) => void,
+  onPermanentDelete: (service: MedicalService) => void
+): ColumnDef<MedicalService>[] => [
   {
     accessorKey: "code",
     header: "Code",
+    cell: ({ row }) => {
+      const service = row.original;
+      return (
+        <div className="flex flex-col">
+          <span className="font-mono text-xs">{service.code}</span>
+          {service.deleted_at && (
+            <Badge variant="destructive" className="w-fit text-[10px] h-4 mt-1">
+              Supprimé
+            </Badge>
+          )}
+        </div>
+      );
+    }
   },
   {
     accessorKey: "label",
@@ -52,11 +72,18 @@ export const getMedicalServiceColumns = (onEdit: (service: MedicalService) => vo
     accessorKey: "is_active",
     header: "Statut",
     cell: ({ row }) => {
-      const isActive = row.getValue("is_active") as boolean;
+      const service = row.original;
       return (
-        <Badge variant={isActive ? "default" : "destructive"}>
-          {isActive ? "Actif" : "Inactif"}
-        </Badge>
+        <div className="flex items-center gap-2">
+          <Switch
+            checked={service.is_active && !service.deleted_at}
+            onCheckedChange={() => onToggleStatus(service.id)}
+            disabled={!!service.deleted_at}
+          />
+          <span className={`text-xs ${service.is_active && !service.deleted_at ? "text-green-600 font-medium" : "text-muted-foreground"}`}>
+            {service.deleted_at ? "N/A" : service.is_active ? "Actif" : "Inactif"}
+          </span>
+        </div>
       );
     },
   },
@@ -75,13 +102,30 @@ export const getMedicalServiceColumns = (onEdit: (service: MedicalService) => vo
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem onClick={() => onEdit(service)}>
-              <Edit className="mr-2 h-4 w-4" /> Modifier
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => onDelete(service)} className="text-red-600">
-              <Trash className="mr-2 h-4 w-4" /> Supprimer
-            </DropdownMenuItem>
+            
+            {!service.deleted_at && (
+              <>
+                <DropdownMenuItem onClick={() => onEdit(service)}>
+                  <Edit className="mr-2 h-4 w-4" /> Modifier
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => onDelete(service)} className="text-red-600">
+                  <Trash2 className="mr-2 h-4 w-4" /> Supprimer
+                </DropdownMenuItem>
+              </>
+            )}
+
+            {service.deleted_at && (
+              <>
+                <DropdownMenuItem onClick={() => onRestore(service.id)}>
+                  <RotateCcw className="mr-2 h-4 w-4" /> Restaurer
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => onPermanentDelete(service)} className="text-red-600">
+                  <Trash2 className="mr-2 h-4 w-4" /> Supprimer définitivement
+                </DropdownMenuItem>
+              </>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       );

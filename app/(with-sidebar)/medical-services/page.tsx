@@ -3,7 +3,13 @@
 import { useState, useMemo } from "react";
 import { DataTableWithFilters } from "@/components/ui/data-table-with-filters";
 import { getMedicalServiceColumns } from "@/features/billing/components/medical-service-columns";
-import { useMedicalServices, useDeleteMedicalService } from "@/features/billing/hooks/use-medical-services";
+import { 
+  useMedicalServices, 
+  useDeleteMedicalService, 
+  useRestoreMedicalService, 
+  useToggleMedicalServiceStatus, 
+  usePermanentDeleteMedicalService 
+} from "@/features/billing/hooks/use-medical-services";
 import { MedicalService } from "@/features/billing/types/medical-service.types";
 import { usePermissionsContext } from "@/contexts/permissions-context";
 import { useAuthRefresh } from "@/hooks/use-auth-refresh";
@@ -11,16 +17,8 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { MedicalServiceModal } from "@/features/billing/components/medical-service-modal";
 import { MedicalServiceFilters } from "@/features/billing/components/medical-service-filters";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { DeleteMedicalServiceModal } from "@/features/billing/components/delete-medical-service-modal";
+import { PermanentDeleteMedicalServiceModal } from "@/features/billing/components/permanent-delete-medical-service-modal";
 
 export default function MedicalServicesPage() {
   const { isLoading: authLoading } = useAuthRefresh();
@@ -28,12 +26,15 @@ export default function MedicalServicesPage() {
   
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
-  const [filters, setFilters] = useState<Record<string, any>>({});
+  const [filters, setFilters] = useState<Record<string, any>>({
+    include_deleted: false,
+  });
   
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedService, setSelectedService] = useState<MedicalService | null>(null);
   
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [permanentDeleteModalOpen, setPermanentDeleteModalOpen] = useState(false);
   const [serviceToDelete, setServiceToDelete] = useState<MedicalService | null>(null);
 
   const { data, isLoading, isError, error } = useMedicalServices({
@@ -42,7 +43,8 @@ export default function MedicalServicesPage() {
     ...filters,
   });
 
-  const deleteService = useDeleteMedicalService();
+  const { mutateAsync: restoreService } = useRestoreMedicalService();
+  const { mutateAsync: toggleStatus } = useToggleMedicalServiceStatus();
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -70,22 +72,37 @@ export default function MedicalServicesPage() {
 
   const handleDeleteClick = (service: MedicalService) => {
     setServiceToDelete(service);
-    setDeleteDialogOpen(true);
+    setDeleteModalOpen(true);
   };
 
-  const confirmDelete = async () => {
-    if (serviceToDelete) {
-      try {
-        await deleteService.mutateAsync(serviceToDelete.id);
-        setDeleteDialogOpen(false);
-        setServiceToDelete(null);
-      } catch (err) {
-        // Handled by hook
-      }
+  const handlePermanentDeleteClick = (service: MedicalService) => {
+    setServiceToDelete(service);
+    setPermanentDeleteModalOpen(true);
+  };
+
+  const handleToggleStatus = async (id: string) => {
+    try {
+      await toggleStatus(id);
+    } catch (err) {
+      // Handled by hook
     }
   };
 
-  const columns = useMemo(() => getMedicalServiceColumns(handleEdit, handleDeleteClick), []);
+  const handleRestore = async (id: string) => {
+    try {
+      await restoreService(id);
+    } catch (err) {
+      // Handled by hook
+    }
+  };
+
+  const columns = useMemo(() => getMedicalServiceColumns(
+    handleEdit, 
+    handleDeleteClick,
+    handleToggleStatus,
+    handleRestore,
+    handlePermanentDeleteClick
+  ), []);
 
   if (authLoading) {
     return <div className="p-8 text-center">Chargement...</div>;
@@ -124,7 +141,7 @@ export default function MedicalServicesPage() {
         onItemsPerPageChange={handleItemsPerPageChange}
         onFiltersChange={handleFiltersChange}
         filterComponent={MedicalServiceFilters as any}
-        initialFilters={{}}
+        initialFilters={{ include_deleted: false }}
       />
 
       <MedicalServiceModal
@@ -133,23 +150,26 @@ export default function MedicalServicesPage() {
         service={selectedService}
       />
 
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Êtes-vous sûr ?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Cette action supprimera définitivement le service médical{" "}
-              <strong>{serviceToDelete?.label}</strong> ({serviceToDelete?.code}).
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700">
-              Supprimer
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {serviceToDelete && (
+        <>
+          <DeleteMedicalServiceModal
+            service={serviceToDelete}
+            isOpen={deleteModalOpen}
+            onClose={() => {
+              setDeleteModalOpen(false);
+              setServiceToDelete(null);
+            }}
+          />
+          <PermanentDeleteMedicalServiceModal
+            service={serviceToDelete}
+            isOpen={permanentDeleteModalOpen}
+            onClose={() => {
+              setPermanentDeleteModalOpen(false);
+              setServiceToDelete(null);
+            }}
+          />
+        </>
+      )}
     </div>
   );
 }

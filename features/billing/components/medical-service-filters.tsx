@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label";
 import { RotateCcw } from "lucide-react";
 import { ServiceMainCategory, MAIN_CATEGORY_LABELS } from "../types/medical-service.types";
 
+import { Switch } from "@/components/ui/switch";
+
 interface MedicalServiceFiltersProps {
   filters: Record<string, any>;
   onFiltersChange: (filters: Record<string, any>) => void;
@@ -27,6 +29,7 @@ export function MedicalServiceFilters({
     onFiltersChange({
       search: "",
       category: undefined,
+      include_deleted: false,
     });
   };
 
@@ -50,7 +53,7 @@ export function MedicalServiceFilters({
           className="h-10"
         />
       </div>
-      <div className="space-y-2 w-[250px] pb-5">
+      <div className="space-y-2 w-[200px] pb-5">
         <Label htmlFor="category" className="text-sm font-medium text-muted-foreground">Catégorie</Label>
         <CustomSelect
           options={categoryOptions}
@@ -61,6 +64,16 @@ export function MedicalServiceFilters({
           placeholder="Filtrer par catégorie"
           height="h-10"
         />
+      </div>
+      <div className="flex items-center space-x-2 pt-10 px-2">
+        <Switch
+          id="include-deleted"
+          checked={filters.include_deleted || false}
+          onCheckedChange={(checked) => handleFilterChange("include_deleted", checked)}
+        />
+        <Label htmlFor="include-deleted" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer">
+          Afficher les supprimés
+        </Label>
       </div>
       <div className="pt-8">
         <Button

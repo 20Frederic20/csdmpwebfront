@@ -71,3 +71,49 @@ export function useDeleteMedicalService() {
     },
   });
 }
+
+export function useRestoreMedicalService() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => MedicalServiceService.restoreMedicalService(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [MEDICAL_SERVICES_KEY] });
+      toast.success('Service médical restauré avec succès');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Erreur lors de la restauration du service médical');
+    },
+  });
+}
+
+export function useToggleMedicalServiceStatus() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => MedicalServiceService.toggleMedicalServiceStatus(id),
+    onSuccess: (updatedService) => {
+      queryClient.invalidateQueries({ queryKey: [MEDICAL_SERVICES_KEY] });
+      queryClient.invalidateQueries({ queryKey: [MEDICAL_SERVICES_KEY, updatedService.id] });
+      toast.success(`Service médical ${updatedService.is_active ? 'activé' : 'désactivé'} avec succès`);
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Erreur lors du changement de statut');
+    },
+  });
+}
+
+export function usePermanentDeleteMedicalService() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => MedicalServiceService.permanentlyDeleteMedicalService(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [MEDICAL_SERVICES_KEY] });
+      toast.success('Service médical supprimé définitivement');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Erreur lors de la suppression définitive');
+    },
+  });
+}

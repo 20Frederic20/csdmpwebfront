@@ -233,6 +233,7 @@ export interface MedicalService {
   is_active: boolean;
   created_at?: string;
   updated_at?: string;
+  deleted_at?: string | null;
 }
 
 export interface CreateMedicalServiceDTO {
@@ -253,6 +254,7 @@ export interface ListMedicalServicesQueryParams {
   category?: ServiceCategory;
   health_facility_id?: string;
   search?: string;
+  include_deleted?: boolean;
 }
 
 export interface ListMedicalServicesQM {
