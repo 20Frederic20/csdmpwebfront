@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EnhancedDataTable } from "@/components/ui/enhanced-data-table";
 import { ColumnDef } from "@tanstack/react-table";
@@ -63,14 +63,14 @@ export function DataTableWithFilters<TData, TValue>({
   const [filters, setFilters] = useState<Record<string, any>>(initialFilters);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
-  const handleFiltersChange = (newFilters: Record<string, any>) => {
+  const handleFiltersChange = useCallback((newFilters: Record<string, any>) => {
     setFilters(newFilters);
     onFiltersChange?.(newFilters);
     // Reset to page 1 when filters change
     onPageChange?.(1);
-  };
+  }, [onFiltersChange, onPageChange]);
 
-  const handleFiltersReset = () => {
+  const handleFiltersReset = useCallback(() => {
     const resetFilters = Object.keys(initialFilters).reduce((acc, key) => {
       acc[key] = initialFilters[key];
       return acc;
@@ -79,7 +79,7 @@ export function DataTableWithFilters<TData, TValue>({
     setFilters(resetFilters);
     onFiltersChange?.(resetFilters);
     onPageChange?.(1);
-  };
+  }, [initialFilters, onFiltersChange, onPageChange]);
 
   const handleToggleAdvanced = () => {
     setShowAdvancedFilters(!showAdvancedFilters);

@@ -92,5 +92,9 @@ export interface RoomOccupancyQueryParams {
     offset?: number;
     patient_id?: string;
     room_id?: string;
-    is_active?: boolean;
+    health_facility_id?: string;
+    is_discharged?: boolean;
+    discharge_date?: string;
+    sort_by?: string;
+    sort_order?: 'asc' | 'desc';
 }

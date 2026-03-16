@@ -15,3 +15,11 @@ export const roomSchema = z.object({
 });
 
 export type RoomFormValues = z.infer<typeof roomSchema>;
+
+export const occupancyFilterSchema = z.object({
+    patient_id: z.string().optional(),
+    is_discharged: z.boolean().optional(),
+    discharge_date: z.string().optional(),
+});
+
+export type OccupancyFilterValues = z.infer<typeof occupancyFilterSchema>;

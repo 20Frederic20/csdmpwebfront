@@ -79,6 +79,11 @@ export class RoomService {
         if (params.offset) queryParams.append('offset', params.offset.toString());
         if (params.patient_id) queryParams.append('patient_id', params.patient_id);
         if (params.room_id) queryParams.append('room_id', params.room_id);
+        if (params.health_facility_id) queryParams.append('health_facility_id', params.health_facility_id);
+        if (params.is_discharged !== undefined) queryParams.append('is_discharged', params.is_discharged.toString());
+        if (params.discharge_date) queryParams.append('discharge_date', params.discharge_date);
+        if (params.sort_by) queryParams.append('sort_by', params.sort_by);
+        if (params.sort_order) queryParams.append('sort_order', params.sort_order);
 
         const queryString = queryParams.toString();
         const endpoint = queryString ? `${this.OCCUPANCY_ENDPOINT}?${queryString}` : this.OCCUPANCY_ENDPOINT;

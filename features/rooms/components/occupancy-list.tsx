@@ -11,11 +11,12 @@ import { OccupancyFilters } from "./occupancy-filters";
 export function OccupancyList() {
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(20);
-    const [filters, setFilters] = useState<Record<string, string | boolean | number | undefined>>({});
+    const [filters, setFilters] = useState<Record<string, any>>({});
 
     const { data: occupancyResponse, isLoading } = useOccupancies({
         limit: itemsPerPage,
         offset: (currentPage - 1) * itemsPerPage,
+        ...filters,
     });
 
     const [selectedOccupancy, setSelectedOccupancy] = useState<RoomOccupancy | null>(null);

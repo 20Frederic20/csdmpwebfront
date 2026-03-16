@@ -90,11 +90,22 @@ export const useToggleRoomStatus = () => {
     });
 };
 
+import { usePermissionsContext } from "@/contexts/permissions-context";
+
 // Occupancy Hooks
 export const useOccupancies = (params: RoomOccupancyQueryParams = {}) => {
+    const { user, loading: permissionsLoading } = usePermissionsContext();
+
+    const queryParams: RoomOccupancyQueryParams = {
+        sort_by: 'health_facility_id',
+        ...params,
+        health_facility_id: user?.health_facility_id || params.health_facility_id || undefined,
+    };
+
     return useQuery({
-        queryKey: ['room-occupancies', params],
-        queryFn: () => RoomService.getOccupancies(params),
+        queryKey: ['room-occupancies', queryParams],
+        queryFn: () => RoomService.getOccupancies(queryParams),
+        enabled: !permissionsLoading,
         staleTime: 5 * 60 * 1000,
     });
 };
