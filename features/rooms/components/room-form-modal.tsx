@@ -23,6 +23,10 @@ import {
 import { useCreateRoom, useUpdateRoom } from "../hooks/use-rooms";
 import { HealthFacilitySelect } from "@/features/health-facilities/components/health-facility-select";
 import { DepartmentSelect } from "@/features/departments/components/department-select";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { roomSchema, RoomFormValues } from "../schemas/rooms.schema";
+import { usePermissionsContext } from "@/contexts/permissions-context";
 
 interface RoomFormModalProps {
     isOpen: boolean;
@@ -36,43 +40,53 @@ export function RoomFormModal({
     room,
 }: RoomFormModalProps) {
     const isEdit = !!room;
+    const { user } = usePermissionsContext();
     const { mutateAsync: createRoom, isPending: isCreating } = useCreateRoom();
     const { mutateAsync: updateRoom, isPending: isUpdating } = useUpdateRoom();
     const loading = isCreating || isUpdating;
 
-    const [formData, setFormData] = useState<CreateRoomRequest>({
-        name: "",
-        capacity: 1,
-        type_: RoomType.STANDARD,
-        health_facility_id: "",
-        department_id: null,
+    const {
+        register,
+        handleSubmit,
+        control,
+        reset,
+        watch,
+        setValue,
+        formState: { errors }
+    } = useForm<RoomFormValues>({
+        resolver: zodResolver(roomSchema),
+        defaultValues: {
+            name: "",
+            capacity: 1,
+            type_: RoomType.STANDARD,
+            health_facility_id: user?.health_facility_id || "",
+            department_id: null,
+        },
     });
 
     useEffect(() => {
-        if (room) {
-            const timer = setTimeout(() => {
-                setFormData({
+        if (isOpen) {
+            if (room) {
+                reset({
                     name: room.name,
                     capacity: room.capacity,
                     type_: room.type_,
                     health_facility_id: room.health_facility_id,
                     department_id: room.department_id,
                 });
-            }, 0);
-            return () => clearTimeout(timer);
-        } else {
-            const timer = setTimeout(() => {
-                setFormData({
+            } else {
+                reset({
                     name: "",
                     capacity: 1,
                     type_: RoomType.STANDARD,
-                    health_facility_id: "",
+                    health_facility_id: user?.health_facility_id || "",
                     department_id: null,
                 });
-            }, 0);
-            return () => clearTimeout(timer);
+            }
         }
-    }, [room, isOpen]);
+    }, [room, isOpen, reset, user?.health_facility_id]);
+
+    const healthFacilityId = watch("health_facility_id");
 
     const roomTypeOptions = [
         { value: RoomType.STANDARD, label: "Standard" },
@@ -81,26 +95,12 @@ export function RoomFormModal({
         { value: RoomType.PEDIATRICS, label: "Pédiatrie" },
     ];
 
-    const handleInputChange = (field: keyof CreateRoomRequest, value: string | string[] | number | RoomType | null) => {
-        const normalizedValue = Array.isArray(value) ? value[0] : value;
-        setFormData((prev) => ({
-            ...prev,
-            [field]: normalizedValue,
-        }));
-    };
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-
-        if (!formData.name.trim()) return;
-        if (formData.capacity <= 0) return;
-        if (!isEdit && !formData.health_facility_id) return;
-
+    const onSubmit = async (data: RoomFormValues) => {
         try {
             if (isEdit && room) {
-                await updateRoom({ id: room.id_, data: formData as UpdateRoomRequest });
+                await updateRoom({ id: room.id_, data: data as UpdateRoomRequest });
             } else {
-                await createRoom(formData);
+                await createRoom(data as CreateRoomRequest);
             }
             onClose();
         } catch (error) {
@@ -122,50 +122,76 @@ export function RoomFormModal({
                     </DialogDescription>
                 </DialogHeader>
 
-                <form onSubmit={handleSubmit} className="space-y-6">
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                     <div className="space-y-4">
                         <div className="space-y-2">
                             <Label htmlFor="name">Nom / Numéro de la chambre *</Label>
                             <Input
                                 id="name"
-                                value={formData.name}
-                                onChange={(e) => handleInputChange("name", e.target.value)}
+                                {...register("name")}
                                 placeholder="Ex: Chambre 101"
-                                required
                                 disabled={loading}
                             />
+                            {errors.name && (
+                                <p className="text-sm text-red-500">{errors.name.message}</p>
+                            )}
                         </div>
 
-                        <HealthFacilitySelect
-                            value={formData.health_facility_id}
-                            onChange={(val) => {
-                                handleInputChange("health_facility_id", val || "");
-                                handleInputChange("department_id", null); // Reset department when facility changes
-                            }}
-                            required={!isEdit}
-                            disabled={loading}
-                            className="space-y-1"
-                        />
+                        <div className="space-y-2">
+                            <HealthFacilitySelect
+                                value={healthFacilityId}
+                                onChange={(val) => {
+                                    setValue("health_facility_id", val || "", { shouldValidate: true });
+                                    setValue("department_id", null); // Reset department when facility changes
+                                }}
+                                required={true}
+                                disabled={loading || !!user?.health_facility_id}
+                                className="space-y-1"
+                            />
+                            {errors.health_facility_id && (
+                                <p className="text-sm text-red-500">{errors.health_facility_id.message}</p>
+                            )}
+                        </div>
 
-                        <DepartmentSelect
-                            value={formData.department_id || undefined}
-                            onChange={(val) => handleInputChange("department_id", val)}
-                            healthFacilityId={formData.health_facility_id}
-                            disabled={loading || !formData.health_facility_id}
-                            required={false}
-                            placeholder="Sélectionner un département (optionnel)"
-                            className="space-y-1"
-                        />
+                        <div className="space-y-2">
+                            <Controller
+                                control={control}
+                                name="department_id"
+                                render={({ field }) => (
+                                    <DepartmentSelect
+                                        value={field.value || undefined}
+                                        onChange={(val) => field.onChange(val)}
+                                        healthFacilityId={healthFacilityId}
+                                        disabled={loading || !healthFacilityId}
+                                        required={false}
+                                        placeholder="Sélectionner un département (optionnel)"
+                                        className="space-y-1"
+                                    />
+                                )}
+                            />
+                            {errors.department_id && (
+                                <p className="text-sm text-red-500">{errors.department_id.message}</p>
+                            )}
+                        </div>
 
                         <div className="space-y-2">
                             <Label htmlFor="type">Type de chambre *</Label>
-                            <CustomSelect
-                                options={roomTypeOptions}
-                                value={formData.type_}
-                                onChange={(val) => handleInputChange("type_", val)}
-                                placeholder="Sélectionner le type"
-                                isDisabled={loading}
+                            <Controller
+                                control={control}
+                                name="type_"
+                                render={({ field }) => (
+                                    <CustomSelect
+                                        options={roomTypeOptions}
+                                        value={field.value}
+                                        onChange={(val) => field.onChange(val)}
+                                        placeholder="Sélectionner le type"
+                                        isDisabled={loading}
+                                    />
+                                )}
                             />
+                            {errors.type_ && (
+                                <p className="text-sm text-red-500">{errors.type_.message}</p>
+                            )}
                         </div>
 
                         <div className="space-y-2">
@@ -174,11 +200,12 @@ export function RoomFormModal({
                                 id="capacity"
                                 type="number"
                                 min={1}
-                                value={formData.capacity}
-                                onChange={(e) => handleInputChange("capacity", parseInt(e.target.value))}
-                                required
+                                {...register("capacity", { valueAsNumber: true })}
                                 disabled={loading}
                             />
+                            {errors.capacity && (
+                                <p className="text-sm text-red-500">{errors.capacity.message}</p>
+                            )}
                         </div>
                     </div>
 
