@@ -12,6 +12,29 @@ import {
 } from "@/components/ui/generic-columns";
 
 
+export const getOccupancyActions = (
+    occupancy: RoomOccupancy,
+    onTransfer: (occupancy: RoomOccupancy) => void,
+    onDischarge: (occupancy: RoomOccupancy) => void
+): ActionConfig[] => {
+    const actions: ActionConfig[] = [];
+
+    actions.push({
+        label: "Transférer",
+        icon: <ArrowRightLeft className="mr-2 h-4 w-4" />,
+        onClick: () => onTransfer(occupancy),
+    });
+    actions.push({
+        label: "Enregistrer la sortie",
+        icon: <LogOut className="mr-2 h-4 w-4" />,
+        onClick: () => onDischarge(occupancy),
+        variant: 'destructive',
+    });
+
+
+    return actions;
+};
+
 export const occupancyColumns = (
     onTransfer: (occupancy: RoomOccupancy) => void,
     onDischarge: (occupancy: RoomOccupancy) => void
@@ -44,34 +67,38 @@ export const occupancyColumns = (
             ),
         },
         {
-            accessorKey: "is_active",
-            header: "Statut",
+            accessorKey: "discharge_date",
+            header: "Date de sortie",
             cell: ({ row }) => (
-                <Badge variant={row.original.is_active ? "default" : "secondary"} className={row.original.is_active ? "bg-green-100 text-green-700 border-green-200" : ""}>
-                    {row.original.is_active ? "En cours" : "Terminé"}
-                </Badge>
+                <div className="text-sm text-muted-foreground">
+                    {row.original.discharge_date 
+                        ? format(new Date(row.original.discharge_date), "dd MMM yyyy HH:mm", { locale: fr })
+                        : "---"
+                    }
+                </div>
             ),
         },
+        {
+            accessorKey: "is_active",
+            header: "Statut",
+            cell: ({ row }) => {
+                const isActive = !row.original.discharge_date;
+                return (
+                    <Badge 
+                        variant={isActive ? "default" : "secondary"} 
+                        className={isActive ? "bg-green-100 text-green-700 border-green-200" : ""}
+                    >
+                        {isActive ? "Hospitalisé" : "Sortie enregistrée"}
+                    </Badge>
+                );
+            },
+        },
+
+
+
         createActionsColumn<RoomOccupancy>(
-            (occupancy) => {
-                const actions: ActionConfig[] = [];
-
-                if (occupancy.is_active) {
-                    actions.push({
-                        label: "Transférer",
-                        icon: <ArrowRightLeft className="mr-2 h-4 w-4" />,
-                        onClick: () => onTransfer(occupancy),
-                    });
-                    actions.push({
-                        label: "Enregistrer la sortie",
-                        icon: <LogOut className="mr-2 h-4 w-4" />,
-                        onClick: () => onDischarge(occupancy),
-                        variant: 'destructive',
-                    });
-                }
-
-                return actions;
-            }
+            (occupancy) => getOccupancyActions(occupancy, onTransfer, onDischarge)
         ),
     ];
+
 

@@ -6,9 +6,6 @@ import { useOccupancies, RoomOccupancy } from "../";
 import { occupancyColumns } from "./occupancy-columns";
 import { TransferPatientModal } from "./transfer-patient-modal";
 import { DischargePatientModal } from "./discharge-patient-modal";
-import { Button } from "@/components/ui/button";
-import { UserPlus } from "lucide-react";
-import { AdmitPatientModal } from "./admit-patient-modal";
 import { OccupancyFilters } from "./occupancy-filters";
 
 export function OccupancyList() {
@@ -50,9 +47,6 @@ export function OccupancyList() {
 
     return (
         <div className="space-y-4">
-            <div className="flex justify-end">
-                {/* L'admission est gérée au niveau de la page ou via la liste des chambres */}
-            </div>
 
 
             <DataTableWithFilters
