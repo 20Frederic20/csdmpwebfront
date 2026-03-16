@@ -182,10 +182,14 @@ export function EnhancedDataTable<TData, TValue>({
 
       <div className="flex items-center justify-between">
         <div className="text-sm text-muted-foreground">
-          {total !== undefined 
-            ? `${Object.keys(rowSelection).length} sur ${data.length} ligne(s) sélectionnée(s), ${data.length} sur ${total} résultat(s)`
-            : `${Object.keys(rowSelection).length} sur ${data.length} ligne(s) sélectionnée(s)`
-          }
+          {total !== undefined ? (
+            <>
+              <div>{Object.keys(rowSelection).length} sur {data.length} ligne(s) sélectionnée(s)</div>
+              <div>{data.length} sur {total} résultat(s)</div>
+            </>
+          ) : (
+            <div>{Object.keys(rowSelection).length} sur {data.length} ligne(s) sélectionnée(s)</div>
+          )}
         </div>
         
         <div className="flex items-center space-x-2">
@@ -211,7 +215,6 @@ export function EnhancedDataTable<TData, TValue>({
               disabled={currentPage <= 1}
             >
               <ChevronLeft className="h-4 w-4" />
-              Précédent
             </Button>
             
             <span className="text-sm text-muted-foreground px-2">
@@ -227,7 +230,6 @@ export function EnhancedDataTable<TData, TValue>({
               }}
               disabled={currentPage >= totalPages}
             >
-              Suivant
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
