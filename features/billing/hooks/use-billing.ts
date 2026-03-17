@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { BillingService } from '../services/billing.service';
-import { ListInvoicesQueryParams } from '../types/billing.types';
+import { ListInvoicesQueryParams, MarkAsPaidPayload } from '../types/billing.types';
 import { toast } from 'sonner';
 
 export const BILLING_KEY = 'billing';
@@ -25,7 +25,7 @@ export function useMarkInvoiceAsPaid() {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: (id: string) => BillingService.markAsPaid(id),
+        mutationFn: ({ id, payload }: { id: string, payload: MarkAsPaidPayload }) => BillingService.markAsPaid(id, payload),
         onSuccess: (data) => {
             queryClient.invalidateQueries({ queryKey: [BILLING_KEY] });
             queryClient.invalidateQueries({ queryKey: [BILLING_KEY, data.id] });

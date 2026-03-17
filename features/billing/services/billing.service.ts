@@ -1,4 +1,4 @@
-import { ListInvoicesQM, ListInvoicesQueryParams, Invoice } from '../types/billing.types';
+import { ListInvoicesQM, ListInvoicesQueryParams, Invoice, MarkAsPaidPayload } from '../types/billing.types';
 import { FetchService } from '@/features/core/services/fetch.service';
 
 export class BillingService {
@@ -22,7 +22,7 @@ export class BillingService {
     return FetchService.get<Invoice>(`invoices/${id}`, 'Invoice');
   }
 
-  static async markAsPaid(id: string): Promise<Invoice> {
-    return FetchService.post<Invoice>(`invoices/${id}/pay`, {}, 'Invoice');
+  static async markAsPaid(id: string, payload: MarkAsPaidPayload): Promise<Invoice> {
+    return FetchService.post<Invoice>(`invoices/${id}/pay`, payload, 'Invoice');
   }
 }

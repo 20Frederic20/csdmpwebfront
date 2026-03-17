@@ -1,30 +1,25 @@
 "use client";
 
-import { useInvoice, useMarkInvoiceAsPaid } from "@/features/billing/hooks/use-billing";
+import { useState } from "react";
+import { useInvoice } from "@/features/billing/hooks/use-billing";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Printer, CheckCircle, Clock, Check, XCircle } from "lucide-react";
+import { ArrowLeft, Printer, CheckCircle } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { formatAmount, getInvoiceStatusBadge } from "@/features/billing/components/billing-columns";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { MarkAsPaidModal } from "@/features/billing/components/mark-as-paid-modal";
 
 export default function InvoiceDetailsPage() {
   const { id } = useParams();
   const router = useRouter();
   const { data: invoice, isLoading, isError } = useInvoice(id as string);
-  const markAsPaid = useMarkInvoiceAsPaid();
+  const [isMarkAsPaidOpen, setIsMarkAsPaidOpen] = useState(false);
 
   const handlePrint = () => {
     window.print();
-  };
-
-  const handleMarkAsPaid = async () => {
-    if (!invoice) return;
-    try {
-      await markAsPaid.mutateAsync(invoice.id);
-    } catch (err) {}
   };
 
   if (isLoading) return <div className="p-8 text-center">Chargement...</div>;
@@ -43,7 +38,7 @@ export default function InvoiceDetailsPage() {
             Imprimer
           </Button>
           {invoice.status !== 'PAID' && (
-            <Button onClick={handleMarkAsPaid} disabled={markAsPaid.isPending}>
+            <Button onClick={() => setIsMarkAsPaidOpen(true)}>
               <CheckCircle className="mr-2 h-4 w-4" />
               Marquer comme payée
             </Button>
@@ -67,7 +62,6 @@ export default function InvoiceDetailsPage() {
               <h3 className="font-semibold text-lg border-b pb-2">Informations Patient</h3>
               <div className="space-y-1 text-sm">
                 <p><span className="text-muted-foreground">Patient:</span> {invoice.patient_full_name}</p>
-                <p><span className="text-muted-foreground">ID Consultation:</span> {invoice.consultation_id}</p>
                 {invoice.paid_at && (
                   <p><span className="text-muted-foreground">Payée le:</span> {format(new Date(invoice.paid_at), "PPP", { locale: fr })}</p>
                 )}
@@ -160,6 +154,11 @@ export default function InvoiceDetailsPage() {
           }
         }
       `}</style>
+      <MarkAsPaidModal
+        invoiceId={invoice.id}
+        isOpen={isMarkAsPaidOpen}
+        onClose={() => setIsMarkAsPaidOpen(false)}
+      />
     </div>
   );
 }

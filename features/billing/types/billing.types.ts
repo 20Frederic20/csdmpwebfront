@@ -1,4 +1,15 @@
 export type InvoiceStatus = 'DRAFT' | 'PAID' | 'CANCELLED';
+export enum PaymentMethod {
+  CASH = "CASH",
+  MOMO = "MOMO",
+  CARD = "CARD",
+  INSURANCE = "INSURANCE"
+}
+
+export interface MarkAsPaidPayload {
+  payment_method: PaymentMethod;
+  receipt_number?: string;
+}
 
 export interface InvoiceLine {
   id: string;
