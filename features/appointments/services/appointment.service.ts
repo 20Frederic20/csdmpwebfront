@@ -64,6 +64,26 @@ export class AppointmentService {
     return FetchService.patch<Appointment>(`appointments/${id}/status`, { status }, 'Appointment');
   }
 
+  static async confirmAppointmentByPatient(id: string): Promise<Appointment> {
+    console.log('Confirming appointment by patient:', id);
+    return FetchService.patch<Appointment>(`appointments/${id}/confirm`, {}, 'Appointment');
+  }
+
+  static async confirmAppointment(id: string): Promise<Appointment> {
+    console.log('Confirming appointment:', id);
+    return FetchService.patch<Appointment>(`appointments/${id}/confirm`, {}, 'Appointment');
+  }
+
+  static async cancelAppointment(id: string): Promise<Appointment> {
+    console.log('Cancelling appointment:', id);
+    return FetchService.patch<Appointment>(`appointments/${id}/cancel`, {}, 'Appointment');
+  }
+
+  static async completeAppointment(id: string): Promise<Appointment> {
+    console.log('Completing appointment:', id);
+    return FetchService.patch<Appointment>(`appointments/${id}/complete`, {}, 'Appointment');
+  }
+
   // Helper methods
   static async getAppointmentsByPatientId(patientId: string, params?: Omit<AppointmentFilterParams, 'patient_id'>): Promise<ListAppointmentsResponse> {
     return this.getAppointments({ ...params, patient_id: patientId });

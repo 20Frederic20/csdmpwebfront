@@ -104,12 +104,12 @@ export function EditAppointmentModal({ isOpen, onClose, appointment, onUpdate, o
   }));
 
   const statusOptions = [
-    { value: 'scheduled', label: 'Programmé' },
-    { value: 'confirmed', label: 'Confirmé' },
-    { value: 'cancelled', label: 'Annulé' },
-    { value: 'completed', label: 'Terminé' },
-    { value: 'no_show', label: 'Non présenté' },
-    { value: 'rescheduled', label: 'Reprogrammé' }
+    { value: AppointmentStatus.SCHEDULED, label: 'Programmé' },
+    { value: AppointmentStatus.CONFIRMED, label: 'Confirmé' },
+    { value: AppointmentStatus.CANCELLED, label: 'Annulé' },
+    { value: AppointmentStatus.COMPLETED, label: 'Terminé' },
+    { value: AppointmentStatus.NO_SHOW, label: 'Non présenté' },
+    { value: AppointmentStatus.RESCHEDULED, label: 'Reprogrammé' }
   ];
 
   const appointmentTypeOptions = [
@@ -196,6 +196,8 @@ export function EditAppointmentModal({ isOpen, onClose, appointment, onUpdate, o
     }
   };
 
+  const isEditable = appointment?.status === AppointmentStatus.SCHEDULED && !appointment?.is_confirmed_by_patient;
+
   if (!isOpen || !appointment) return null;
 
   return (
@@ -214,6 +216,11 @@ export function EditAppointmentModal({ isOpen, onClose, appointment, onUpdate, o
             </div>
           ) : (
             <>
+              {!isEditable && (
+                <div className="bg-amber-50 border border-amber-200 text-amber-700 px-4 py-3 rounded mb-4">
+                  Ce rendez-vous ne peut plus être modifié car il est {appointment.is_confirmed_by_patient ? 'confirmé par le patient' : 'dans un état final'}.
+                </div>
+              )}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="patient_id">Patient *</Label>
@@ -233,7 +240,7 @@ export function EditAppointmentModal({ isOpen, onClose, appointment, onUpdate, o
                 value={formData.doctor_id || null}
                 onChange={(value) => handleInputChange('doctor_id', Array.isArray(value) ? value[0] : value as any)}
                 placeholder="Sélectionner un médecin"
-                isDisabled={loading}
+                isDisabled={loading || !isEditable}
                 className="w-full"
               />
             </div>
@@ -246,6 +253,7 @@ export function EditAppointmentModal({ isOpen, onClose, appointment, onUpdate, o
                 value={formData.scheduled_at || undefined}
                 onChange={(e) => handleInputChange('scheduled_at', e.target.value)}
                 required
+                disabled={loading || !isEditable}
               />
             </div>
 
@@ -258,6 +266,7 @@ export function EditAppointmentModal({ isOpen, onClose, appointment, onUpdate, o
                 max="240"
                 value={formData.estimated_duration || undefined}
                 onChange={(e) => handleInputChange('estimated_duration', parseInt(e.target.value))}
+                disabled={loading || !isEditable}
               />
             </div>
 
@@ -279,7 +288,7 @@ export function EditAppointmentModal({ isOpen, onClose, appointment, onUpdate, o
                 value={formData.appointment_type || ''}
                 onChange={(value) => handleInputChange('appointment_type', value === '' ? null : value as AppointmentType)}
                 placeholder="Sélectionner un type"
-                isDisabled={loading}
+                isDisabled={loading || !isEditable}
                 className="w-full"
               />
             </div>
@@ -299,7 +308,7 @@ export function EditAppointmentModal({ isOpen, onClose, appointment, onUpdate, o
                 value={formData.payment_method || ''}
                 onChange={(value) => handleInputChange('payment_method', value === '' ? null : value as PaymentMethod)}
                 placeholder="Sélectionner une méthode"
-                isDisabled={loading}
+                isDisabled={loading || !isEditable}
                 className="w-full"
               />
             </div>
@@ -310,7 +319,7 @@ export function EditAppointmentModal({ isOpen, onClose, appointment, onUpdate, o
                 value={formData.health_facility_id || undefined}
                 onChange={(value) => handleInputChange('health_facility_id', value)}
                 placeholder="Sélectionner un établissement de santé"
-                disabled={loading}
+                disabled={loading || !isEditable}
                 className="w-full"
               />
             </div>
@@ -321,7 +330,7 @@ export function EditAppointmentModal({ isOpen, onClose, appointment, onUpdate, o
                 value={formData.department_id || undefined}
                 onChange={(value) => handleInputChange('department_id', value)}
                 placeholder="Sélectionner un département"
-                disabled={loading}
+                disabled={loading || !isEditable}
                 healthFacilityId={formData.health_facility_id}
                 className="w-full"
               />
@@ -333,7 +342,7 @@ export function EditAppointmentModal({ isOpen, onClose, appointment, onUpdate, o
                 value={formData.insurance_company_id || undefined}
                 onChange={(value) => handleInputChange('insurance_company_id', value)}
                 placeholder="Sélectionner une compagnie d'assurance"
-                disabled={loading}
+                disabled={loading || !isEditable}
                 className="w-full"
               />
             </div>
@@ -342,17 +351,17 @@ export function EditAppointmentModal({ isOpen, onClose, appointment, onUpdate, o
               <Label htmlFor="status">Statut</Label>
               <CustomSelect
                 options={[
-                  { value: 'scheduled', label: 'Programmé' },
-                  { value: 'confirmed', label: 'Confirmé' },
-                  { value: 'cancelled', label: 'Annulé' },
-                  { value: 'completed', label: 'Terminé' },
-                  { value: 'no_show', label: 'Non présenté' },
-                  { value: 'rescheduled', label: 'Reprogrammé' }
+                  { value: AppointmentStatus.SCHEDULED, label: 'Programmé' },
+                  { value: AppointmentStatus.CONFIRMED, label: 'Confirmé' },
+                  { value: AppointmentStatus.CANCELLED, label: 'Annulé' },
+                  { value: AppointmentStatus.COMPLETED, label: 'Terminé' },
+                  { value: AppointmentStatus.NO_SHOW, label: 'Non présenté' },
+                  { value: AppointmentStatus.RESCHEDULED, label: 'Reprogrammé' }
                 ]}
                 value={formData.status || ''}
                 onChange={(value) => handleInputChange('status', value as AppointmentStatus)}
                 placeholder="Sélectionner un statut"
-                isDisabled={loading}
+                isDisabled={loading || !isEditable}
                 className="w-full"
               />
             </div>
@@ -366,6 +375,7 @@ export function EditAppointmentModal({ isOpen, onClose, appointment, onUpdate, o
               onChange={(e) => handleInputChange('reason', e.target.value)}
               placeholder="Raison du rendez-vous..."
               rows={3}
+              disabled={loading || !isEditable}
             />
           </div>
 
@@ -381,7 +391,7 @@ export function EditAppointmentModal({ isOpen, onClose, appointment, onUpdate, o
             <Button
               type="button"
               onClick={handleButtonClick}
-              disabled={loading}
+              disabled={loading || !isEditable}
               className="cursor-pointer"
             >
               {loading ? 'Mise à jour...' : 'Mettre à jour'}

@@ -15,7 +15,7 @@ import { CheckCircle } from "lucide-react";
 
 const formSchema = z.object({
   payment_method: z.nativeEnum(PaymentMethod, {
-    required_error: "Veuillez sélectionner un moyen de paiement",
+    message: "Veuillez sélectionner un moyen de paiement",
   }),
   receipt_number: z.string().optional(),
 }).refine((data) => {

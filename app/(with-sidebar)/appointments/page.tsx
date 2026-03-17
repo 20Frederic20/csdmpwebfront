@@ -27,6 +27,9 @@ export default function AppointmentsPage() {
   const [appointmentsData, setAppointmentsData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const triggerRefresh = () => setRefreshKey(k => k + 1);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
@@ -90,26 +93,16 @@ export default function AppointmentsPage() {
     }
   };
 
-  const handleAppointmentUpdated = (updatedAppointment: any) => {
-    // Recharger les données après mise à jour
-    setAppointmentsData((prev: any) => prev ? {
-      ...prev,
-      data: prev.data.map((apt: any) =>
-        apt.id_ === updatedAppointment.id_ ? updatedAppointment : apt
-      )
-    } : null);
-    toast.success("Rendez-vous mis à jour avec succès");
+  const handleAppointmentUpdated = (_updatedAppointment?: any) => {
+    // Recharger la liste complète depuis le serveur
+    triggerRefresh();
   };
 
-  const handleAppointmentCreated = (newAppointment: any) => {
-    // Recharger les données après création
-    setAppointmentsData((prev: any) => prev ? {
-      ...prev,
-      data: [newAppointment, ...prev.data],
-      total: prev.total + 1
-    } : null);
-    toast.success("Rendez-vous créé avec succès");
+  const handleAppointmentCreated = (_newAppointment?: any) => {
+    // Recharger la liste complète depuis le serveur
+    triggerRefresh();
   };
+
 
   const handleAppointmentDeleted = () => {
     // Recharger les données après suppression
@@ -150,7 +143,7 @@ export default function AppointmentsPage() {
     if (token) {
       loadAppointments();
     }
-  }, [currentPage, itemsPerPage, filters, token]);
+  }, [currentPage, itemsPerPage, filters, token, refreshKey]);
 
   if (authLoading) {
     return (

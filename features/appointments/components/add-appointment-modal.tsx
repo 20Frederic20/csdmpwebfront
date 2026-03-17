@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect } from "react";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -13,14 +15,32 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import CustomSelect from "@/components/ui/custom-select";
-import { Save, X } from "lucide-react";
-import { CreateAppointmentRequest, AppointmentType, PaymentMethod, AppointmentStatus } from "@/features/appointments/types/appointments.types";
+import { Save } from "lucide-react";
+import { AppointmentType, PaymentMethod, AppointmentStatus } from "@/features/appointments/types/appointments.types";
 import { AppointmentService } from "@/features/appointments/services/appointment.service";
-import { useAuthToken } from "@/hooks/use-auth-token";
 import { HealthFacilitySelect } from "@/features/health-facilities/components/health-facility-select";
 import { DepartmentSelect } from "@/features/departments/components/department-select";
 import { HospitalStaffSelect } from "@/features/hospital-staff/components/hospital-staff-select";
 import { PatientSelect } from "@/features/patients/components/patient-select";
+import { toast } from "sonner";
+
+// ─── Schéma Zod ──────────────────────────────────────────────────────────────
+
+const addAppointmentSchema = z.object({
+  patient_id: z.string().min(1, "Veuillez sélectionner un patient"),
+  health_facility_id: z.string().min(1, "Veuillez sélectionner un établissement"),
+  department_id: z.string().min(1, "Veuillez sélectionner un département"),
+  doctor_id: z.string().nullable().optional(),
+  appointment_type: z.nativeEnum(AppointmentType),
+  payment_method: z.nativeEnum(PaymentMethod),
+  scheduled_at: z.string().min(1, "La date et l'heure sont requises"),
+  estimated_duration: z.number().min(5).max(480).nullable().optional(),
+  reason: z.string().nullable().optional(),
+});
+
+type AddAppointmentFormValues = z.infer<typeof addAppointmentSchema>;
+
+// ─── Props ────────────────────────────────────────────────────────────────────
 
 interface AddAppointmentModalProps {
   isOpen: boolean;
@@ -29,202 +49,217 @@ interface AddAppointmentModalProps {
   defaultPatientId?: string;
 }
 
+// ─── Options ──────────────────────────────────────────────────────────────────
+
+const typeOptions = [
+  { value: AppointmentType.ROUTINE_CONSULTATION, label: "Consultation de routine" },
+  { value: AppointmentType.EMERGENCY_CONSULTATION, label: "Consultation d'urgence" },
+  { value: AppointmentType.FOLLOW_UP, label: "Suivi" },
+  { value: AppointmentType.SPECIALIST_CONSULTATION, label: "Consultation spécialisée" },
+  { value: AppointmentType.SURGERY, label: "Chirurgie" },
+  { value: AppointmentType.IMAGING, label: "Imagerie" },
+  { value: AppointmentType.LABORATORY, label: "Laboratoire" },
+  { value: AppointmentType.VACCINATION, label: "Vaccination" },
+  { value: AppointmentType.PREVENTIVE_CARE, label: "Soins préventifs" },
+];
+
+const paymentMethodOptions = [
+  { value: PaymentMethod.FREE_OF_CHARGE, label: "Gratuit" },
+  { value: PaymentMethod.INSURANCE, label: "Assurance" },
+  { value: PaymentMethod.CASH, label: "Espèces" },
+  { value: PaymentMethod.CREDIT_CARD, label: "Carte de crédit" },
+  { value: PaymentMethod.MOBILE_MONEY, label: "Mobile money" },
+  { value: PaymentMethod.BANK_TRANSFER, label: "Virement bancaire" },
+];
+
+// ─── Composant ────────────────────────────────────────────────────────────────
+
 export function AddAppointmentModal({
   isOpen,
   onClose,
   onAppointmentCreated,
   defaultPatientId = "",
 }: AddAppointmentModalProps) {
-  const { token } = useAuthToken();
-  const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState<CreateAppointmentRequest>({
+  const defaultValues: AddAppointmentFormValues = {
     patient_id: defaultPatientId,
     health_facility_id: "",
     department_id: "",
+    doctor_id: null,
     appointment_type: AppointmentType.ROUTINE_CONSULTATION,
     payment_method: PaymentMethod.FREE_OF_CHARGE,
-    doctor_id: null,
     scheduled_at: "",
     estimated_duration: 30,
-    reason: null,
-    status: AppointmentStatus.SCHEDULED,
-    is_confirmed_by_patient: false,
-    is_active: true,
+    reason: "",
+  };
+
+  const {
+    register,
+    handleSubmit,
+    control,
+    watch,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<AddAppointmentFormValues>({
+    resolver: zodResolver(addAppointmentSchema),
+    defaultValues,
   });
 
-  // Options pour les CustomSelect
-  const typeOptions = [
-    { value: AppointmentType.ROUTINE_CONSULTATION, label: 'Consultation de routine' },
-    { value: AppointmentType.EMERGENCY_CONSULTATION, label: 'Consultation d\'urgence' },
-    { value: AppointmentType.FOLLOW_UP, label: 'Suivi' },
-    { value: AppointmentType.SPECIALIST_CONSULTATION, label: 'Consultation spécialisée' },
-    { value: AppointmentType.SURGERY, label: 'Chirurgie' },
-    { value: AppointmentType.IMAGING, label: 'Imagerie' },
-    { value: AppointmentType.LABORATORY, label: 'Laboratoire' },
-    { value: AppointmentType.VACCINATION, label: 'Vaccination' },
-    { value: AppointmentType.PREVENTIVE_CARE, label: 'Soins préventifs' },
-  ];
-
-  const paymentMethodOptions = [
-    { value: PaymentMethod.FREE_OF_CHARGE, label: 'Gratuit' },
-    { value: PaymentMethod.INSURANCE, label: 'Assurance' },
-    { value: PaymentMethod.CASH, label: 'Espèces' },
-    { value: PaymentMethod.CREDIT_CARD, label: 'Carte de crédit' },
-    { value: PaymentMethod.MOBILE_MONEY, label: 'Mobile money' },
-    { value: PaymentMethod.BANK_TRANSFER, label: 'Virement bancaire' },
-  ];
-
-  const handleInputChange = (field: keyof CreateAppointmentRequest, value: any) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
-  const handleTypeChange = (value: string | string[] | null) => {
-    handleInputChange('appointment_type', value as AppointmentType);
-  };
-
-  const handlePaymentMethodChange = (value: string | string[] | null) => {
-    handleInputChange('payment_method', value as PaymentMethod);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!formData.patient_id) {
-      return;
+  // Reset à la fermeture
+  useEffect(() => {
+    if (!isOpen) {
+      reset({ ...defaultValues, patient_id: defaultPatientId });
     }
-    
-    if (!formData.health_facility_id) {
-      return;
-    }
-    
-    if (!formData.department_id) {
-      return;
-    }
+  }, [isOpen, defaultPatientId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-    if (!formData.scheduled_at) {
-      return;
-    }
+  const healthFacilityId = watch("health_facility_id");
 
-    setLoading(true);
-    
+  const onSubmit = async (data: AddAppointmentFormValues) => {
     try {
-      const newAppointment = await AppointmentService.createAppointment(formData);
-      onAppointmentCreated?.(newAppointment);
-      
-      // Reset du formulaire
-      setFormData({
-        patient_id: defaultPatientId,
-        health_facility_id: "",
-        department_id: "",
-        appointment_type: AppointmentType.ROUTINE_CONSULTATION,
-        payment_method: PaymentMethod.FREE_OF_CHARGE,
-        doctor_id: "",
-        scheduled_at: "",
-        estimated_duration: 30,
-        reason: "",
+      // Convertir datetime-local en ISO 8601 avec timezone
+      const scheduledAtIso = new Date(data.scheduled_at).toISOString();
+
+      const payload = {
+        ...data,
+        scheduled_at: scheduledAtIso,
+        doctor_id: data.doctor_id || null,
+        reason: data.reason || null,
         status: AppointmentStatus.SCHEDULED,
         is_confirmed_by_patient: false,
         is_active: true,
-      });
-      
+      };
+
+      const newAppointment = await AppointmentService.createAppointment(payload);
+      toast.success("Rendez-vous créé avec succès");
+      onAppointmentCreated?.(newAppointment);
       onClose();
     } catch (error: any) {
-      console.error('Error creating appointment:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleClose = () => {
-    if (!loading) {
-      onClose();
+      toast.error(error.message || "Erreur lors de la création du rendez-vous");
     }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && !isSubmitting && onClose()}>
       <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center justify-between">
-            Ajouter un rendez-vous
-          </DialogTitle>
+          <DialogTitle>Ajouter un rendez-vous</DialogTitle>
         </DialogHeader>
-        
-        <form onSubmit={handleSubmit} className="space-y-6">
+
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
             {/* Patient */}
             <div className="space-y-2">
-              <PatientSelect
-                value={formData.patient_id}
-                onChange={(value) => handleInputChange('patient_id', value || '')}
-                placeholder="Sélectionner un patient"
-                disabled={loading}
-                required={true}
+              <Controller
+                control={control}
+                name="patient_id"
+                render={({ field }) => (
+                  <PatientSelect
+                    value={field.value}
+                    onChange={(value) => field.onChange(value || "")}
+                    placeholder="Sélectionner un patient"
+                    disabled={isSubmitting}
+                    required={true}
+                  />
+                )}
               />
+              {errors.patient_id && (
+                <p className="text-sm text-red-500">{errors.patient_id.message}</p>
+              )}
             </div>
 
-            {/* Établissement de santé */}
+            {/* Établissement */}
             <div className="space-y-2">
-              <HealthFacilitySelect
-                value={formData.health_facility_id}
-                onChange={(value) => handleInputChange('health_facility_id', value)}
-                placeholder="Sélectionner un établissement de santé"
-                required={true}
-                disabled={loading}
+              <Controller
+                control={control}
+                name="health_facility_id"
+                render={({ field }) => (
+                  <HealthFacilitySelect
+                    value={field.value}
+                    onChange={field.onChange}
+                    placeholder="Sélectionner un établissement"
+                    required={true}
+                    disabled={isSubmitting}
+                  />
+                )}
               />
+              {errors.health_facility_id && (
+                <p className="text-sm text-red-500">{errors.health_facility_id.message}</p>
+              )}
             </div>
 
             {/* Département */}
             <div className="space-y-2">
-              <DepartmentSelect
-                value={formData.department_id}
-                onChange={(value) => handleInputChange('department_id', value || '')}
-                placeholder="Sélectionner un département"
-                healthFacilityId={formData.health_facility_id}
-                disabled={loading}
-                required={true}
+              <Controller
+                control={control}
+                name="department_id"
+                render={({ field }) => (
+                  <DepartmentSelect
+                    value={field.value}
+                    onChange={(value) => field.onChange(value || "")}
+                    placeholder="Sélectionner un département"
+                    healthFacilityId={healthFacilityId}
+                    disabled={isSubmitting}
+                    required={true}
+                  />
+                )}
               />
+              {errors.department_id && (
+                <p className="text-sm text-red-500">{errors.department_id.message}</p>
+              )}
             </div>
 
             {/* Docteur */}
             <div className="space-y-2">
-              <Label htmlFor="doctor_id">Docteur</Label>
-              <HospitalStaffSelect
-                value={formData.doctor_id || undefined}
-                onChange={(value) => handleInputChange('doctor_id', value || '')}
-                placeholder="Sélectionner un docteur"
-                healthFacilityId={formData.health_facility_id}
-                disabled={loading}
+              <Label>Docteur</Label>
+              <Controller
+                control={control}
+                name="doctor_id"
+                render={({ field }) => (
+                  <HospitalStaffSelect
+                    value={field.value ?? undefined}
+                    onChange={(value) => field.onChange(value || null)}
+                    placeholder="Sélectionner un docteur"
+                    healthFacilityId={healthFacilityId}
+                    disabled={isSubmitting}
+                  />
+                )}
               />
             </div>
 
             {/* Type de rendez-vous */}
             <div className="space-y-2">
-              <Label htmlFor="appointment_type">Type de rendez-vous</Label>
-              <CustomSelect
-                options={typeOptions}
-                value={formData.appointment_type}
-                onChange={handleTypeChange}
-                placeholder="Sélectionner le type"
-                height="h-10"
-                isDisabled={loading}
+              <Label>Type de rendez-vous</Label>
+              <Controller
+                control={control}
+                name="appointment_type"
+                render={({ field }) => (
+                  <CustomSelect
+                    options={typeOptions}
+                    value={field.value}
+                    onChange={(v) => field.onChange(v as AppointmentType)}
+                    placeholder="Sélectionner le type"
+                    height="h-10"
+                    isDisabled={isSubmitting}
+                  />
+                )}
               />
             </div>
 
             {/* Date et heure */}
             <div className="space-y-2">
-              <Label htmlFor="scheduled_at">Date et heure *</Label>
+              <Label htmlFor="scheduled_at">
+                Date et heure <span className="text-red-500">*</span>
+              </Label>
               <Input
                 id="scheduled_at"
                 type="datetime-local"
-                value={formData.scheduled_at}
-                onChange={(e) => handleInputChange('scheduled_at', e.target.value)}
-                required
-                disabled={loading}
+                {...register("scheduled_at")}
+                disabled={isSubmitting}
+                className={errors.scheduled_at ? "border-red-500" : ""}
               />
+              {errors.scheduled_at && (
+                <p className="text-sm text-red-500">{errors.scheduled_at.message}</p>
+              )}
             </div>
 
             {/* Durée estimée */}
@@ -235,23 +270,31 @@ export function AddAppointmentModal({
                 type="number"
                 min="5"
                 max="480"
-                value={formData.estimated_duration || ""}
-                onChange={(e) => handleInputChange('estimated_duration', parseInt(e.target.value) || null)}
+                {...register("estimated_duration", { valueAsNumber: true })}
                 placeholder="30"
-                disabled={loading}
+                disabled={isSubmitting}
               />
+              {errors.estimated_duration && (
+                <p className="text-sm text-red-500">{errors.estimated_duration.message}</p>
+              )}
             </div>
 
             {/* Méthode de paiement */}
             <div className="space-y-2">
-              <Label htmlFor="payment_method">Méthode de paiement</Label>
-              <CustomSelect
-                options={paymentMethodOptions}
-                value={formData.payment_method}
-                onChange={handlePaymentMethodChange}
-                placeholder="Sélectionner la méthode"
-                height="h-10"
-                isDisabled={loading}
+              <Label>Méthode de paiement</Label>
+              <Controller
+                control={control}
+                name="payment_method"
+                render={({ field }) => (
+                  <CustomSelect
+                    options={paymentMethodOptions}
+                    value={field.value}
+                    onChange={(v) => field.onChange(v as PaymentMethod)}
+                    placeholder="Sélectionner la méthode"
+                    height="h-10"
+                    isDisabled={isSubmitting}
+                  />
+                )}
               />
             </div>
 
@@ -260,10 +303,9 @@ export function AddAppointmentModal({
               <Label htmlFor="reason">Raison du rendez-vous</Label>
               <Input
                 id="reason"
-                value={formData.reason || ""}
-                onChange={(e) => handleInputChange('reason', e.target.value)}
+                {...register("reason")}
                 placeholder="Raison ou motif du rendez-vous"
-                disabled={loading}
+                disabled={isSubmitting}
               />
             </div>
           </div>
@@ -272,26 +314,22 @@ export function AddAppointmentModal({
             <Button
               type="button"
               variant="outline"
-              onClick={handleClose}
-              disabled={loading}
+              onClick={onClose}
+              disabled={isSubmitting}
             >
               Annuler
             </Button>
-            <Button
-              type="submit"
-              disabled={loading}
-              className="cursor-pointer"
-            >
-              {loading ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <span className="flex items-center gap-2">
+                  <span className="animate-spin inline-block h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
                   Création...
-                </>
+                </span>
               ) : (
-                <>
-                  <Save className="mr-2 h-4 w-4" />
+                <span className="flex items-center gap-2">
+                  <Save className="h-4 w-4" />
                   Créer le rendez-vous
-                </>
+                </span>
               )}
             </Button>
           </DialogFooter>

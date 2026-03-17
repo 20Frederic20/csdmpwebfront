@@ -39,10 +39,12 @@ export function getAppointmentActions(
   ];
 
   if (canAccess('appointments', 'update')) {
+    const isEditable = appointment.status === AppointmentStatus.SCHEDULED && !appointment.is_confirmed_by_patient;
     actions.push({
       label: "Modifier",
       icon: <Edit className="h-4 w-4" />,
       onClick: () => onEdit?.(appointment),
+      disabled: !isEditable,
     });
   }
 

@@ -46,7 +46,7 @@ export interface CreateAppointmentRequest {
 }
 
 export interface AppointmentResponse {
-  id: string;
+  id_: string;
   patient_id: string;
   doctor_id?: string | null;
   scheduled_at: string;
@@ -64,7 +64,7 @@ export interface AppointmentResponse {
 }
 
 export interface AppointmentQM {
-  id: string;
+  id_: string;
   patient_id: string;
   doctor_id?: string | null;
   patient_full_name?: string | null;
