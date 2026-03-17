@@ -54,7 +54,7 @@ export default function InvoiceDetailsPage() {
       <Card className="print:border-none print:shadow-none">
         <CardHeader className="flex flex-row items-center justify-between border-b pb-6">
           <div className="space-y-1">
-            <CardTitle className="text-2xl">Facture #{invoice.id.substring(0, 8)}</CardTitle>
+            <CardTitle className="text-2xl">{invoice.invoice_number}</CardTitle>
             <p className="text-sm text-muted-foreground">
               Générée le {format(new Date(invoice.created_at), "PPP", { locale: fr })}
             </p>
@@ -66,7 +66,7 @@ export default function InvoiceDetailsPage() {
             <div className="space-y-4">
               <h3 className="font-semibold text-lg border-b pb-2">Informations Patient</h3>
               <div className="space-y-1 text-sm">
-                <p><span className="text-muted-foreground">ID Patient:</span> {invoice.patient_id}</p>
+                <p><span className="text-muted-foreground">Patient:</span> {invoice.patient_full_name}</p>
                 <p><span className="text-muted-foreground">ID Consultation:</span> {invoice.consultation_id}</p>
                 {invoice.paid_at && (
                   <p><span className="text-muted-foreground">Payée le:</span> {format(new Date(invoice.paid_at), "PPP", { locale: fr })}</p>

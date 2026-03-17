@@ -23,6 +23,6 @@ export class BillingService {
   }
 
   static async markAsPaid(id: string): Promise<Invoice> {
-    return FetchService.patch<Invoice>(`invoices/${id}/pay`, {}, 'Invoice');
+    return FetchService.post<Invoice>(`invoices/${id}/pay`, {}, 'Invoice');
   }
 }

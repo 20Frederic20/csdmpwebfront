@@ -69,11 +69,11 @@ export function getInvoiceActions(invoice: Invoice, meta: any): ActionConfig[] {
 
 export const billingColumns: ColumnDef<Invoice>[] = [
   {
-    accessorKey: "id",
+    accessorKey: "invoice_number",
     header: "N° Facture",
     cell: ({ row }) => {
-      const id = row.original.id;
-      return <span className="font-medium">#{id.substring(0, 8)}</span>;
+      const id = row.original.invoice_number;
+      return <span className="font-medium">{id}</span>;
     },
   },
   {

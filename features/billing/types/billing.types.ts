@@ -17,8 +17,11 @@ export interface InvoiceLine {
 
 export interface Invoice {
   id: string;
+  invoice_number?: string;
   patient_id: string;
+  patient_full_name?: string;
   health_facility_id: string;
+  health_facility_name?: string;
   status: InvoiceStatus;
   total_amount: string;
   insurance_amount: string;
