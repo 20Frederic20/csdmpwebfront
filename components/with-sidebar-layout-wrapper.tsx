@@ -13,14 +13,17 @@ export function WithSidebarLayoutWrapper({ children }: WithSidebarLayoutWrapperP
   return (
     <SidebarProvider>
       <AppSidebar />
-      <SidebarInset className="flex-1">
-        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-          <SidebarTrigger className="-ml-1" />
+      <SidebarInset className="flex-1 relative overflow-hidden bg-white">
+        <div className="noise opacity-[0.015]" />
+        <header className="flex h-16 shrink-0 items-center gap-2 border-b border-slate-100 px-4 bg-white/70 backdrop-blur-md sticky top-0 z-40">
+          <SidebarTrigger className="-ml-1 text-slate-500" />
           <div className="flex-1" />
-          <ModeToggle />
-          <UserAvatarDropdown />
+          <div className="flex items-center gap-4">
+            <ModeToggle />
+            <UserAvatarDropdown />
+          </div>
         </header>
-        <main className="flex-1 p-6">
+        <main className="flex-1 p-6 relative z-10 bg-white">
           {children}
         </main>
       </SidebarInset>

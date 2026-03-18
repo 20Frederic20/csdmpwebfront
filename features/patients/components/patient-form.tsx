@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { GlassCard, Button } from "@/components/UI";
 import { ArrowLeft, Save, X } from "lucide-react";
 import { toast } from "sonner";
 import { CreatePatientRequest, Patient, useCreatePatient, useUpdatePatient } from "@/features/patients";
@@ -437,154 +436,136 @@ export function PatientForm({
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Type de création - seulement pour l'ajout */}
         {!patient && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Type de création</CardTitle>
-              <p className="text-sm text-muted-foreground">
+          <GlassCard className="p-6 space-y-4">
+            <div>
+              <h2 className="text-lg font-bold">Type de création</h2>
+              <p className="text-sm text-medical-muted">
                 Choisissez de créer un nouvel utilisateur ou d'utiliser un utilisateur existant
               </p>
-            </CardHeader>
-            <CardContent>
-              <CreationTypeSelector
-                createUser={createUser}
-                onCreateUserChange={setCreateUser}
-              />
-            </CardContent>
-          </Card>
+            </div>
+            <CreationTypeSelector
+              createUser={createUser}
+              onCreateUserChange={setCreateUser}
+            />
+          </GlassCard>
         )}
 
         {/* Création d'utilisateur - seulement pour l'ajout */}
         {createUser && !patient && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Création de l'utilisateur</CardTitle>
-              <p className="text-sm text-muted-foreground">
+          <GlassCard className="p-6 space-y-4">
+            <div>
+              <h2 className="text-lg font-bold">Création de l'utilisateur</h2>
+              <p className="text-sm text-medical-muted">
                 Créez un nouvel utilisateur qui sera associé à ce patient
               </p>
-            </CardHeader>
-            <CardContent>
-              <PatientUserCreationForm
-                userData={userData}
-                selectedRoles={selectedRoles}
-                onUserDataChange={handleUserDataChange}
-                onRolesChange={handleRolesChange}
-              />
-            </CardContent>
-          </Card>
+            </div>
+            <PatientUserCreationForm
+              userData={userData}
+              selectedRoles={selectedRoles}
+              onUserDataChange={handleUserDataChange}
+              onRolesChange={handleRolesChange}
+            />
+          </GlassCard>
         )}
 
         {/* Sélection d'utilisateur existant - seulement pour l'ajout */}
         {!createUser && !patient && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Sélection de l'utilisateur</CardTitle>
-              <p className="text-sm text-muted-foreground">
+          <GlassCard className="p-6 space-y-4">
+            <div>
+              <h2 className="text-lg font-bold">Sélection de l'utilisateur</h2>
+              <p className="text-sm text-medical-muted">
                 Sélectionnez un utilisateur existant à associer à ce patient
               </p>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <PatientOwnerSelector
-                users={users}
-                selectedOwner={formData.owner_id || ""}
-                onOwnerChange={(value) => handleInputChange('owner_id', value)}
-                isLoading={loadingUsers}
-                label="Utilisateur existant"
-                placeholder="Sélectionner un utilisateur existant"
-                showSelector={true}
-                required={true}
-              />
-            </CardContent>
-          </Card>
+            </div>
+            <PatientOwnerSelector
+              users={users}
+              selectedOwner={formData.owner_id || ""}
+              onOwnerChange={(value) => handleInputChange('owner_id', value)}
+              isLoading={loadingUsers}
+              label="Utilisateur existant"
+              placeholder="Sélectionner un utilisateur existant"
+              showSelector={true}
+              required={true}
+            />
+          </GlassCard>
         )}
 
         {/* Informations du patient */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Informations du patient</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <PatientInformationForm
-              givenName={formData.given_name}
-              familyName={formData.family_name}
-              birthDate={formData.birth_date}
-              gender={formData.gender}
-              location={formData.location || ""}
-              onFieldChange={handleInputChange}
-            />
-          </CardContent>
-        </Card>
+        <GlassCard className="p-6 space-y-4">
+          <h2 className="text-lg font-bold">Informations du patient</h2>
+          <PatientInformationForm
+            givenName={formData.given_name}
+            familyName={formData.family_name}
+            birthDate={formData.birth_date}
+            gender={formData.gender}
+            location={formData.location || ""}
+            onFieldChange={handleInputChange}
+          />
+        </GlassCard>
 
         {/* Informations additionnelles */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Informations additionnelles</CardTitle>
-            <p className="text-sm text-muted-foreground">
+        <GlassCard className="p-6 space-y-4">
+          <div>
+            <h2 className="text-lg font-bold">Informations additionnelles</h2>
+            <p className="text-sm text-medical-muted">
               Informations médicales et contacts d'urgence (optionnel)
             </p>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <PatientAdditionalInfoForm
-              birthPlace={formData.birth_place}
-              residenceCity={formData.residence_city}
-              neighborhood={formData.neighborhood}
-              phoneNumber={formData.phone_number}
-              npiNumber={formData.npi_number}
-              bloodGroup={formData.blood_group}
-              fatherFullName={formData.father_full_name}
-              motherFullName={formData.mother_full_name}
-              emergencyContactName={formData.emergency_contact_name}
-              emergencyContactPhone={formData.emergency_contact_phone}
-              onFieldChange={handleInputChange}
-            />
-          </CardContent>
-        </Card>
+          </div>
+          <PatientAdditionalInfoForm
+            birthPlace={formData.birth_place}
+            residenceCity={formData.residence_city}
+            neighborhood={formData.neighborhood}
+            phoneNumber={formData.phone_number}
+            npiNumber={formData.npi_number}
+            bloodGroup={formData.blood_group}
+            fatherFullName={formData.father_full_name}
+            motherFullName={formData.mother_full_name}
+            emergencyContactName={formData.emergency_contact_name}
+            emergencyContactPhone={formData.emergency_contact_phone}
+            onFieldChange={handleInputChange}
+          />
+        </GlassCard>
 
         {/* Propriétaire du patient - seulement pour la modification */}
         {patient && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Propriétaire du patient</CardTitle>
-              <p className="text-sm text-muted-foreground">
+          <GlassCard className="p-6 space-y-4">
+            <div>
+              <h2 className="text-lg font-bold">Propriétaire du patient</h2>
+              <p className="text-sm text-medical-muted">
                 Modifiez le propriétaire pour ce patient (optionnel)
               </p>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <PatientOwnerSelector
-                users={users}
-                selectedOwner={formData.owner_id || ""}
-                onOwnerChange={(value) => handleInputChange('owner_id', value)}
-                isLoading={loadingUsers}
-                label="Propriétaire du patient"
-                placeholder="Sélectionner un propriétaire (optionnel)"
-                showSelector={true}
-              />
-            </CardContent>
-          </Card>
+            </div>
+            <PatientOwnerSelector
+              users={users}
+              selectedOwner={formData.owner_id || ""}
+              onOwnerChange={(value) => handleInputChange('owner_id', value)}
+              isLoading={loadingUsers}
+              label="Propriétaire du patient"
+              placeholder="Sélectionner un propriétaire (optionnel)"
+              showSelector={true}
+            />
+          </GlassCard>
         )}
 
         {/* Actions */}
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex justify-end gap-3">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onCancel}
-                className="cursor-pointer"
-              >
-                Annuler
-              </Button>
-              <Button
-                type="submit"
-                disabled={loading}
-                className="cursor-pointer"
-              >
-                <Save className="mr-2 h-4 w-4" />
-                {loading ? `${submitButtonText} en cours...` : submitButtonText}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <GlassCard className="p-6 flex justify-end gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            className="cursor-pointer border-white/10 hover:bg-white/5"
+          >
+            Annuler
+          </Button>
+          <Button
+            type="submit"
+            disabled={loading}
+            className="cursor-pointer"
+          >
+            <Save className="mr-2 h-4 w-4" />
+            {loading ? `${submitButtonText} en cours...` : submitButtonText}
+          </Button>
+        </GlassCard>
       </form>
     </div>
   );

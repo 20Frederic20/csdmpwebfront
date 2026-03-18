@@ -524,18 +524,18 @@ export function AppSidebar() {
   ];
 
   return (
-    <Sidebar collapsible="icon" variant="inset">
-      <SidebarHeader>
+    <Sidebar collapsible="icon" variant="inset" className="border-r border-white/5 bg-medical-bg/95 backdrop-blur-xl">
+      <SidebarHeader className="border-b border-white/5 py-4">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" asChild>
+            <SidebarMenuButton size="lg" asChild className="hover:bg-white/5 transition-colors">
               <Link href="/dashboard">
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                  <Stethoscope className="size-4" />
+                <div className="flex aspect-square size-10 items-center justify-center rounded-xl bg-vital-green text-medical-bg vital-glow">
+                  <Activity className="size-6" />
                 </div>
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">CSDMP</span>
-                  <span className="truncate text-xs">Tableau de bord</span>
+                <div className="grid flex-1 text-left text-sm leading-tight ml-3">
+                  <span className="truncate font-display font-bold text-lg tracking-tight">CS<span className="text-vital-green">DMP</span></span>
+                  <span className="truncate text-[10px] text-medical-muted uppercase tracking-widest font-medium">Santé Connectée</span>
                 </div>
               </Link>
             </SidebarMenuButton>

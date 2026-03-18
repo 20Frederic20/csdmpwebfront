@@ -1,20 +1,14 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { usePermissionsContext } from '@/contexts/permissions-context';
-import { Button } from "@/components/ui/button"
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardFooter,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card"
+import { GlassCard, Button } from "@/components/UI"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Link from "next/link";
+import { Activity, Shield, Lock } from 'lucide-react';
+import { motion } from 'motion/react';
 
 import { AuthClientService } from '@/features/core/auth/services/auth-client.service';
 
@@ -24,6 +18,12 @@ export default function LoginPage() {
     const router = useRouter();
     const [error, setError] = useState<string | null>(null);
     const [isPending, startTransition] = useTransition();
+
+    useEffect(() => {
+        if (AuthClientService.isAuthenticated()) {
+            router.push('/dashboard');
+        }
+    }, [router]);
 
     async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -47,81 +47,98 @@ export default function LoginPage() {
             }
         });
     }
-    return (
-        <Card className="w-full max-w-md mx-auto my-36">
-            <CardHeader>
-                <CardTitle>Connexion à votre compte</CardTitle>
-                <CardDescription>
-                    Entrez votre email ci-dessous pour vous connecter
-                </CardDescription>
-                {/* CardAction n'existe pas dans la version standard actuelle de shadcn/ui → on le remplace par un div flex */}
-                <div className="ml-auto">
-                    <Button variant="link" asChild>
-                        <Link href="/register">S'inscrire</Link>
-                    </Button>
-                </div>
-            </CardHeader>
 
-            <CardContent>
-                <form onSubmit={handleSubmit}>
-                    <div className="flex flex-col gap-6">
-                        <div className="grid gap-2">
-                            <Label htmlFor="text">Health ID</Label>
+    return (
+        <div className="min-h-screen flex items-center justify-center p-6 relative">
+            <div className="noise" />
+            
+            {/* Background decorative element */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-vital-green/5 rounded-full blur-[120px] pointer-events-none" />
+
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="w-full max-w-md relative z-10"
+            >
+                <div className="flex flex-col items-center mb-10 text-center">
+                    <div className="w-16 h-16 rounded-2xl bg-vital-green flex items-center justify-center vital-glow mb-6">
+                        <Activity className="text-medical-bg w-10 h-10" />
+                    </div>
+                    <h1 className="font-display font-bold text-3xl tracking-tight">
+                        CS<span className="text-vital-green">DMP</span>
+                    </h1>
+                    <p className="text-medical-muted mt-2">Accès sécurisé à votre espace santé</p>
+                </div>
+
+                <GlassCard className="p-8 border-vital-green/20">
+                    <div className="flex justify-between items-center mb-8">
+                        <h2 className="text-2xl font-bold">Connexion</h2>
+                        <Link href="/" className="text-xs text-vital-green hover:underline">
+                            Retour à l'accueil
+                        </Link>
+                    </div>
+
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                        <div className="space-y-2">
+                            <Label htmlFor="health_id" className="text-xs text-medical-muted uppercase tracking-wider">Health ID</Label>
                             <Input
                                 id="health_id"
-                                name="health_id"           // ← important pour FormData
+                                name="health_id"
                                 type="text"
-                                placeholder="m@example.com"
+                                placeholder="ID Hospitalier"
                                 required
                                 disabled={isPending}
-                                className="h-12"
+                                className="bg-medical-bg/50 border-white/10 h-12 rounded-xl focus:border-vital-green/50"
                             />
                         </div>
 
-                        <div className="grid gap-2">
-                            <div className="flex items-center">
-                                <Label htmlFor="password">Mot de passe</Label>
-                                <a
-                                    href="#"
-                                    className="ml-auto inline-block text-md underline-offset-4 hover:underline"
-                                >
-                                    Mot de passe oublié ?
+                        <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                                <Label htmlFor="password" className="text-xs text-medical-muted uppercase tracking-wider">Mot de passe</Label>
+                                <a href="#" className="text-xs text-medical-muted hover:text-vital-green transition-colors">
+                                    Oublié ?
                                 </a>
                             </div>
                             <Input
                                 id="password"
-                                name="password"       // ← important pour FormData
+                                name="password"
                                 type="password"
                                 required
                                 disabled={isPending}
-                                className="h-12"
+                                className="bg-medical-bg/50 border-white/10 h-12 rounded-xl focus:border-vital-green/50"
                             />
                         </div>
 
                         {error && (
-                            <p className="text-md text-destructive text-center">{error}</p>
+                            <motion.p 
+                                initial={{ opacity: 0, x: -10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                className="text-sm text-red-400 text-center bg-red-400/10 py-2 rounded-lg border border-red-400/20"
+                            >
+                                {error}
+                            </motion.p>
                         )}
+
+                        <Button type="submit" className="w-full py-6 text-lg" disabled={isPending}>
+                            {isPending ? "Authentification..." : "Se connecter"}
+                        </Button>
+                    </form>
+
+                    <div className="mt-8 pt-8 border-t border-white/5 text-center">
+                        <p className="text-sm text-medical-muted">
+                            Pas encore de compte ?{" "}
+                            <Link href="/register" className="text-vital-green font-bold hover:underline">
+                                S'inscrire
+                            </Link>
+                        </p>
                     </div>
 
-                    {/* Bouton submit placé ici pour être dans le <form> */}
-                    <CardFooter className="flex flex-col gap-2 pt-6">
-                        <Button type="submit" className="w-full h-12" disabled={isPending}>
-                            {isPending ? "Connexion en cours..." : "Se connecter"}
-                        </Button>
-
-                        <Button
-                            type="button"
-                            variant="outline"
-                            className="w-full h-12"
-                            disabled={isPending}
-                        // À implémenter plus tard : Google OAuth via Server Action ou route handler
-                        // onClick={() => router.push('/api/auth/google')}
-                        >
-                            Se connecter avec Google
-                        </Button>
-                    </CardFooter>
-                </form>
-            </CardContent>
-        </Card>
+                    <p className="mt-8 text-center text-[10px] text-medical-muted flex items-center justify-center gap-2">
+                        <Lock className="w-3 h-3" />
+                        Chiffrement de bout en bout AES-256 activé
+                    </p>
+                </GlassCard>
+            </motion.div>
+        </div>
     );
 }

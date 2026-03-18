@@ -30,5 +30,14 @@ export function useAuthToken() {
     }
   };
 
-  return { token, saveToken, clearToken };
+  return { 
+    token, 
+    saveToken, 
+    clearToken,
+    user: token ? {
+      name: "Jean Dupont",
+      initials: "JD",
+      role: token.includes('admin') ? 'Administrateur' : 'Patient'
+    } : null
+  };
 }

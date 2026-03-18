@@ -72,35 +72,35 @@ export function UserAvatarDropdown() {
           variant="ghost"
           className="relative h-10 w-10 rounded-full p-0 hover:bg-muted/50"
         >
-          <Avatar className="h-10 w-10">
-            <AvatarFallback className="bg-primary text-primary-foreground">
+          <Avatar className="h-10 w-10 border border-vital-green/20">
+            <AvatarFallback className="bg-vital-green text-medical-bg font-bold">
               {initials}
             </AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56" align="end" forceMount>
+      <DropdownMenuContent className="w-56 bg-medical-card/90 backdrop-blur-md border-white/10" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">
+            <p className="text-sm font-bold leading-none text-white">
               {user.given_name} {user.family_name}
             </p>
-            <p className="text-xs leading-none text-muted-foreground">
+            <p className="text-xs leading-none text-medical-muted">
               {user.email}
             </p>
           </div>
         </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleProfile} className="cursor-pointer">
-          <User className="mr-2 h-4 w-4" />
+        <DropdownMenuSeparator className="bg-white/5" />
+        <DropdownMenuItem onClick={handleProfile} className="cursor-pointer hover:bg-white/5 focus:bg-white/5">
+          <User className="mr-2 h-4 w-4 text-vital-green" />
           <span>Voir le profil</span>
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={handleSettings} className="cursor-pointer">
-          <Settings className="mr-2 h-4 w-4" />
+        <DropdownMenuItem onClick={handleSettings} className="cursor-pointer hover:bg-white/5 focus:bg-white/5">
+          <Settings className="mr-2 h-4 w-4 text-vital-green" />
           <span>Paramètres</span>
         </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-red-600 focus:text-red-600">
+        <DropdownMenuSeparator className="bg-white/5" />
+        <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-red-400 focus:text-red-400 hover:bg-red-500/10 focus:bg-red-500/10">
           <LogOut className="mr-2 h-4 w-4" />
           <span>Se déconnecter</span>
         </DropdownMenuItem>

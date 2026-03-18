@@ -141,17 +141,54 @@ export default function CustomSelect({
           noOptionsMessage={() => 'Aucune option trouvée'}
           // Styles dynamiques basés sur les classes
           styles={{
-            control: (base) => {
+            control: (base, state) => {
               const styles = getStylesFromClasses();
               return {
                 ...base,
-                borderColor: '#d1d5db',
-                borderRadius: '0.375rem',
+                backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                borderColor: state.isFocused ? 'rgba(0, 242, 177, 0.5)' : 'rgba(255, 255, 255, 0.1)',
+                borderRadius: '0.75rem',
                 minHeight: styles.height,
                 height: styles.height,
                 padding: `0 ${styles.padding}`,
+                boxShadow: state.isFocused ? '0 0 0 1px rgba(0, 242, 177, 0.2)' : 'none',
+                '&:hover': {
+                  borderColor: 'rgba(0, 242, 177, 0.3)',
+                  backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                }
               };
             },
+            menu: (base) => ({
+              ...base,
+              backgroundColor: 'rgba(10, 20, 20, 0.95)',
+              backdropFilter: 'blur(16px)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              borderRadius: '0.75rem',
+              overflow: 'hidden',
+              zIndex: 50,
+            }),
+            option: (base, state) => ({
+              ...base,
+              backgroundColor: state.isSelected 
+                ? 'rgba(0, 242, 177, 0.2)' 
+                : state.isFocused 
+                  ? 'rgba(255, 255, 255, 0.05)' 
+                  : 'transparent',
+              color: state.isSelected ? '#00f2b1' : '#E2E8F0',
+              cursor: 'pointer',
+              fontSize: '14px',
+              '&:active': {
+                backgroundColor: 'rgba(0, 242, 177, 0.3)',
+              }
+            }),
+            singleValue: (base) => ({
+              ...base,
+              color: '#fff',
+            }),
+            placeholder: (base) => ({
+              ...base,
+              color: 'rgba(148, 163, 184, 0.5)',
+            }),
             valueContainer: (base) => {
               const styles = getStylesFromClasses();
               return {
@@ -162,6 +199,17 @@ export default function CustomSelect({
             indicatorsContainer: (base) => ({
               ...base,
               padding: '0 4px',
+            }),
+            dropdownIndicator: (base) => ({
+              ...base,
+              color: 'rgba(148, 163, 184, 0.5)',
+              '&:hover': {
+                color: '#00f2b1',
+              }
+            }),
+            indicatorSeparator: (base) => ({
+              ...base,
+              backgroundColor: 'rgba(255, 255, 255, 0.1)',
             }),
           }}
         />
