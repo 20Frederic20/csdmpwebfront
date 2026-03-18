@@ -32,8 +32,8 @@ export const Button = ({
   ...props 
 }: React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary' | 'secondary' | 'outline' }) => {
   const variants = {
-    primary: "bg-vital-green text-slate-900 hover:bg-emerald-glow shadow-[0_0_20px_rgba(0,212,170,0.3)]",
-    secondary: "bg-slate-100 text-slate-900 border border-slate-200 hover:bg-slate-200",
+    primary: "bg-vital-green text-medical-bg hover:bg-emerald-glow shadow-[0_0_20px_rgba(0,212,170,0.3)]",
+    secondary: "bg-medical-card text-medical-text border border-vital-green/20 hover:border-vital-green/50",
     outline: "bg-transparent border border-vital-green/30 text-vital-green hover:bg-vital-green/10"
   };
 
@@ -53,16 +53,16 @@ export const Button = ({
 
 export const Badge = ({ children, status }: { children: React.ReactNode, status?: string }) => {
   const colors: Record<string, string> = {
-    Stable: "bg-emerald-glow/10 text-emerald-glow border-emerald-glow/20",
-    Critical: "bg-red-500/10 text-red-500 border-red-500/20",
-    Observation: "bg-amber-500/10 text-amber-500 border-amber-500/20",
-    Active: "bg-vital-green/10 text-vital-green border-vital-green/20",
+    Stable: "bg-emerald-glow/20 text-emerald-glow border-emerald-glow/30",
+    Critical: "bg-red-500/20 text-red-400 border-red-500/30",
+    Observation: "bg-amber-500/20 text-amber-400 border-amber-500/30",
+    Active: "bg-vital-green/20 text-vital-green border-vital-green/30",
   };
 
   return (
     <span className={cn(
       "px-3 py-1 rounded-full text-xs font-mono border",
-      status ? colors[status] : "bg-slate-100 text-slate-500 border-slate-200"
+      status ? colors[status] : "bg-medical-card text-medical-muted border-white/10"
     )}>
       {children}
     </span>

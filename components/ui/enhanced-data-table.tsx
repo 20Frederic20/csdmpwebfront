@@ -113,23 +113,23 @@ export function EnhancedDataTable<TData, TValue>({
 
   return (
     <div className="space-y-4">
-      <div className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
+      <div className="rounded-xl border border-input bg-card overflow-hidden shadow-sm">
         <Table>
-          <TableHeader className="bg-slate-50/50">
+          <TableHeader className="bg-muted/50">
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id} className="hover:bg-transparent border-slate-100">
+              <TableRow key={headerGroup.id} className="hover:bg-transparent border-border">
                 {enableRowSelection && (
                   <TableHead className="w-12">
                     <Checkbox
                       checked={table.getIsAllPageRowsSelected()}
                       onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
                       aria-label="Tout sélectionner"
-                      className="border-slate-300 data-[state=checked]:bg-vital-green data-[state=checked]:border-vital-green"
+                      className="border-input data-[state=checked]:bg-vital-green data-[state=checked]:border-vital-green"
                     />
                   </TableHead>
                 )}
                 {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id} className="text-slate-500 font-semibold">
+                  <TableHead key={header.id} className="text-muted-foreground font-semibold">
                     {header.isPlaceholder
                       ? null
                       : flexRender(
@@ -147,7 +147,7 @@ export function EnhancedDataTable<TData, TValue>({
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
-                  className="border-slate-100 hover:bg-slate-50/50 transition-colors"
+                  className="border-border hover:bg-muted/50 transition-colors"
                 >
                   {enableRowSelection && (
                     <TableCell className="w-12">
@@ -155,12 +155,12 @@ export function EnhancedDataTable<TData, TValue>({
                         checked={row.getIsSelected()}
                         onCheckedChange={(value) => row.toggleSelected(!!value)}
                         aria-label="Sélectionner la ligne"
-                        className="border-slate-300 data-[state=checked]:bg-vital-green data-[state=checked]:border-vital-green"
+                        className="border-input data-[state=checked]:bg-vital-green data-[state=checked]:border-vital-green"
                       />
                     </TableCell>
                   )}
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className="text-slate-700">
+                    <TableCell key={cell.id} className="text-foreground">
                       {flexRender(
                         cell.column.columnDef.cell,
                         cell.getContext()
@@ -173,7 +173,7 @@ export function EnhancedDataTable<TData, TValue>({
               <TableRow>
                 <TableCell
                   colSpan={columns.length + (enableRowSelection ? 1 : 0)}
-                  className="h-24 text-center text-slate-400"
+                  className="h-24 text-center text-muted-foreground"
                 >
                   Aucun résultat.
                 </TableCell>
@@ -184,11 +184,11 @@ export function EnhancedDataTable<TData, TValue>({
       </div>
 
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-2">
-        <div className="text-xs text-slate-500">
+        <div className="text-xs text-muted-foreground">
           {total !== undefined ? (
             <div className="flex flex-col gap-0.5">
               <div><span className="text-vital-green font-bold">{Object.keys(rowSelection).length}</span> sur {data.length} ligne(s) sélectionnée(s)</div>
-              <div>Affichage de <span className="text-slate-900 font-medium">{data.length}</span> sur {total} résultat(s)</div>
+              <div>Affichage de <span className="text-foreground font-medium">{data.length}</span> sur {total} résultat(s)</div>
             </div>
           ) : (
             <div><span className="text-vital-green font-bold">{Object.keys(rowSelection).length}</span> sur {data.length} ligne(s) sélectionnée(s)</div>
@@ -197,11 +197,11 @@ export function EnhancedDataTable<TData, TValue>({
         
         <div className="flex items-center space-x-4">
           <div className="flex items-center gap-2">
-            <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400">Lignes par page</span>
+            <span className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground">Lignes par page</span>
             <select
               value={itemsPerPage}
               onChange={(e) => onItemsPerPageChange?.(Number(e.target.value))}
-              className="bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-700 focus:outline-none focus:border-vital-green/50"
+              className="bg-background border border-input rounded-lg px-2 py-1.5 text-xs text-foreground focus:outline-none focus:border-vital-green/50"
             >
               <option value={10}>10</option>
               <option value={20}>20</option>
@@ -219,13 +219,13 @@ export function EnhancedDataTable<TData, TValue>({
                 onPageChange?.(newPage);
               }}
               disabled={currentPage <= 1}
-              className="h-8 w-8 p-0 border-slate-200 hover:bg-slate-50 disabled:opacity-50"
+              className="h-8 w-8 p-0 border-input hover:bg-muted disabled:opacity-50"
             >
-              <ChevronLeft className="h-4 w-4 text-slate-600" />
+              <ChevronLeft className="h-4 w-4 text-foreground/70" />
             </Button>
             
-            <span className="text-xs text-slate-500">
-              Page <span className="text-slate-900 font-medium">{currentPage}</span> sur {totalPages}
+            <span className="text-xs text-muted-foreground">
+              Page <span className="text-foreground font-medium">{currentPage}</span> sur {totalPages}
             </span>
             
             <Button
@@ -236,9 +236,9 @@ export function EnhancedDataTable<TData, TValue>({
                 onPageChange?.(newPage);
               }}
               disabled={currentPage >= totalPages}
-              className="h-8 w-8 p-0 border-slate-200 hover:bg-slate-50 disabled:opacity-50"
+              className="h-8 w-8 p-0 border-input hover:bg-muted disabled:opacity-50"
             >
-              <ChevronRight className="h-4 w-4 text-slate-600" />
+              <ChevronRight className="h-4 w-4 text-foreground/70" />
             </Button>
           </div>
         </div>

@@ -145,24 +145,24 @@ export default function CustomSelect({
               const styles = getStylesFromClasses();
               return {
                 ...base,
-                backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                borderColor: state.isFocused ? 'rgba(0, 242, 177, 0.5)' : 'rgba(255, 255, 255, 0.1)',
+                backgroundColor: 'var(--background)',
+                borderColor: state.isFocused ? 'var(--primary)' : 'var(--border)',
                 borderRadius: '0.75rem',
                 minHeight: styles.height,
                 height: styles.height,
                 padding: `0 ${styles.padding}`,
-                boxShadow: state.isFocused ? '0 0 0 1px rgba(0, 242, 177, 0.2)' : 'none',
+                boxShadow: state.isFocused ? '0 0 0 1px var(--primary)' : 'none',
                 '&:hover': {
-                  borderColor: 'rgba(0, 242, 177, 0.3)',
-                  backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                  borderColor: 'var(--primary)',
+                  backgroundColor: 'var(--background)',
                 }
               };
             },
             menu: (base) => ({
               ...base,
-              backgroundColor: 'rgba(10, 20, 20, 0.95)',
+              backgroundColor: 'var(--card)',
               backdropFilter: 'blur(16px)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
+              border: '1px solid var(--border)',
               borderRadius: '0.75rem',
               overflow: 'hidden',
               zIndex: 50,
@@ -170,24 +170,25 @@ export default function CustomSelect({
             option: (base, state) => ({
               ...base,
               backgroundColor: state.isSelected 
-                ? 'rgba(0, 242, 177, 0.2)' 
+                ? 'var(--primary)' 
                 : state.isFocused 
-                  ? 'rgba(255, 255, 255, 0.05)' 
+                  ? 'var(--accent)' 
                   : 'transparent',
-              color: state.isSelected ? '#00f2b1' : '#E2E8F0',
+              color: state.isSelected ? 'var(--primary-foreground)' : 'var(--foreground)',
               cursor: 'pointer',
               fontSize: '14px',
               '&:active': {
-                backgroundColor: 'rgba(0, 242, 177, 0.3)',
+                backgroundColor: 'var(--primary)',
               }
             }),
             singleValue: (base) => ({
               ...base,
-              color: '#fff',
+              color: 'var(--foreground)',
             }),
             placeholder: (base) => ({
               ...base,
-              color: 'rgba(148, 163, 184, 0.5)',
+              color: 'var(--muted-foreground)',
+              opacity: 0.5,
             }),
             valueContainer: (base) => {
               const styles = getStylesFromClasses();
@@ -202,14 +203,14 @@ export default function CustomSelect({
             }),
             dropdownIndicator: (base) => ({
               ...base,
-              color: 'rgba(148, 163, 184, 0.5)',
+              color: 'var(--muted-foreground)',
               '&:hover': {
-                color: '#00f2b1',
+                color: 'var(--primary)',
               }
             }),
             indicatorSeparator: (base) => ({
               ...base,
-              backgroundColor: 'rgba(255, 255, 255, 0.1)',
+              backgroundColor: 'var(--border)',
             }),
           }}
         />
