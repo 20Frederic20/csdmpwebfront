@@ -175,7 +175,7 @@ export default function Dashboard() {
               <div className="text-sm text-gray-500 py-4 text-center">Aucune consultation récente trouvée.</div>
             ) : (
               <div className="space-y-4 mt-4">
-                {recentConsultations.map(consultation => (
+                {recentConsultations.slice(0,5).map(consultation => (
                   <div key={consultation.id_} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-lg border bg-card text-card-foreground hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer gap-2" onClick={() => window.location.href = `/consultations/${consultation.id_}`}>
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full bg-green-100 text-green-700 flex items-center justify-center">
