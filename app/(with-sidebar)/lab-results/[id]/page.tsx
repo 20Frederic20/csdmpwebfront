@@ -21,6 +21,7 @@ import { LabResultsService } from "@/features/lab-results/services/lab-results.s
 import { LabResult, TestType } from "@/features/lab-results/types/lab-results.types";
 import { useAuthRefresh } from "@/hooks/use-auth-refresh";
 import Link from "next/link";
+import { ExtractedValuesDisplay } from "@/features/lab-results/components/ExtractedValuesDisplay";
 
 export default function LabResultDetailPage() {
   const params = useParams();
@@ -284,9 +285,10 @@ export default function LabResultDetailPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <pre className="text-sm bg-muted p-4 rounded-lg overflow-auto">
-                  {JSON.stringify(labResult.extracted_values, null, 2)}
-                </pre>
+                <ExtractedValuesDisplay 
+                  extractedValues={labResult.extracted_values} 
+                  testType={labResult.test_type}
+                />
               </CardContent>
             </Card>
           )}

@@ -6,6 +6,7 @@ import { Calendar, Building, FileText, Beaker, User, Clock } from "lucide-react"
 import { LabResult } from "../types/lab-results.types";
 import { TestType } from "../types/lab-results.types";
 import { Modal } from "@/components/ui/modal";
+import { ExtractedValuesDisplay } from "./ExtractedValuesDisplay";
 
 interface ViewLabResultModalProps {
   isOpen: boolean;
@@ -132,11 +133,10 @@ export function ViewLabResultModal({ isOpen, onClose, labResult }: ViewLabResult
               <FileText className="h-5 w-5 text-gray-400" />
               <h4 className="font-medium">Valeurs extraites</h4>
             </div>
-            <div className="bg-gray-50 rounded-lg p-4">
-              <pre className="text-sm text-gray-700 whitespace-pre-wrap">
-                {JSON.stringify(labResult.extracted_values, null, 2)}
-              </pre>
-            </div>
+            <ExtractedValuesDisplay 
+              extractedValues={labResult.extracted_values} 
+              testType={labResult.test_type}
+            />
           </div>
         )}
 

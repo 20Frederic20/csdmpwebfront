@@ -17,10 +17,10 @@ export enum TestType {
 
 export interface CreateLabResultRequest {
   patient_id: string;
-  performer_id: string; // ID du personnel qui a réalisé le test
+  performer_id: string;
   test_type: TestType;
-  date_performed: string; // ISO date string
-  date_reported: string; // ISO date string
+  date_performed: string;
+  date_reported: string;
   issuing_facility?: string | null;
   extracted_values?: object | null;
   document_id?: string | null;

@@ -20,6 +20,8 @@ import { labResultSchema, LabResultFormValues } from "@/features/lab-results/sch
 import { useCreateLabResult } from "@/features/lab-results/hooks/use-lab-results";
 import { getTestTypeOptions } from "@/features/lab-results/utils/lab-results.utils";
 import { usePermissionsContext } from "@/contexts/permissions-context";
+import { DynamicTestFields } from "@/features/lab-results/components/DynamicTestFields";
+import { TEST_FIELDS_CONFIG } from "@/features/lab-results/config/test-fields.config";
 
 export default function AddLabResultPage() {
   const router = useRouter();
@@ -103,22 +105,41 @@ export default function AddLabResultPage() {
     }
   }, [issuingFacility, setValue, user?.health_facility_id]);
 
+  useEffect(() => {
+    const fields = TEST_FIELDS_CONFIG[testType] || [];
+    const newExtractedValues: any = {};
+    fields.forEach((f: any) => {
+      if (f.type === 'number') {
+        newExtractedValues[f.name] = { 
+          value: null, 
+          min_ref: f.defaultMin !== undefined ? f.defaultMin : null, 
+          max_ref: f.defaultMax !== undefined ? f.defaultMax : null 
+        };
+      } else {
+        newExtractedValues[f.name] = '';
+      }
+    });
+    setValue('extracted_values', newExtractedValues);
+  }, [testType, setValue]);
+
   const onSubmit = async (data: LabResultFormValues) => {
     try {
-      let extractedValues = data.extracted_values;
-      if (typeof extractedValues === 'string' && extractedValues.trim() !== '') {
-        try {
-          extractedValues = JSON.parse(extractedValues);
-        } catch {
-          // Validation should already handle this
-        }
+      const processedExtractedValues: Record<string, any> = {};
+      if (data.extracted_values) {
+        Object.entries(data.extracted_values).forEach(([key, val]) => {
+          if (typeof val === 'object' && val !== null) {
+            processedExtractedValues[key] = JSON.stringify(val);
+          } else if (val !== undefined && val !== null) {
+            processedExtractedValues[key] = String(val);
+          }
+        });
       }
 
       const submitData = {
         ...data,
         date_performed: new Date(data.date_performed).toISOString(),
         date_reported: new Date(data.date_reported).toISOString(),
-        extracted_values: extractedValues
+        extracted_values: processedExtractedValues,
       };
 
       await createMutation.mutateAsync(submitData);
@@ -284,21 +305,12 @@ export default function AddLabResultPage() {
             </div>
 
             {/* Extracted Values */}
-            <div className="space-y-2">
-              <Label htmlFor="extracted_values">Valeurs extraites (JSON)</Label>
-              <Textarea
-                id="extracted_values"
-                placeholder='{"key": "value", "result": 123.45}'
-                {...register('extracted_values')}
-                rows={6}
-                className="font-mono"
+            <div className="space-y-4">
+              <Label className="text-lg font-semibold">Valeurs de l'examen</Label>
+              <DynamicTestFields 
+                testType={testType} 
+                register={register} 
               />
-              <p className="text-sm text-muted-foreground">
-                Format JSON. Exemple: {`{"hemoglobin": 14.5, "platelets": 250000}`}
-              </p>
-              {errors.extracted_values && (
-                <p className="text-sm text-red-500">{errors.extracted_values.message as string}</p>
-              )}
             </div>
 
             {/* Is Active */}
