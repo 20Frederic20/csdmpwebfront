@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EnhancedDataTable } from "@/components/ui/enhanced-data-table";
 import { ColumnDef } from "@tanstack/react-table";
@@ -62,6 +62,11 @@ export function DataTableWithFilters<TData, TValue>({
 }: DataTableWithFiltersProps<TData, TValue>) {
   const [filters, setFilters] = useState<Record<string, any>>(initialFilters);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+
+  // Sync internal filters with initialFilters if they change from outside
+  useEffect(() => {
+    setFilters(initialFilters);
+  }, [initialFilters]);
 
   const handleFiltersChange = useCallback((newFilters: Record<string, any>) => {
     setFilters(newFilters);

@@ -25,7 +25,17 @@ export default function PatientsPage() {
     owner_id: undefined as string | undefined,
   });
   const [selectedRows, setSelectedRows] = useState<Record<string, boolean>>({});
-  const { canAccess } = usePermissionsContext();
+  const { canAccess, user } = usePermissionsContext();
+
+  // Filtre automatique pour les utilisateurs sans établissement ni staff_id
+  useEffect(() => {
+    if (user && !user.health_facility_id && !user.hospital_staff_id) {
+      setFilters(prev => ({
+        ...prev,
+        owner_id: user.id
+      }));
+    }
+  }, [user]);
 
   // États pour les modals
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
