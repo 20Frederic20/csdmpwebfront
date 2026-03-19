@@ -77,4 +77,5 @@ export interface PatientsQueryParams {
   search?: string;
   birth_date_from?: string;
   genders?: 'male' | 'female' | 'other' | 'unknown' | 'all';
+  owner_id?: string;
 }

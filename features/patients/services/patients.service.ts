@@ -18,6 +18,7 @@ export class PatientService {
     if (params.search) searchParams.append('search', params.search);
     if (params.birth_date_from) searchParams.append('birth_date_from', params.birth_date_from);
     if (params.genders) searchParams.append('genders', params.genders);
+    if (params.owner_id) searchParams.append('owner_id', params.owner_id);
 
     const url = `${API_BASE}/patients${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
 

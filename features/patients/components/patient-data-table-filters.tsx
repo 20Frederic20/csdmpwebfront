@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import CustomSelect from "@/components/ui/custom-select";
 import { Label } from "@/components/ui/label";
-import { Search, RotateCcw, ChevronDown, ChevronUp } from "lucide-react";
+import { Search, RotateCcw, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { usePermissionsContext } from "@/contexts/permissions-context";
 
 interface PatientDataTableFiltersProps {
   filters: Record<string, any>;
@@ -19,7 +19,7 @@ export function PatientDataTableFilters({
   onFiltersChange,
   onReset,
 }: PatientDataTableFiltersProps) {
-  const [showAdvanced, setShowAdvanced] = useState(false);
+  const { user } = usePermissionsContext();
 
   const handleSearchChange = (value: string) => {
     onFiltersChange({ ...filters, search: value });
@@ -34,6 +34,14 @@ export function PatientDataTableFilters({
       ...filters, 
       genders: (value as string) || 'all'
     });
+  };
+
+  const toggleMyPatients = () => {
+    if (filters.owner_id) {
+      onFiltersChange({ ...filters, owner_id: undefined });
+    } else if (user?.id) {
+      onFiltersChange({ ...filters, owner_id: user.id });
+    }
   };
 
   // Options pour le CustomSelect
@@ -53,13 +61,16 @@ export function PatientDataTableFilters({
       search: "",
       birth_date_from: "",
       genders: "all",
+      owner_id: undefined,
     });
   };
 
+  const isMyPatientsActive = !!filters.owner_id;
+
   return (
     <div className="space-y-4">
-      {/* Recherche simple */}
-      <div className="flex items-center space-x-3 bg-muted/30 p-2 rounded-xl border border-input shadow-sm">
+      {/* Recherche simple et actions */}
+      <div className="flex flex-col md:flex-row md:items-center gap-4 bg-muted/30 p-4 rounded-xl border border-input shadow-sm">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
@@ -69,7 +80,20 @@ export function PatientDataTableFilters({
             className="pl-10"
           />
         </div>
+        
         <div className="flex items-center gap-2">
+          <Button
+            variant={isMyPatientsActive ? "default" : "outline"}
+            onClick={toggleMyPatients}
+            className={cn(
+              "flex items-center gap-2",
+              isMyPatientsActive && "bg-vital-green hover:bg-vital-green/90 text-white border-vital-green"
+            )}
+          >
+            <Users className="h-4 w-4" />
+            <span>Mes patients</span>
+          </Button>
+
           <Button
             variant="outline"
             onClick={handleReset}
@@ -78,51 +102,34 @@ export function PatientDataTableFilters({
             <RotateCcw className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">Réinitialiser</span>
           </Button>
-          <Button
-            variant="ghost"
-            onClick={() => setShowAdvanced(!showAdvanced)}
-            className={cn(
-              "flex items-center gap-2 transition-colors",
-              showAdvanced ? "text-vital-green bg-vital-green/10" : "text-muted-foreground hover:text-foreground hover:bg-accent"
-            )}
-          >
-            <span className="hidden sm:inline">Filtres avancés</span>
-            {showAdvanced ? (
-              <ChevronUp className="h-4 w-4" />
-            ) : (
-              <ChevronDown className="h-4 w-4" />
-            )}
-          </Button>
         </div>
       </div>
 
-      {/* Filtres avancés */}
-      {showAdvanced && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 border border-input rounded-xl bg-card shadow-sm animate-in fade-in slide-in-from-top-2 duration-300">
-          {/* Date de naissance */}
-          <div className="space-y-3">
-            <Label htmlFor="birth_date" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Date de naissance (à partir de)</Label>
-            <Input
-              id="birth_date"
-              type="date"
-              value={filters.birth_date_from}
-              onChange={(e) => handleBirthDateChange(e.target.value)}
-            />
-          </div>
-
-          {/* Sexe */}
-          <div className="space-y-3">
-            <Label htmlFor="gender" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Sexe</Label>
-            <CustomSelect
-              options={genderOptions}
-              value={filters.genders}
-              onChange={handleGenderChange}
-              placeholder="Sélectionner le sexe"
-              height="h-10"
-            />
-          </div>
+      {/* Tous les filtres (affichés en permanence) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 border border-input rounded-xl bg-card shadow-sm">
+        {/* Date de naissance */}
+        <div className="space-y-3">
+          <Label htmlFor="birth_date" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Date de naissance (à partir de)</Label>
+          <Input
+            id="birth_date"
+            type="date"
+            value={filters.birth_date_from}
+            onChange={(e) => handleBirthDateChange(e.target.value)}
+          />
         </div>
-      )}
+
+        {/* Sexe */}
+        <div className="space-y-3">
+          <Label htmlFor="gender" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Sexe</Label>
+          <CustomSelect
+            options={genderOptions}
+            value={filters.genders}
+            onChange={handleGenderChange}
+            placeholder="Sélectionner le sexe"
+            height="h-10"
+          />
+        </div>
+      </div>
     </div>
   );
 }

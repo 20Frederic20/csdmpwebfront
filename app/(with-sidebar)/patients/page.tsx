@@ -22,6 +22,7 @@ export default function PatientsPage() {
     search: "",
     birth_date_from: "",
     genders: "all" as 'male' | 'female' | 'other' | 'unknown' | 'all',
+    owner_id: undefined as string | undefined,
   });
   const [selectedRows, setSelectedRows] = useState<Record<string, boolean>>({});
   const { canAccess } = usePermissionsContext();
@@ -43,6 +44,7 @@ export default function PatientsPage() {
     search: filters.search || undefined,
     birth_date_from: filters.birth_date_from || undefined,
     genders: filters.genders !== 'all' ? filters.genders : undefined,
+    owner_id: filters.owner_id,
   });
 
   const { mutateAsync: toggleStatus } = useTogglePatientActivation();
@@ -100,6 +102,7 @@ export default function PatientsPage() {
       search: newFilters.search || "",
       birth_date_from: newFilters.birth_date_from || "",
       genders: newFilters.genders || "all",
+      owner_id: newFilters.owner_id,
     });
     setCurrentPage(1); // Retour à la page 1 lors du changement de filtre
   };
