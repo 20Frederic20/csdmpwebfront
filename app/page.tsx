@@ -31,6 +31,7 @@ import {
   LogIn,
   UserCircle
 } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { cn } from '../lib/utils';
 import { GlassCard, Button, Badge } from '../components/UI';
 import { MOCK_PATIENTS, MOCK_STAFF, Patient, Staff } from '../types';
@@ -919,6 +920,7 @@ export default function App() {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const { token, saveToken, clearToken, user } = useAuthToken();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50);
@@ -942,6 +944,7 @@ export default function App() {
   };
 
   const handleLogout = () => {
+    queryClient.clear();
     clearToken();
     setView('landing');
   };

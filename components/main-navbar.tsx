@@ -19,6 +19,7 @@ import { AuthClientService } from "@/features/core/auth/services/auth-client.ser
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { usePermissionsContext } from "@/contexts/permissions-context";
 import { useAuthRefresh } from "@/hooks/use-auth-refresh";
+import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -27,8 +28,12 @@ export function MainNavbar() {
   const pathname = usePathname();
   const { clearPermissionsCache } = usePermissionsContext();
   const { isLoading } = useAuthRefresh();
+  const queryClient = useQueryClient();
 
   const handleLogout = () => {
+    // Nettoyer le cache React Query
+    queryClient.clear();
+    
     // Nettoyer le cache des permissions avant la déconnexion
     clearPermissionsCache();
     

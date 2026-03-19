@@ -18,14 +18,19 @@ import {
 import { useRouter } from "next/navigation";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { usePermissionsContext } from "@/contexts/permissions-context";
+import { useQueryClient } from "@tanstack/react-query";
 
 
 export function UserAvatarDropdown() {
   const { clearToken } = useAuthToken();
   const { clearPermissionsCache, user, loading } = usePermissionsContext();
+  const queryClient = useQueryClient();
   const router = useRouter();
 
   const handleLogout = () => {
+    // Nettoyer le cache React Query
+    queryClient.clear();
+
     // Supprimer le token du localStorage
     clearToken();
 

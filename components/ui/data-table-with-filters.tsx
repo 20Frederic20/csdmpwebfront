@@ -63,7 +63,6 @@ export function DataTableWithFilters<TData, TValue>({
   const [filters, setFilters] = useState<Record<string, any>>(initialFilters);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
-  // Sync internal filters with initialFilters if they change from outside
   useEffect(() => {
     setFilters(initialFilters);
   }, [initialFilters]);
