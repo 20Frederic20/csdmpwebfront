@@ -4,12 +4,18 @@ import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Edit, User, Phone, MapPin, Calendar, Heart } from "lucide-react";
+import { ArrowLeft, Edit, User, Phone, MapPin, Calendar, Heart, ChevronDown, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Patient, usePatient } from "@/features/patients";
 import { Badge } from "@/components/ui/badge";
 import { PatientDetailTabs } from "@/features/patients/components/patient-detail-tabs";
 import { PatientResponse } from "@/features/patients/types/patient-detail.types";
+import { Activity } from "lucide-react";
+import { useLabResults } from "@/features/lab-results/hooks/use-lab-results";
+import { getEvolutionData } from "@/features/lab-results/utils/analytics.utils";
+import { LabEvolutionChart } from "@/components/charts/LabEvolutionChart";
+import { TEST_FIELDS_CONFIG } from "@/features/lab-results/config/test-fields.config";
 
 export default function PatientDetailPage() {
   const router = useRouter();
@@ -18,6 +24,32 @@ export default function PatientDetailPage() {
 
   const { data: patientData, isLoading: loading, error: queryError } = usePatient(patientId);
   const patient = patientData as PatientResponse | undefined;
+
+  const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
+
+  // Récupérer les examens pour l'analytique
+  const { data: labResultsData, isLoading: loadingLabs, isFetching } = useLabResults(
+    { patient_id: patientId, limit: 100 },
+    { enabled: isAnalyticsOpen }
+  );
+  const labResults = labResultsData?.data || [];
+
+  // Extraire automatiquement tous les test numériques disponibles
+  const numericFields: any[] = [];
+  (Object.values(TEST_FIELDS_CONFIG) as any[][]).forEach((categoryFields) => {
+    categoryFields.forEach((field: any) => {
+      if (field.type === 'number' && !numericFields.find(f => f.name === field.name)) {
+        numericFields.push(field);
+      }
+    });
+  });
+
+  const availableCharts = numericFields
+    .map(field => ({
+      field,
+      history: getEvolutionData(labResults, field.name)
+    }))
+    .filter(item => item.history.length > 0);
 
   // Gérer les erreurs de chargement
   useEffect(() => {
@@ -240,6 +272,55 @@ export default function PatientDetailPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* NOUVELLE SECTION : ANALYTICS */}
+      <Collapsible
+        open={isAnalyticsOpen}
+        onOpenChange={setIsAnalyticsOpen}
+        className="w-full space-y-4 border rounded-lg p-4 bg-muted/20"
+      >
+        <div className="flex items-center justify-between cursor-pointer" onClick={() => setIsAnalyticsOpen(!isAnalyticsOpen)}>
+          <h2 className="text-lg font-semibold flex items-center gap-2">
+            <Activity className="h-5 w-5" /> Évolution des constantes
+          </h2>
+          <CollapsibleTrigger asChild>
+            <Button variant="ghost" size="sm" className="w-9 p-0">
+              {isAnalyticsOpen ? (
+                <ChevronDown className="h-4 w-4" />
+              ) : (
+                <ChevronRight className="h-4 w-4" />
+              )}
+            </Button>
+          </CollapsibleTrigger>
+        </div>
+
+        <CollapsibleContent className="space-y-4 pt-4">
+          {isFetching || loadingLabs ? (
+            <div className="flex justify-center p-8 text-muted-foreground">Téléchargement et analyse des données...</div>
+          ) : availableCharts.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {availableCharts.map(({ field, history }) => (
+                <LabEvolutionChart 
+                  key={field.name}
+                  title={field.label} 
+                  unit={field.unit || ""}
+                  data={history} 
+                  minRef={field.defaultMin} 
+                  maxRef={field.defaultMax} 
+                />
+              ))}
+            </div>
+          ) : (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center p-6 text-muted-foreground">
+                <Activity className="h-8 w-8 mb-2 opacity-50" />
+                <p>Aucune donnée numérique n'a encore été saisie pour ce patient.</p>
+                <p className="text-sm">L'ajout de champs numériques (ex: Hémoglobine, Glycémie) générera des graphiques automatiquement.</p>
+              </CardContent>
+            </Card>
+          )}
+        </CollapsibleContent>
+      </Collapsible>
 
       {/* Tabs pour les informations médicales détaillées */}
       <PatientDetailTabs patient={patient} patientId={patientId} />

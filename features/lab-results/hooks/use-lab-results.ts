@@ -5,10 +5,11 @@ import { toast } from 'sonner';
 
 export const LAB_RESULTS_QUERY_KEY = ['lab-results'] as const;
 
-export function useLabResults(params: ListLabResultQueryParams = {}) {
+export function useLabResults(params: ListLabResultQueryParams = {}, options?: any) {
     return useQuery({
         queryKey: [...LAB_RESULTS_QUERY_KEY, params],
         queryFn: () => LabResultsService.getLabResults(params),
+        ...options
     });
 }
 
