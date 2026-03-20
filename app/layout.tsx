@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { PermissionsProvider } from "@/contexts/permissions-context";
 import { QueryProvider } from "@/contexts/query-provider";
 import { ThemeProvider } from "@/components/theme-provider";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -39,7 +40,9 @@ export default function RootLayout({
         >
           <QueryProvider>
             <PermissionsProvider>
-              {children}
+              <TooltipProvider>
+                {children}
+              </TooltipProvider>
               <Toaster />
             </PermissionsProvider>
           </QueryProvider>

@@ -14,6 +14,7 @@ import {
 } from "@/features/hospital-staff/utils/hospital-staff.utils";
 import { useHospitalStaffMutations } from "@/features/hospital-staff/hooks/use-hospital-staff-mutations";
 import { useAuthToken } from "@/hooks/use-auth-token";
+import { usePermissionsContext } from "@/contexts/permissions-context";
 import { UserRole } from "@/features/users/types/user.types";
 import { toast } from "sonner";
 import { ArrowLeft, Save, X } from "lucide-react";
@@ -54,6 +55,17 @@ export default function AddHospitalStaffPage() {
   });
   const [selectedRoles, setSelectedRoles] = useState<UserRole[]>([]);
   const { token } = useAuthToken();
+  const { user } = usePermissionsContext();
+
+  // Pré-sélectionner l'établissement en fonction de l'utilisateur connecté
+  useEffect(() => {
+    if (user?.health_facility_id && !formData.health_facility_id) {
+      setFormData(prev => ({
+        ...prev,
+        health_facility_id: user.health_facility_id || ""
+      }));
+    }
+  }, [user, formData.health_facility_id]);
 
   // Charger les établissements de santé
   useEffect(() => {

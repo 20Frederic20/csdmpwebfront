@@ -4,6 +4,7 @@ import { SidebarProvider, SidebarTrigger, SidebarInset } from "@/components/ui/s
 import { AppSidebar } from "@/components/app-sidebar"
 import { UserAvatarDropdown } from "@/components/user-avatar-dropdown"
 import { ModeToggle } from "@/components/mode-toggle"
+import { NotificationDropdown } from "@/components/notification-dropdown"
 
 interface WithSidebarLayoutWrapperProps {
   children: React.ReactNode;
@@ -19,6 +20,7 @@ export function WithSidebarLayoutWrapper({ children }: WithSidebarLayoutWrapperP
           <SidebarTrigger className="-ml-1 text-slate-500" />
           <div className="flex-1" />
           <div className="flex items-center gap-4">
+            <NotificationDropdown />
             <ModeToggle />
             <UserAvatarDropdown />
           </div>
