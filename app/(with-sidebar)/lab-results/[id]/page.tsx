@@ -22,11 +22,13 @@ import { LabResult, TestType } from "@/features/lab-results/types/lab-results.ty
 import { useAuthRefresh } from "@/hooks/use-auth-refresh";
 import Link from "next/link";
 import { ExtractedValuesDisplay } from "@/features/lab-results/components/ExtractedValuesDisplay";
+import { usePermissionsContext } from "@/contexts/permissions-context";
 
 export default function LabResultDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { isLoading: authLoading } = useAuthRefresh();
+  const { canAccess, loading: permissionsLoading } = usePermissionsContext();
   const [labResult, setLabResult] = useState<LabResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -104,10 +106,21 @@ export default function LabResultDetailPage() {
     return labels[testType] || testType;
   };
 
-  if (authLoading) {
+  if (authLoading || permissionsLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-lg">Chargement...</div>
+      </div>
+    );
+  }
+
+  if (!canAccess('lab_results', 'read')) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-2">Accès refusé</h2>
+          <p className="text-muted-foreground">Vous n'avez pas la permission de consulter les résultats de laboratoire.</p>
+        </div>
       </div>
     );
   }
@@ -160,32 +173,38 @@ export default function LabResultDetailPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Link href={`/lab-results/${labResult.id_}/edit`}>
-            <Button variant="outline" size="sm">
-              <Edit className="mr-2 h-4 w-4" />
-              Modifier
+          {canAccess('lab_results', 'update') && (
+            <Link href={`/lab-results/${labResult.id_}/edit`}>
+              <Button variant="outline" size="sm">
+                <Edit className="mr-2 h-4 w-4" />
+                Modifier
+              </Button>
+            </Link>
+          )}
+          {canAccess('lab_results', 'toggle') && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleToggleStatus}
+            >
+              {labResult.is_active ? (
+                <ToggleRight className="mr-2 h-4 w-4" />
+              ) : (
+                <ToggleLeft className="mr-2 h-4 w-4" />
+              )}
+              {labResult.is_active ? 'Désactiver' : 'Activer'}
             </Button>
-          </Link>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleToggleStatus}
-          >
-            {labResult.is_active ? (
-              <ToggleRight className="mr-2 h-4 w-4" />
-            ) : (
-              <ToggleLeft className="mr-2 h-4 w-4" />
-            )}
-            {labResult.is_active ? 'Désactiver' : 'Activer'}
-          </Button>
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={handleDelete}
-          >
-            <Trash2 className="mr-2 h-4 w-4" />
-            Supprimer
-          </Button>
+          )}
+          {canAccess('lab_results', 'soft_delete') && (
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleDelete}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Supprimer
+            </Button>
+          )}
         </div>
       </div>
 
@@ -310,45 +329,6 @@ export default function LabResultDetailPage() {
                   {labResult.patient_id}
                 </div>
               </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Actions rapides</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <Link href={`/lab-results/${labResult.id_}/edit`}>
-                <Button className="w-full" variant="outline">
-                  <Edit className="mr-2 h-4 w-4" />
-                  Modifier
-                </Button>
-              </Link>
-              <Button
-                className="w-full"
-                variant="outline"
-                onClick={handleToggleStatus}
-              >
-                {labResult.is_active ? (
-                  <>
-                    <ToggleLeft className="mr-2 h-4 w-4" />
-                    Désactiver
-                  </>
-                ) : (
-                  <>
-                    <ToggleRight className="mr-2 h-4 w-4" />
-                    Activer
-                  </>
-                )}
-              </Button>
-              <Button
-                className="w-full"
-                variant="destructive"
-                onClick={handleDelete}
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Supprimer
-              </Button>
             </CardContent>
           </Card>
         </div>

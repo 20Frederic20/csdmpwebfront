@@ -1,12 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { LabResultsService } from '../services/lab-results.service';
-import { ListLabResultQueryParams, CreateLabResultRequest, LabResult } from '../types/lab-results.types';
+import { ListLabResultQueryParams, CreateLabResultRequest, LabResult, ListLabResultQM } from '../types/lab-results.types';
 import { toast } from 'sonner';
 
 export const LAB_RESULTS_QUERY_KEY = ['lab-results'] as const;
 
 export function useLabResults(params: ListLabResultQueryParams = {}, options?: any) {
-    return useQuery({
+    return useQuery<ListLabResultQM, Error>({
         queryKey: [...LAB_RESULTS_QUERY_KEY, params],
         queryFn: () => LabResultsService.getLabResults(params),
         ...options

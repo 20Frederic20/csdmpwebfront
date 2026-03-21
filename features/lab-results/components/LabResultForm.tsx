@@ -1,34 +1,32 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Calendar, Save } from "lucide-react";
+import { Calendar, Save, ArrowLeft } from "lucide-react";
 import { LabResult, TestType } from "../types/lab-results.types";
-import { Modal } from "@/components/ui/modal";
 import { PatientSelect } from "@/features/patients/components/patient-select";
 import { labResultSchema, LabResultFormValues } from "../schemas/lab-results.schema";
-import { useUpdateLabResult } from "../hooks/use-lab-results";
 import { getTestTypeOptions } from "../utils/lab-results.utils";
 import { usePermissionsContext } from "@/contexts/permissions-context";
 import { DynamicTestFields } from "./DynamicTestFields";
 import { TEST_FIELDS_CONFIG } from "../config/test-fields.config";
 import { HealthFacilitySelect } from "@/features/health-facilities/components/health-facility-select";
 import { HospitalStaffSelect } from "@/features/hospital-staff/components/hospital-staff-select";
+import Link from 'next/link';
 
-interface EditLabResultModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  labResult: LabResult;
-  onUpdate?: (updatedLabResult: LabResult) => void;
+interface LabResultFormProps {
+  initialData?: LabResult;
+  onSubmit: (data: LabResultFormValues) => Promise<void>;
+  isSubmitting?: boolean;
+  title: string;
 }
 
-export function EditLabResultModal({ isOpen, onClose, labResult, onUpdate }: EditLabResultModalProps) {
-  const updateMutation = useUpdateLabResult();
+export function LabResultForm({ initialData, onSubmit, isSubmitting, title }: LabResultFormProps) {
   const { user } = usePermissionsContext();
 
   const {
@@ -44,8 +42,8 @@ export function EditLabResultModal({ isOpen, onClose, labResult, onUpdate }: Edi
       patient_id: '',
       performer_id: '',
       test_type: TestType.BLOOD_COUNT,
-      date_performed: '',
-      date_reported: '',
+      date_performed: new Date().toISOString().split('T')[0],
+      date_reported: new Date().toISOString().split('T')[0],
       issuing_facility: '',
       document_id: '',
       extracted_values: null,
@@ -54,11 +52,11 @@ export function EditLabResultModal({ isOpen, onClose, labResult, onUpdate }: Edi
   });
 
   useEffect(() => {
-    if (labResult) {
+    if (initialData) {
       // Pré-traitement des valeurs extraites : décoder les strings JSON si nécessaire
       const processedExtractedValues: Record<string, any> = {};
-      if (labResult.extracted_values) {
-        Object.entries(labResult.extracted_values).forEach(([key, val]) => {
+      if (initialData.extracted_values) {
+        Object.entries(initialData.extracted_values).forEach(([key, val]) => {
           if (typeof val === 'string' && (val.startsWith('{') || val.startsWith('['))) {
             try {
               processedExtractedValues[key] = JSON.parse(val);
@@ -72,27 +70,37 @@ export function EditLabResultModal({ isOpen, onClose, labResult, onUpdate }: Edi
       }
 
       reset({
-        patient_id: labResult.patient_id,
-        performer_id: labResult.performer_id || user?.hospital_staff_id || '',
-        test_type: labResult.test_type,
-        date_performed: labResult.date_performed.split('T')[0],
-        date_reported: labResult.date_reported.split('T')[0],
-        issuing_facility: labResult.issuing_facility || user?.health_facility_id || '',
-        document_id: labResult.document_id || '',
+        patient_id: initialData.patient_id,
+        performer_id: initialData.performer_id || user?.hospital_staff_id || '',
+        test_type: initialData.test_type,
+        date_performed: initialData.date_performed.split('T')[0],
+        date_reported: initialData.date_reported.split('T')[0],
+        issuing_facility: initialData.issuing_facility || user?.health_facility_id || '',
+        document_id: initialData.document_id || '',
         extracted_values: processedExtractedValues,
-        is_active: labResult.is_active
+        is_active: initialData.is_active
       });
+    } else if (user) {
+      // Pour une nouvelle insertion, pré-remplir avec les infos de l'utilisateur
+      if (user.health_facility_id) {
+        setValue('issuing_facility', user.health_facility_id);
+      }
+      if (user.hospital_staff_id) {
+        setValue('performer_id', user.hospital_staff_id);
+      }
     }
-  }, [labResult, reset, user]);
+  }, [initialData, reset, user, setValue]);
 
   const patientId = watch('patient_id');
   const isActive = watch('is_active');
   const testType = watch('test_type');
+  const issuingFacility = watch('issuing_facility');
+  const performerId = watch('performer_id');
 
   // Gérer le changement de type de test (réinitialiser les champs dynamiques)
   useEffect(() => {
     // Ne pas réinitialiser lors du premier chargement ou si c'est le type initial du labResult
-    if (labResult && testType === labResult.test_type) return;
+    if (initialData && testType === initialData.test_type) return;
 
     const fields = TEST_FIELDS_CONFIG[testType] || [];
     const newExtractedValues: any = {};
@@ -108,44 +116,26 @@ export function EditLabResultModal({ isOpen, onClose, labResult, onUpdate }: Edi
       }
     });
     setValue('extracted_values', newExtractedValues);
-  }, [testType, setValue, labResult]);
+  }, [testType, setValue, initialData]);
 
-  const onSubmit = async (data: LabResultFormValues) => {
-    try {
-      // Post-traitement des valeurs : matcher la logique du "add"
-      const processedExtractedValues: Record<string, any> = {};
-      if (data.extracted_values) {
-        Object.entries(data.extracted_values).forEach(([key, val]) => {
-          if (typeof val === 'object' && val !== null) {
-            processedExtractedValues[key] = JSON.stringify(val);
-          } else if (val !== undefined && val !== null) {
-            processedExtractedValues[key] = String(val);
-          }
-        });
-      }
-
-      const result = await updateMutation.mutateAsync({
-        id: labResult.id_,
-        data: {
-          ...data,
-          extracted_values: processedExtractedValues
-        }
-      });
-      
-      if (onUpdate) onUpdate(result);
-      onClose();
-    } catch (err) {
-      console.error('Failed to update lab result:', err);
-    }
-  };
-
-  const issuingFacility = watch('issuing_facility');
   const testTypeOptions = getTestTypeOptions();
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Modifier le résultat de laboratoire" size="xl">
+    <div className="space-y-6">
+      <div className="flex items-center gap-4">
+        <Link href="/lab-results">
+          <Button variant="outline" size="sm">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Retour
+          </Button>
+        </Link>
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
+        </div>
+      </div>
+
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Patient Selection */}
           <div className="space-y-2">
             <PatientSelect
@@ -158,10 +148,28 @@ export function EditLabResultModal({ isOpen, onClose, labResult, onUpdate }: Edi
             )}
           </div>
 
+          {/* Issuing Facility Selection */}
+          <div className="space-y-2">
+            <HealthFacilitySelect
+              value={issuingFacility || ''}
+              onChange={(value) => {
+                setValue('issuing_facility', value || '');
+                // Reset performer if facility changes and is not the same as user's
+                if (value !== user?.health_facility_id) {
+                    setValue('performer_id', '');
+                }
+              }}
+              required
+            />
+            {errors.issuing_facility && (
+              <p className="text-sm text-red-500">{errors.issuing_facility.message}</p>
+            )}
+          </div>
+
           {/* Performer Selection */}
           <div className="space-y-2">
             <HospitalStaffSelect
-              value={watch('performer_id')}
+              value={performerId}
               onChange={(value) => setValue('performer_id', value || '', { shouldValidate: true })}
               healthFacilityId={issuingFacility}
               required
@@ -179,7 +187,7 @@ export function EditLabResultModal({ isOpen, onClose, labResult, onUpdate }: Edi
             <select
               id="test_type"
               {...register('test_type')}
-              className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
+              className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
             >
               {testTypeOptions.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -190,15 +198,6 @@ export function EditLabResultModal({ isOpen, onClose, labResult, onUpdate }: Edi
             {errors.test_type && (
               <p className="text-sm text-red-500">{errors.test_type.message}</p>
             )}
-          </div>
-
-          {/* Issuing Facility Selection */}
-          <div className="space-y-2">
-            <HealthFacilitySelect
-              value={issuingFacility || ''}
-              onChange={(value) => setValue('issuing_facility', value || '')}
-              required
-            />
           </div>
 
           {/* Dates */}
@@ -265,26 +264,28 @@ export function EditLabResultModal({ isOpen, onClose, labResult, onUpdate }: Edi
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-4 pt-4 border-t">
+        <div className="flex items-center gap-4 pt-6 border-t">
           <Button
             type="submit"
-            disabled={updateMutation.isPending}
-            className="bg-slate-900 hover:bg-slate-800 text-white"
+            disabled={isSubmitting}
+            className="min-w-[150px]"
           >
-            {updateMutation.isPending ? (
-              'Mise à jour en cours...'
+            {isSubmitting ? (
+              'Enregistrement...'
             ) : (
               <>
                 <Save className="h-4 w-4 mr-2" />
-                Mettre à jour
+                Enregistrer
               </>
             )}
           </Button>
-          <Button variant="outline" type="button" onClick={onClose}>
-            Annuler
-          </Button>
+          <Link href="/lab-results">
+            <Button variant="outline" type="button">
+              Annuler
+            </Button>
+          </Link>
         </div>
       </form>
-    </Modal>
+    </div>
   );
 }

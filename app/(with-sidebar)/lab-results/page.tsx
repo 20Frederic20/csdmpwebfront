@@ -44,7 +44,7 @@ import {
   usePermanentlyDeleteLabResult,
   useToggleLabResultStatus
 } from "@/features/lab-results/hooks/use-lab-results";
-import { EditLabResultModal } from "@/features/lab-results/components/edit-lab-result-modal";
+import { useRouter } from "next/navigation";
 
 export default function LabResultsPage() {
   const [search, setSearch] = useState('');
@@ -52,9 +52,7 @@ export default function LabResultsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
   const { canAccess } = usePermissionsContext();
-
-  const [selectedLabResult, setSelectedLabResult] = useState<LabResult | null>(null);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const router = useRouter();
 
   const queryParams: ListLabResultQueryParams = {
     limit: itemsPerPage,
@@ -109,8 +107,7 @@ export default function LabResultsPage() {
   };
 
   const handleEditClick = (labResult: LabResult) => {
-    setSelectedLabResult(labResult);
-    setIsEditModalOpen(true);
+    router.push(`/lab-results/${labResult.id_}/edit`);
   };
 
   const totalPages = labResultsData ? Math.ceil(labResultsData.total / itemsPerPage) : 0;
@@ -232,7 +229,7 @@ export default function LabResultsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {labResults.map((labResult) => {
+                  {labResults.map((labResult: LabResult) => {
                     const isDeleted = labResult.deleted_at != null && labResult.deleted_at !== undefined && labResult.deleted_at !== '';
                     return (
                       <TableRow key={labResult.id_} className={isDeleted ? 'opacity-60' : ''}>
@@ -345,17 +342,6 @@ export default function LabResultsPage() {
           )}
         </CardContent>
       </Card>
-
-      {selectedLabResult && (
-        <EditLabResultModal
-          isOpen={isEditModalOpen}
-          onClose={() => {
-            setIsEditModalOpen(false);
-            setSelectedLabResult(null);
-          }}
-          labResult={selectedLabResult}
-        />
-      )}
     </div>
   );
 }
