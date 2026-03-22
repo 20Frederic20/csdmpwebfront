@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import CustomSelect from "@/components/ui/custom-select";
 import { Save } from "lucide-react";
-import { AppointmentType, PaymentMethod, AppointmentStatus } from "@/features/appointments/types/appointments.types";
+import { AppointmentType, AppointmentStatus } from "@/features/appointments/types/appointments.types";
 import { AppointmentService } from "@/features/appointments/services/appointment.service";
 import { HealthFacilitySelect } from "@/features/health-facilities/components/health-facility-select";
 import { DepartmentSelect } from "@/features/departments/components/department-select";
@@ -32,7 +32,6 @@ const addAppointmentSchema = z.object({
   department_id: z.string().min(1, "Veuillez sélectionner un département"),
   doctor_id: z.string().nullable().optional(),
   appointment_type: z.nativeEnum(AppointmentType),
-  payment_method: z.nativeEnum(PaymentMethod),
   scheduled_at: z.string().min(1, "La date et l'heure sont requises"),
   estimated_duration: z.number().min(5).max(480).nullable().optional(),
   reason: z.string().nullable().optional(),
@@ -63,14 +62,6 @@ const typeOptions = [
   { value: AppointmentType.PREVENTIVE_CARE, label: "Soins préventifs" },
 ];
 
-const paymentMethodOptions = [
-  { value: PaymentMethod.FREE_OF_CHARGE, label: "Gratuit" },
-  { value: PaymentMethod.INSURANCE, label: "Assurance" },
-  { value: PaymentMethod.CASH, label: "Espèces" },
-  { value: PaymentMethod.CREDIT_CARD, label: "Carte de crédit" },
-  { value: PaymentMethod.MOBILE_MONEY, label: "Mobile money" },
-  { value: PaymentMethod.BANK_TRANSFER, label: "Virement bancaire" },
-];
 
 // ─── Composant ────────────────────────────────────────────────────────────────
 
@@ -86,7 +77,6 @@ export function AddAppointmentModal({
     department_id: "",
     doctor_id: null,
     appointment_type: AppointmentType.ROUTINE_CONSULTATION,
-    payment_method: PaymentMethod.FREE_OF_CHARGE,
     scheduled_at: "",
     estimated_duration: 30,
     reason: "",
@@ -279,24 +269,6 @@ export function AddAppointmentModal({
               )}
             </div>
 
-            {/* Méthode de paiement */}
-            <div className="space-y-2">
-              <Label>Méthode de paiement</Label>
-              <Controller
-                control={control}
-                name="payment_method"
-                render={({ field }) => (
-                  <CustomSelect
-                    options={paymentMethodOptions}
-                    value={field.value}
-                    onChange={(v) => field.onChange(v as PaymentMethod)}
-                    placeholder="Sélectionner la méthode"
-                    height="h-10"
-                    isDisabled={isSubmitting}
-                  />
-                )}
-              />
-            </div>
 
             {/* Raison */}
             <div className="space-y-2 md:col-span-2">

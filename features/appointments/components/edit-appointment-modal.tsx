@@ -15,7 +15,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import CustomSelect from "@/components/ui/custom-select";
-import { Appointment, UpdateAppointmentRequest, AppointmentStatus, AppointmentType, PaymentMethod } from "../types/appointments.types";
+import { Appointment, UpdateAppointmentRequest, AppointmentStatus, AppointmentType } from "../types/appointments.types";
 import { AppointmentService } from "../services/appointment.service";
 import { PatientService } from "@/features/patients";
 import { HospitalStaffService } from "@/features/hospital-staff/services/hospital-staff.service";
@@ -42,7 +42,6 @@ export function EditAppointmentModal({ isOpen, onClose, appointment, onUpdate, o
     department_id: null,
     health_facility_id: null,
     appointment_type: null,
-    payment_method: null,
     status: 'scheduled' as any,
     is_confirmed_by_patient: false,
     is_active: true
@@ -64,7 +63,6 @@ export function EditAppointmentModal({ isOpen, onClose, appointment, onUpdate, o
         department_id: appointment.department_id,
         health_facility_id: appointment.health_facility_id,
         appointment_type: appointment.appointment_type,
-        payment_method: appointment.payment_method,
         status: appointment.status,
         is_confirmed_by_patient: appointment.is_confirmed_by_patient,
         is_active: appointment.is_active
@@ -124,14 +122,6 @@ export function EditAppointmentModal({ isOpen, onClose, appointment, onUpdate, o
     { value: 'PREVENTIVE_CARE', label: 'Soins préventifs' }
   ];
 
-  const paymentMethodOptions = [
-    { value: 'FREE_OF_CHARGE', label: 'Gratuit' },
-    { value: 'INSURANCE', label: 'Assurance' },
-    { value: 'CASH', label: 'Espèces' },
-    { value: 'CREDIT_CARD', label: 'Carte de crédit' },
-    { value: 'MOBILE_MONEY', label: 'Mobile money' },
-    { value: 'BANK_TRANSFER', label: 'Virement bancaire' }
-  ];
 
   const handleButtonClick = () => {
     console.log('Bouton cliqué'); // Debug
@@ -166,7 +156,6 @@ export function EditAppointmentModal({ isOpen, onClose, appointment, onUpdate, o
       if (formData.department_id !== undefined) updateData.department_id = formData.department_id;
       if (formData.health_facility_id !== undefined) updateData.health_facility_id = formData.health_facility_id;
       if (formData.appointment_type !== undefined) updateData.appointment_type = formData.appointment_type;
-      if (formData.payment_method !== undefined) updateData.payment_method = formData.payment_method;
       if (formData.status !== undefined) updateData.status = formData.status;
       if (formData.is_confirmed_by_patient !== undefined) updateData.is_confirmed_by_patient = formData.is_confirmed_by_patient;
       if (formData.is_active !== undefined) updateData.is_active = formData.is_active;
@@ -293,25 +282,6 @@ export function EditAppointmentModal({ isOpen, onClose, appointment, onUpdate, o
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="payment_method">Méthode de paiement</Label>
-              <CustomSelect
-                options={[
-                  { value: '', label: 'Aucune' },
-                  { value: 'FREE_OF_CHARGE', label: 'Gratuit' },
-                  { value: 'INSURANCE', label: 'Assurance' },
-                  { value: 'CASH', label: 'Espèces' },
-                  { value: 'CREDIT_CARD', label: 'Carte de crédit' },
-                  { value: 'MOBILE_MONEY', label: 'Mobile money' },
-                  { value: 'BANK_TRANSFER', label: 'Virement bancaire' }
-                ]}
-                value={formData.payment_method || ''}
-                onChange={(value) => handleInputChange('payment_method', value === '' ? null : value as PaymentMethod)}
-                placeholder="Sélectionner une méthode"
-                isDisabled={loading || !isEditable}
-                className="w-full"
-              />
-            </div>
 
             <div className="space-y-2">
               <Label htmlFor="health_facility_id">Établissement</Label>

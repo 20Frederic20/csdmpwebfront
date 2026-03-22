@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Clock, User, FileText, Activity, CheckCircle, XCircle, Check } from "lucide-react";
-import { Appointment, AppointmentStatus, AppointmentType, PaymentMethod } from "../types/appointments.types";
+import { Appointment, AppointmentStatus, AppointmentType } from "../types/appointments.types";
 import { ConfirmAppointmentModal } from "./confirm-appointment-modal";
 import { CancelAppointmentModal } from "./cancel-appointment-modal";
 import { CompleteAppointmentModal } from "./complete-appointment-modal";
@@ -81,17 +81,6 @@ export function ViewAppointmentModal({ isOpen, onClose, appointment, onAppointme
     return typeLabels[type] || type;
   };
 
-  const getPaymentMethodLabel = (method: PaymentMethod) => {
-    const methodLabels: Record<PaymentMethod, string> = {
-      [PaymentMethod.FREE_OF_CHARGE]: 'Gratuit',
-      [PaymentMethod.INSURANCE]: 'Assurance',
-      [PaymentMethod.CASH]: 'Espèces',
-      [PaymentMethod.CREDIT_CARD]: 'Carte de crédit',
-      [PaymentMethod.MOBILE_MONEY]: 'Mobile money',
-      [PaymentMethod.BANK_TRANSFER]: 'Virement bancaire',
-    };
-    return methodLabels[method] || method;
-  };
 
   const handleActionSuccess = () => {
     onAppointmentUpdated?.(appointment);
@@ -179,10 +168,6 @@ export function ViewAppointmentModal({ isOpen, onClose, appointment, onAppointme
                 </Badge>
               </div>
               
-              <div>
-                <h3 className="text-sm font-medium text-gray-500 mb-2">Méthode de paiement</h3>
-                <p className="text-lg font-semibold">{getPaymentMethodLabel(appointment.payment_method || PaymentMethod.CASH)}</p>
-              </div>
             </div>
             
             {/* Raison */}

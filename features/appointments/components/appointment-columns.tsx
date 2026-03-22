@@ -3,11 +3,10 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Eye, Edit, Trash2, RotateCcw, Calendar, Clock, User, Building } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Appointment, AppointmentStatus, AppointmentType, PaymentMethod } from "@/features/appointments/types/appointments.types";
+import { Appointment, AppointmentStatus, AppointmentType } from "@/features/appointments/types/appointments.types";
 import { 
   formatAppointmentStatus, 
   formatAppointmentType, 
-  formatPaymentMethod,
   getAppointmentStatusBadge,
   formatAppointmentDateTime,
   getAppointmentDuration,
@@ -192,22 +191,6 @@ export const appointmentColumns: ColumnDef<Appointment>[] = [
     },
   },
 
-  // Colonne Méthode de paiement
-  {
-    accessorKey: "payment_method",
-    header: "Paiement",
-    cell: ({ row }) => {
-      const appointment = row.original;
-      const method = appointment.payment_method;
-      if (!method) return '-';
-      
-      return (
-        <Badge variant="secondary">
-          {formatPaymentMethod(method)}
-        </Badge>
-      );
-    },
-  },
 
   // Colonne Statut
   {

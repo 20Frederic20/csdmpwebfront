@@ -6,8 +6,7 @@ import {
   AppointmentFilterParams,
   ListAppointmentsResponse,
   AppointmentStatus,
-  AppointmentType,
-  PaymentMethod
+  AppointmentType
 } from '../types/appointments.types';
 import { FetchService } from '@/features/core/services/fetch.service';
 

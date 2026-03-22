@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import CustomSelect from "@/components/ui/custom-select";
 import { Label } from "@/components/ui/label";
 import { Search, RotateCcw, ChevronDown, ChevronUp } from "lucide-react";
-import { AppointmentFilterParams, AppointmentStatus, AppointmentType, PaymentMethod } from "@/features/appointments/types/appointments.types";
+import { AppointmentFilterParams, AppointmentStatus, AppointmentType } from "@/features/appointments/types/appointments.types";
 
 interface AppointmentDataTableFiltersProps {
   filters: AppointmentFilterParams;
@@ -39,12 +39,6 @@ export function AppointmentDataTableFilters({
     });
   };
 
-  const handlePaymentMethodChange = (value: string | string[] | null) => {
-    onFiltersChange({ 
-      ...filters, 
-      payment_method: (value as PaymentMethod) || null
-    });
-  };
 
   const handleDateFromChange = (value: string) => {
     onFiltersChange({ ...filters, scheduled_from: value });
@@ -79,15 +73,6 @@ export function AppointmentDataTableFilters({
     { value: AppointmentType.PREVENTIVE_CARE, label: 'Soins préventifs' },
   ];
 
-  const paymentMethodOptions = [
-    { value: '', label: 'Tous' },
-    { value: PaymentMethod.FREE_OF_CHARGE, label: 'Gratuit' },
-    { value: PaymentMethod.INSURANCE, label: 'Assurance' },
-    { value: PaymentMethod.CASH, label: 'Espèces' },
-    { value: PaymentMethod.CREDIT_CARD, label: 'Carte de crédit' },
-    { value: PaymentMethod.MOBILE_MONEY, label: 'Mobile money' },
-    { value: PaymentMethod.BANK_TRANSFER, label: 'Virement bancaire' },
-  ];
 
   // Réinitialisation complète de tous les filtres
   const handleReset = () => {
@@ -97,7 +82,6 @@ export function AppointmentDataTableFilters({
       search: "",
       status: null,
       appointment_type: null,
-      payment_method: null,
       scheduled_from: null,
       scheduled_to: null,
     });
@@ -165,17 +149,6 @@ export function AppointmentDataTableFilters({
             />
           </div>
 
-          {/* Méthode de paiement */}
-          <div className="space-y-2">
-            <Label htmlFor="payment_method">Méthode de paiement</Label>
-            <CustomSelect
-              options={paymentMethodOptions}
-              value={filters.payment_method || ""}
-              onChange={handlePaymentMethodChange}
-              placeholder="Sélectionner la méthode"
-              height="h-10"
-            />
-          </div>
 
           {/* Date de début */}
           <div className="space-y-2">

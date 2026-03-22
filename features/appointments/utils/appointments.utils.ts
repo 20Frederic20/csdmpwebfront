@@ -1,4 +1,4 @@
-import { Appointment, AppointmentStatus, AppointmentType, PaymentMethod } from '../types/appointments.types';
+import { Appointment, AppointmentStatus, AppointmentType } from '../types/appointments.types';
 
 export function formatAppointmentStatus(status: AppointmentStatus): string {
   const statusLabels: Record<AppointmentStatus, string> = {
@@ -30,18 +30,7 @@ export function formatAppointmentType(type: AppointmentType): string {
   return typeLabels[type] || type;
 }
 
-export function formatPaymentMethod(method: PaymentMethod): string {
-  const methodLabels: Record<PaymentMethod, string> = {
-    [PaymentMethod.FREE_OF_CHARGE]: 'Gratuit',
-    [PaymentMethod.INSURANCE]: 'Assurance',
-    [PaymentMethod.CASH]: 'Espèces',
-    [PaymentMethod.CREDIT_CARD]: 'Carte de crédit',
-    [PaymentMethod.MOBILE_MONEY]: 'Mobile money',
-    [PaymentMethod.BANK_TRANSFER]: 'Virement bancaire',
-  };
 
-  return methodLabels[method] || method;
-}
 
 export function getAppointmentStatusBadge(status: AppointmentStatus) {
   const statusConfig = {

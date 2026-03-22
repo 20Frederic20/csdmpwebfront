@@ -20,14 +20,6 @@ export enum AppointmentType {
   PREVENTIVE_CARE = "PREVENTIVE_CARE",
 }
 
-export enum PaymentMethod {
-  FREE_OF_CHARGE = "FREE_OF_CHARGE",
-  INSURANCE = "INSURANCE",
-  CASH = "CASH",
-  CREDIT_CARD = "CREDIT_CARD",
-  MOBILE_MONEY = "MOBILE_MONEY",
-  BANK_TRANSFER = "BANK_TRANSFER",
-}
 
 export interface CreateAppointmentRequest {
   patient_id: string;
@@ -35,7 +27,6 @@ export interface CreateAppointmentRequest {
   department_id: string;
   insurance_company_id?: string | null;
   appointment_type?: AppointmentType;
-  payment_method?: PaymentMethod;
   doctor_id?: string | null;
   scheduled_at: string;
   estimated_duration?: number | null; // en minutes
@@ -54,7 +45,6 @@ export interface AppointmentResponse {
   reason?: string | null;
   status: AppointmentStatus;
   appointment_type?: AppointmentType | null;
-  payment_method?: PaymentMethod | null;
   health_facility_id?: string | null;
   department_id?: string | null;
   insurance_company_id?: string | null;
@@ -79,7 +69,6 @@ export interface AppointmentQM {
   health_facility_id?: string | null;
   health_facility_name?: string | null;
   appointment_type?: AppointmentType | null;
-  payment_method?: PaymentMethod | null;
   status: AppointmentStatus;
   is_confirmed_by_patient: boolean;
   is_active: boolean;
@@ -100,7 +89,6 @@ export interface UpdateAppointmentRequest {
   department_id?: string | null;
   health_facility_id?: string | null;
   appointment_type?: AppointmentType | null;
-  payment_method?: PaymentMethod | null;
   status?: AppointmentStatus | null;
   is_confirmed_by_patient?: boolean | null;
   is_active?: boolean | null;
@@ -122,7 +110,6 @@ export interface Appointment {
   health_facility_id?: string | null;
   health_facility_name?: string | null;
   appointment_type?: AppointmentType | null;
-  payment_method?: PaymentMethod | null;
   status: AppointmentStatus;
   is_confirmed_by_patient: boolean;
   is_active: boolean;
@@ -136,7 +123,6 @@ export interface AppointmentFilterParams {
   health_facility_id?: string | null;
   department_id?: string | null;
   appointment_type?: AppointmentType | null;
-  payment_method?: PaymentMethod | null;
   status?: AppointmentStatus | null;
   is_confirmed_by_patient?: boolean | null;
   is_active?: boolean | null;
