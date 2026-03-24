@@ -1,4 +1,4 @@
-export type InvoiceStatus = 'DRAFT' | 'PAID' | 'CANCELLED';
+export type InvoiceStatus = 'DRAFT' | 'PAID' | 'CANCELLED' | 'PENDING_CONFIRMATION';
 export enum PaymentMethod {
   CASH = "CASH",
   MOMO = "MOMO",
@@ -7,6 +7,11 @@ export enum PaymentMethod {
 }
 
 export interface MarkAsPaidPayload {
+  payment_method: PaymentMethod;
+  receipt_number?: string;
+}
+
+export interface SubmitPaymentPayload {
   payment_method: PaymentMethod;
   receipt_number?: string;
 }

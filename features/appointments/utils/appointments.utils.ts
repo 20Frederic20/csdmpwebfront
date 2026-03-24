@@ -26,7 +26,7 @@ export function formatAppointmentType(type: AppointmentType): string {
     [AppointmentType.VACCINATION]: 'Vaccination',
     [AppointmentType.PREVENTIVE_CARE]: 'Soins préventifs',
   };
-
+  
   return typeLabels[type] || type;
 }
 

@@ -5,18 +5,20 @@ import { useInvoice } from "@/features/billing/hooks/use-billing";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Printer, CheckCircle } from "lucide-react";
+import { ArrowLeft, Printer, CheckCircle, Send } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { formatAmount, getInvoiceStatusBadge } from "@/features/billing/components/billing-columns";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { MarkAsPaidModal } from "@/features/billing/components/mark-as-paid-modal";
+import { SubmitPaymentModal } from "@/features/billing/components/submit-payment-modal";
 
 export default function InvoiceDetailsPage() {
   const { id } = useParams();
   const router = useRouter();
   const { data: invoice, isLoading, isError } = useInvoice(id as string);
   const [isMarkAsPaidOpen, setIsMarkAsPaidOpen] = useState(false);
+  const [isSubmitPaymentOpen, setIsSubmitPaymentOpen] = useState(false);
 
   const handlePrint = () => {
     window.print();
@@ -24,6 +26,9 @@ export default function InvoiceDetailsPage() {
 
   if (isLoading) return <div className="p-8 text-center">Chargement...</div>;
   if (isError || !invoice) return <div className="p-8 text-center text-red-500">Erreur lors du chargement de la facture.</div>;
+
+  const canPay = invoice.status === 'DRAFT';
+  const isPendingConfirmation = invoice.status === 'PENDING_CONFIRMATION';
 
   return (
     <div className="container mx-auto py-6 space-y-6 print:p-0">
@@ -37,10 +42,22 @@ export default function InvoiceDetailsPage() {
             <Printer className="mr-2 h-4 w-4" />
             Imprimer
           </Button>
-          {invoice.status !== 'PAID' && (
+          {canPay && (
+            <>
+              <Button variant="outline" onClick={() => setIsSubmitPaymentOpen(true)}>
+                <Send className="mr-2 h-4 w-4" />
+                Payer (Patient)
+              </Button>
+              <Button onClick={() => setIsMarkAsPaidOpen(true)}>
+                <CheckCircle className="mr-2 h-4 w-4" />
+                Payer (Staff)
+              </Button>
+            </>
+          )}
+          {isPendingConfirmation && (
             <Button onClick={() => setIsMarkAsPaidOpen(true)}>
               <CheckCircle className="mr-2 h-4 w-4" />
-              Marquer comme payée
+              Confirmer le paiement
             </Button>
           )}
         </div>
@@ -107,7 +124,6 @@ export default function InvoiceDetailsPage() {
                   <TableRow key={line.id}>
                     <TableCell>
                       <div className="font-medium">{line.service_name}</div>
-                      <div className="text-xs text-muted-foreground">{line.service_code}</div>
                     </TableCell>
                     <TableCell className="text-right">{formatAmount(line.unit_price)}</TableCell>
                     <TableCell className="text-center">{line.quantity}</TableCell>
@@ -158,6 +174,11 @@ export default function InvoiceDetailsPage() {
         invoiceId={invoice.id}
         isOpen={isMarkAsPaidOpen}
         onClose={() => setIsMarkAsPaidOpen(false)}
+      />
+      <SubmitPaymentModal
+        invoiceId={invoice.id}
+        isOpen={isSubmitPaymentOpen}
+        onClose={() => setIsSubmitPaymentOpen(false)}
       />
     </div>
   );

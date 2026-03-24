@@ -19,6 +19,8 @@ export function getInvoiceStatusBadge(status: InvoiceStatus) {
       return <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-none">Brouillon</Badge>;
     case 'CANCELLED':
       return <Badge className="bg-red-100 text-red-700 hover:bg-red-100 border-none">Annulée</Badge>;
+    case 'PENDING_CONFIRMATION':
+      return <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100 border-none">En attente de confirmation</Badge>;
     default:
       return <Badge variant="outline">{status}</Badge>;
   }

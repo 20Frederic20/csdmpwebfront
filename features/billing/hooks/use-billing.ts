@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { BillingService } from '../services/billing.service';
-import { ListInvoicesQueryParams, MarkAsPaidPayload } from '../types/billing.types';
+import { ListInvoicesQueryParams, MarkAsPaidPayload, SubmitPaymentPayload } from '../types/billing.types';
 import { toast } from 'sonner';
 
 export const BILLING_KEY = 'billing';
@@ -33,6 +33,23 @@ export function useMarkInvoiceAsPaid() {
         },
         onError: (error: any) => {
             toast.error(error.message || 'Erreur lors de la mise à jour de la facture');
+        }
+    });
+}
+
+export function useSubmitPayment() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({ id, payload }: { id: string, payload: SubmitPaymentPayload }) =>
+            BillingService.submitPayment(id, payload),
+        onSuccess: (data) => {
+            queryClient.invalidateQueries({ queryKey: [BILLING_KEY] });
+            queryClient.invalidateQueries({ queryKey: [BILLING_KEY, data.id] });
+            toast.success('Paiement soumis avec succès. En attente de confirmation.');
+        },
+        onError: (error: any) => {
+            toast.error(error.message || 'Erreur lors de la soumission du paiement');
         }
     });
 }
