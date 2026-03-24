@@ -13,7 +13,15 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
 } from "@/components/ui/sidebar"
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible"
 import {
   ChevronRight,
   Plus,
@@ -97,15 +105,56 @@ function NavMain({
             return null;
           }
 
+          const hasSubItems = item.items && item.items.length > 0;
+
+          if (!hasSubItems) {
+            return (
+              <SidebarMenuItem key={item.title}>
+                <SidebarMenuButton tooltip={item.title} isActive={item.isActive} asChild>
+                  <Link href={item.url || "#"}>
+                    {item.icon && <item.icon />}
+                    <span>{item.title}</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            );
+          }
+
           return (
-            <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton tooltip={item.title} isActive={item.isActive} asChild>
-                <Link href={item.url || "#"}>
-                  {item.icon && <item.icon />}
-                  <span>{item.title}</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
+            <Collapsible
+              key={item.title}
+              asChild
+              defaultOpen={item.isActive}
+              className="group/collapsible"
+            >
+              <SidebarMenuItem>
+                <CollapsibleTrigger asChild>
+                  <SidebarMenuButton tooltip={item.title} isActive={item.isActive}>
+                    {item.icon && <item.icon />}
+                    <span>{item.title}</span>
+                    <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                  </SidebarMenuButton>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <SidebarMenuSub>
+                    {item.items?.map((subItem) => {
+                      if (subItem.requiredPermission && canAccess && !canAccess(subItem.requiredPermission.resource, subItem.requiredPermission.action)) {
+                        return null;
+                      }
+                      return (
+                        <SidebarMenuSubItem key={subItem.title}>
+                          <SidebarMenuSubButton asChild isActive={pathname === subItem.url}>
+                            <Link href={subItem.url}>
+                              <span>{subItem.title}</span>
+                            </Link>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                      );
+                    })}
+                  </SidebarMenuSub>
+                </CollapsibleContent>
+              </SidebarMenuItem>
+            </Collapsible>
           );
         })}
       </SidebarMenu>
@@ -137,15 +186,6 @@ export function AppSidebar() {
             action: "list"
           }
         },
-        {
-          title: "Ajouter un patient",
-          url: "/patients/add",
-          icon: UserPlus,
-          requiredPermission: {
-            resource: "patients",
-            action: "create"
-          }
-        }
       ]
     },
     {
@@ -167,15 +207,6 @@ export function AppSidebar() {
             action: "list"
           }
         },
-        {
-          title: "Ajouter un membre",
-          url: "/hospital-staff/add",
-          icon: UserPlus,
-          requiredPermission: {
-            resource: "hospital_staffs",
-            action: "create"
-          }
-        }
       ]
     },
     {
@@ -197,15 +228,6 @@ export function AppSidebar() {
             action: "list"
           }
         },
-        {
-          title: "Ajouter un département",
-          url: "/departments/add",
-          icon: Plus,
-          requiredPermission: {
-            resource: "departments",
-            action: "create"
-          }
-        }
       ]
     },
     {
@@ -248,15 +270,6 @@ export function AppSidebar() {
             action: "list"
           }
         },
-        {
-          title: "Ajouter un établissement",
-          url: "/health-facilities/add",
-          icon: Plus,
-          requiredPermission: {
-            resource: "health_facilities",
-            action: "create"
-          }
-        }
       ]
     },
     {
@@ -278,15 +291,6 @@ export function AppSidebar() {
             action: "list"
           }
         },
-        {
-          title: "Ajouter une assurance",
-          url: "/insurance-companies/add",
-          icon: Plus,
-          requiredPermission: {
-            resource: "insurance_companies",
-            action: "create"
-          }
-        }
       ]
     },
     {
@@ -308,15 +312,6 @@ export function AppSidebar() {
             action: "list"
           }
         },
-        {
-          title: "Ajouter une assurance patient",
-          url: "/patient-insurance/add",
-          icon: Plus,
-          requiredPermission: {
-            resource: "patient_insurances",
-            action: "create"
-          }
-        }
       ]
     },
     {
@@ -338,15 +333,6 @@ export function AppSidebar() {
             action: "list"
           }
         },
-        {
-          title: "Ajouter une consultation",
-          url: "/consultations/add",
-          icon: Plus,
-          requiredPermission: {
-            resource: "consultations",
-            action: "create"
-          }
-        }
       ]
     },
     {
@@ -368,15 +354,6 @@ export function AppSidebar() {
             action: "list"
           }
         },
-        {
-          title: "Ajouter un rendez-vous",
-          url: "/appointments/add",
-          icon: Plus,
-          requiredPermission: {
-            resource: "appointments",
-            action: "create"
-          }
-        }
       ]
     },
     {
@@ -393,19 +370,19 @@ export function AppSidebar() {
           title: "Tableau de bord",
           url: "/reports",
           icon: BarChart3,
-          requiredPermission: {
-            resource: "reports",
-            action: "list"
-          }
+          // requiredPermission: {
+          //   resource: "reports",
+          //   action: "list"
+          // }
         },
         {
           title: "Rapports détaillés",
           url: "/reports/detailed",
           icon: FileText,
-          requiredPermission: {
-            resource: "reports",
-            action: "list"
-          }
+          // requiredPermission: {
+          //   resource: "reports",
+          //   action: "list"
+          // }
         }
       ]
     },
@@ -413,7 +390,7 @@ export function AppSidebar() {
       title: "Laboratoire",
       url: "/lab-results",
       icon: Beaker,
-      isActive: pathname.startsWith("/lab-results"),
+      isActive: pathname.startsWith("/lab-results") || pathname.startsWith("/lab-parameter-norms"),
       requiredPermission: {
         resource: "lab_results",
         action: "list"
@@ -429,14 +406,14 @@ export function AppSidebar() {
           }
         },
         {
-          title: "Ajouter un résultat",
-          url: "/lab-results/add",
-          icon: Plus,
+          title: "Normes de laboratoire",
+          url: "/lab-parameter-norms",
+          icon: Activity,
           requiredPermission: {
-            resource: "lab_results",
-            action: "create"
+            resource: "lab_parameter_norms",
+            action: "list"
           }
-        }
+        },
       ]
     },
     {
@@ -458,15 +435,6 @@ export function AppSidebar() {
             action: "list"
           }
         },
-        {
-          title: "Ajouter une prescription",
-          url: "/prescriptions/add",
-          icon: Plus,
-          requiredPermission: {
-            resource: "prescriptions",
-            action: "create"
-          }
-        }
       ]
     },
     {
