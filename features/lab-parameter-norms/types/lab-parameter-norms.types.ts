@@ -1,4 +1,4 @@
-export type Gender = 'male' | 'female' | 'other' | 'unknown';
+export type Gender = 'M' | 'F' | 'O' | 'ALL';
 
 export interface LabParameterNorm {
   id: string;

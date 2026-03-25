@@ -69,7 +69,7 @@ export const labParameterNormColumns: ColumnDef<LabParameterNorm>[] = [
       const norm = row.original;
       return (
         <Badge variant="outline" className="capitalize bg-white lowercase border-slate-200 text-slate-600">
-          {norm.gender === 'male' ? 'Homme' : norm.gender === 'female' ? 'Femme' : 'Tous'}
+          {norm.gender === 'M' ? 'Homme' : norm.gender === 'F' ? 'Femme' : 'Tous'}
         </Badge>
       );
     },
