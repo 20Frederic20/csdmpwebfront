@@ -12,7 +12,15 @@ export class LabParameterNormService {
 
   static async getAll(params?: ListLabParameterNormsQueryParams): Promise<ListLabParameterNormsResponse> {
     const queryParams = new URLSearchParams();
-    if (params?.parameter_codes) queryParams.append('parameter_codes', params.parameter_codes);
+
+    if (params?.parameter_codes) {
+      const codes = Array.isArray(params.parameter_codes)
+        ? params.parameter_codes
+        : [params.parameter_codes];
+      codes.forEach((code) => queryParams.append('parameter_codes', code));
+    }
+    if (params?.patient_id) queryParams.append('patient_id', params.patient_id);
+    if (params?.health_facility_id) queryParams.append('health_facility_id', params.health_facility_id);
     if (params?.gender) queryParams.append('gender', params.gender);
     if (params?.limit) queryParams.append('limit', params.limit.toString());
     if (params?.offset) queryParams.append('offset', params.offset.toString());

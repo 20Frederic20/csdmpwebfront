@@ -5,6 +5,7 @@ import {
   CreateExamDefinitionRequest,
   UpdateExamDefinitionRequest,
   ExamDefinition,
+  ExamParametersResponse,
 } from '../types/lab-exam-definitions.types';
 import { toast } from 'sonner';
 
@@ -97,5 +98,18 @@ export function useDeleteExamDefinition() {
     onError: (error: any) => {
       toast.error(error.message || "Erreur lors de la suppression");
     },
+  });
+}
+
+export function useExamParameters(
+  testType: string | undefined,
+  healthFacilityId?: string,
+  patientId?: string,
+  options?: { enabled?: boolean }
+) {
+  return useQuery({
+    queryKey: [...EXAM_DEFINITIONS_QUERY_KEY, 'parameters', testType, healthFacilityId, patientId],
+    queryFn: () => ExamDefinitionService.getParameters(testType!, healthFacilityId, patientId),
+    enabled: (options?.enabled ?? true) && !!testType,
   });
 }

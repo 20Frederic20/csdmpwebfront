@@ -5,6 +5,7 @@ import {
   ListExamDefinitionsQueryParams,
   CreateExamDefinitionRequest,
   UpdateExamDefinitionRequest,
+  ExamParametersResponse,
 } from '../types/lab-exam-definitions.types';
 
 export class ExamDefinitionService {
@@ -38,5 +39,20 @@ export class ExamDefinitionService {
 
   static async delete(id: string): Promise<void> {
     return FetchService.delete<void>(`${this.ENDPOINT}/${id}`, 'ExamDefinition');
+  }
+
+  static async getParameters(
+    testType: string,
+    healthFacilityId?: string,
+    patientId?: string
+  ): Promise<ExamParametersResponse> {
+    const queryParams = new URLSearchParams();
+    if (healthFacilityId) queryParams.append('health_facility_id', healthFacilityId);
+    if (patientId) queryParams.append('patient_id', patientId);
+
+    return FetchService.get<ExamParametersResponse>(
+      `${this.ENDPOINT}/parameters/${testType}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`,
+      'ExamParameters'
+    );
   }
 }

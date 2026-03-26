@@ -17,6 +17,21 @@ export interface ExamDefinitionQM {
   total: number;
 }
 
+export interface ParameterNormInfo {
+  parameter_code: string;
+  display_name: string;
+  unit: string;
+  min_value: number;
+  max_value: number;
+  norm_id: string;
+}
+
+export interface ExamParametersResponse {
+  test_type: string;
+  name: string;
+  parameters: ParameterNormInfo[];
+}
+
 export interface ListExamDefinitionsQueryParams {
   test_type?: TestType;
   health_facility_id?: string;

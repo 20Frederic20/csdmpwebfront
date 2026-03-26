@@ -10,7 +10,7 @@ import {
 import { LabParameterNormModal } from "@/features/lab-parameter-norms/components/lab-parameter-norm-modal";
 import { labParameterNormColumns } from "@/features/lab-parameter-norms/components/lab-parameter-norm-columns";
 import { LabParameterNormFilters } from "@/features/lab-parameter-norms/components/lab-parameter-norm-filters";
-import { LabParameterNorm, ListLabParameterNormsQueryParams } from "@/features/lab-parameter-norms/types/lab-parameter-norms.types";
+import { LabParameterNorm, ListLabParameterNormsQueryParams, Gender } from "@/features/lab-parameter-norms/types/lab-parameter-norms.types";
 import { Card, CardContent } from "@/components/ui/card";
 import { ConfirmModal } from "@/components/ui/modal";
 import { usePermissionsContext } from "@/contexts/permissions-context";
@@ -23,8 +23,9 @@ export default function LabParameterNormsPage() {
   const [selectedNorm, setSelectedNorm] = useState<LabParameterNorm | undefined>(undefined);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [normToDelete, setNormToDelete] = useState<string | null>(null);
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState<{ parameter_codes: string; gender: Gender | undefined }>({
     parameter_codes: "",
+    gender: undefined,
   });
 
   const { canAccess } = usePermissionsContext();
@@ -32,10 +33,11 @@ export default function LabParameterNormsPage() {
   const params = useMemo((): ListLabParameterNormsQueryParams => {
     return {
       parameter_codes: filters.parameter_codes || undefined,
+      gender: filters.gender,
       limit: itemsPerPage,
       offset: (currentPage - 1) * itemsPerPage,
     };
-  }, [filters.parameter_codes, itemsPerPage, currentPage]);
+  }, [filters.parameter_codes, filters.gender, itemsPerPage, currentPage]);
 
   const { data, isLoading, error } = useLabParameterNorms(params);
   const deleteMutation = useDeleteLabParameterNorm();

@@ -1,4 +1,4 @@
-export type Gender = 'M' | 'F' | 'O' | 'ALL';
+export type Gender = 'MALE' | 'FEMALE' | 'ALL';
 
 export interface LabParameterNorm {
   id: string;
@@ -35,7 +35,9 @@ export interface UpdateLabParameterNormRequest {
 }
 
 export interface ListLabParameterNormsQueryParams {
-  parameter_codes?: string;
+  parameter_codes?: string | string[];
+  patient_id?: string;
+  health_facility_id?: string;
   gender?: Gender;
   limit?: number;
   offset?: number;

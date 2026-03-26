@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, X, Filter } from "lucide-react";
+import CustomSelect from "@/components/ui/custom-select";
 
 interface LabParameterNormFiltersProps {
   filters: Record<string, any>;
@@ -20,6 +21,13 @@ export function LabParameterNormFilters({
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onFiltersChange({ ...filters, parameter_codes: e.target.value });
   };
+
+  const genderOptions = [
+    { value: "", label: "Tous les genres" },
+    { value: "MALE", label: "Homme" },
+    { value: "FEMALE", label: "Femme" },
+    { value: "ALL", label: "Mixte (ALL)" },
+  ];
 
   return (
     <Card className="border-slate-100 shadow-sm bg-white/50 backdrop-blur-sm">
@@ -47,6 +55,15 @@ export function LabParameterNormFilters({
                 <X className="h-4 w-4" />
               </button>
             )}
+          </div>
+          <div className="w-full md:w-48">
+            <CustomSelect
+              options={genderOptions}
+              value={filters.gender || ""}
+              onChange={(value) => onFiltersChange({ ...filters, gender: value || undefined })}
+              placeholder="Genre"
+              className="h-10 border-slate-200"
+            />
           </div>
           <Button
             variant="outline"

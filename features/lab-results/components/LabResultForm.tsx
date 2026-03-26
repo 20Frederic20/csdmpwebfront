@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from "@/components/ui/button";
@@ -14,9 +14,9 @@ import { labResultSchema, LabResultFormValues } from "../schemas/lab-results.sch
 import { getTestTypeOptions } from "../utils/lab-results.utils";
 import { usePermissionsContext } from "@/contexts/permissions-context";
 import { DynamicTestFields } from "./DynamicTestFields";
-import { TEST_FIELDS_CONFIG } from "../config/test-fields.config";
 import { HealthFacilitySelect } from "@/features/health-facilities/components/health-facility-select";
 import { HospitalStaffSelect } from "@/features/hospital-staff/components/hospital-staff-select";
+import { useExamParameters } from '../hooks/use-lab-exam-definitions';
 import Link from 'next/link';
 
 interface LabResultFormProps {
@@ -53,7 +53,6 @@ export function LabResultForm({ initialData, onSubmit, isSubmitting, title }: La
 
   useEffect(() => {
     if (initialData) {
-      // Pré-traitement des valeurs extraites : décoder les strings JSON si nécessaire
       const processedExtractedValues: Record<string, any> = {};
       if (initialData.extracted_values) {
         Object.entries(initialData.extracted_values).forEach(([key, val]) => {
@@ -81,7 +80,6 @@ export function LabResultForm({ initialData, onSubmit, isSubmitting, title }: La
         is_active: initialData.is_active
       });
     } else if (user) {
-      // Pour une nouvelle insertion, pré-remplir avec les infos de l'utilisateur
       if (user.health_facility_id) {
         setValue('issuing_facility', user.health_facility_id);
       }
@@ -97,26 +95,33 @@ export function LabResultForm({ initialData, onSubmit, isSubmitting, title }: La
   const issuingFacility = watch('issuing_facility');
   const performerId = watch('performer_id');
 
-  // Gérer le changement de type de test (réinitialiser les champs dynamiques)
-  useEffect(() => {
-    // Ne pas réinitialiser lors du premier chargement ou si c'est le type initial du labResult
-    if (initialData && testType === initialData.test_type) return;
+  // 1. Fetch exam parameters and patient-specific norms in a single call
+  const { data: examParams, isLoading: isLoadingFields } = useExamParameters(
+    testType,
+    issuingFacility || undefined,
+    patientId || undefined
+  );
 
-    const fields = TEST_FIELDS_CONFIG[testType] || [];
-    const newExtractedValues: any = {};
-    fields.forEach((f: any) => {
-      if (f.type === 'number') {
-        newExtractedValues[f.name] = { 
-          value: null, 
-          min_ref: f.defaultMin !== undefined ? f.defaultMin : null, 
-          max_ref: f.defaultMax !== undefined ? f.defaultMax : null 
+  const parameters = examParams?.parameters ?? [];
+
+  // 3. Reset extracted_values when test_type/facility changes and new norms are available
+  useEffect(() => {
+    if (initialData && testType === initialData.test_type && issuingFacility === (initialData.issuing_facility || '')) {
+      return; // Don't reset on first load with initial data
+    }
+    if (!isLoadingFields && parameters.length > 0) {
+      const newExtractedValues: Record<string, any> = {};
+      parameters.forEach((param) => {
+        newExtractedValues[param.parameter_code] = {
+          value: null,
+          min_ref: param.min_value,
+          max_ref: param.max_value,
         };
-      } else {
-        newExtractedValues[f.name] = '';
-      }
-    });
-    setValue('extracted_values', newExtractedValues);
-  }, [testType, setValue, initialData]);
+      });
+      setValue('extracted_values', newExtractedValues);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [testType, issuingFacility, isLoadingFields]);
 
   const testTypeOptions = getTestTypeOptions();
 
@@ -154,9 +159,8 @@ export function LabResultForm({ initialData, onSubmit, isSubmitting, title }: La
               value={issuingFacility || ''}
               onChange={(value) => {
                 setValue('issuing_facility', value || '');
-                // Reset performer if facility changes and is not the same as user's
                 if (value !== user?.health_facility_id) {
-                    setValue('performer_id', '');
+                  setValue('performer_id', '');
                 }
               }}
               required
@@ -242,12 +246,19 @@ export function LabResultForm({ initialData, onSubmit, isSubmitting, title }: La
           />
         </div>
 
-        {/* Extracted Values (Dynamic) */}
+        {examParams && (
+          <div className="text-sm text-muted-foreground border rounded-md px-4 py-2 bg-slate-50 dark:bg-slate-900/50">
+            <span className="font-medium text-foreground">{examParams.name}</span>
+          </div>
+        )}
+
+        {/* Extracted Values (Dynamic from norms) */}
         <div className="space-y-4">
-          <Label className="text-lg font-semibold">Valeurs de l'examen</Label>
-          <DynamicTestFields 
-            testType={testType} 
-            register={register} 
+          <Label className="text-lg font-semibold">Valeurs de l&apos;examen</Label>
+          <DynamicTestFields
+            parameters={parameters}
+            register={register}
+            isLoading={isLoadingFields}
           />
         </div>
 

@@ -390,7 +390,7 @@ export function AppSidebar() {
       title: "Laboratoire",
       url: "/lab-results",
       icon: Beaker,
-      isActive: pathname.startsWith("/lab-results") || pathname.startsWith("/lab-parameter-norms"),
+      isActive: pathname.startsWith("/lab-results") || pathname.startsWith("/lab-parameter-norms") || pathname.startsWith("/lab-exam-definitions"),
       requiredPermission: {
         resource: "lab_results",
         action: "list"
@@ -411,6 +411,15 @@ export function AppSidebar() {
           icon: Activity,
           requiredPermission: {
             resource: "lab_parameter_norms",
+            action: "list"
+          }
+        },
+        {
+          title: "Définitions d'examens",
+          url: "/lab-exam-definitions",
+          icon: FileText,
+          requiredPermission: {
+            resource: "exam_definitions",
             action: "list"
           }
         },

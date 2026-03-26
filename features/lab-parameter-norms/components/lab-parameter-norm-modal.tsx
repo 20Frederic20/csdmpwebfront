@@ -66,7 +66,7 @@ export function LabParameterNormModal({ norm, isOpen, onClose }: LabParameterNor
       parameter_code: "",
       display_name: "",
       unit: "",
-      gender: "unknown",
+      gender: "ALL",
       age_min_months: 0,
       age_max_months: 1200, // 100 years
       min_value: 0,
@@ -100,7 +100,7 @@ export function LabParameterNormModal({ norm, isOpen, onClose }: LabParameterNor
           parameter_code: "",
           display_name: "",
           unit: "",
-          gender: "unknown",
+          gender: "ALL",
           age_min_months: 0,
           age_max_months: 1200,
           min_value: 0,
@@ -132,10 +132,9 @@ export function LabParameterNormModal({ norm, isOpen, onClose }: LabParameterNor
   };
 
   const genderOptions = [
-    { value: 'male', label: "Homme" },
-    { value: 'female', label: "Femme" },
-    { value: 'other', label: "Autre" },
-    { value: 'unknown', label: "Inconnu" },
+    { value: 'MALE', label: "Homme" },
+    { value: 'FEMALE', label: "Femme" },
+    { value: 'ALL', label: "Tous" },
   ];
 
   const isLoading = createMutation.isPending || updateMutation.isPending;
@@ -258,7 +257,7 @@ export function LabParameterNormModal({ norm, isOpen, onClose }: LabParameterNor
           </div>
 
           {/* Physiological Status - Only for Females */}
-          {gender === 'female' && (
+          {gender === 'FEMALE' && (
             <>
               <div className="flex items-center space-x-2 pt-4">
                 <Controller
