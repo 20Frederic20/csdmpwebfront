@@ -217,11 +217,31 @@ export class AuthClientService {
     return !!this.getRefreshToken();
   }
 
-  static async register(health_id: string, name: string, email: string, password: string): Promise<AuthResponse> {
+  static async register(
+    health_id: string,
+    given_name: string,
+    family_name: string,
+    email: string,
+    password: string,
+    birth_date?: string,
+    gender?: string,
+    location?: string,
+    blood_group?: string
+  ): Promise<AuthResponse> {
     const response = await fetch(`${this.API_URL}/account/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ health_id, name, email, password }),
+      body: JSON.stringify({
+        health_id,
+        given_name,
+        family_name,
+        email,
+        password,
+        birth_date,
+        gender,
+        location,
+        blood_group
+      }),
       credentials: 'include',
     });
 

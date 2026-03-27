@@ -9,15 +9,71 @@ import { Label } from "@/components/ui/label"
 import Link from "next/link";
 import { Activity, Shield, Lock, User, Mail, IdCard } from 'lucide-react';
 import { motion } from 'motion/react';
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 
 import { AuthClientService } from '@/features/core/auth/services/auth-client.service';
+import CustomSelect from "@/components/ui/custom-select";
+import { cn } from "@/lib/utils";
+
+const genderOptions = [
+    { value: "male", label: "Homme" },
+    { value: "female", label: "Femme" },
+    { value: "other", label: "Autre" },
+    { value: "unknown", label: "Inconnu" },
+];
+
+const bloodGroups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
+
+const registerSchema = z.object({
+    health_id: z.string().min(1, "L'ID Hospitalier est requis"),
+    email: z.string().email("Email invalide").min(1, "L'email est requis"),
+    family_name: z.string().min(1, "Le nom est requis"),
+    given_name: z.string().min(1, "Le prénom est requis"),
+    birth_date: z.string().min(1, "La date de naissance est requise"),
+    gender: z.string().min(1, "Le sexe est requis"),
+    location: z.string().min(1, "La localisation est requise"),
+    blood_group: z.string().optional(),
+    password: z.string().min(8, "Le mot de passe doit contenir au moins 8 caractères"),
+    confirm_password: z.string()
+}).refine((data) => data.password === data.confirm_password, {
+    message: "Les mots de passe ne correspondent pas",
+    path: ["confirm_password"],
+});
+
+type RegisterFormValues = z.infer<typeof registerSchema>;
 
 export default function RegisterPage() {
-
     const { refreshPermissions } = usePermissionsContext();
     const router = useRouter();
     const [error, setError] = useState<string | null>(null);
     const [isPending, startTransition] = useTransition();
+
+    const {
+        register,
+        handleSubmit,
+        control,
+        setValue,
+        watch,
+        formState: { errors }
+    } = useForm<RegisterFormValues>({
+        resolver: zodResolver(registerSchema),
+        defaultValues: {
+            health_id: "",
+            email: "",
+            family_name: "",
+            given_name: "",
+            birth_date: "",
+            gender: "",
+            location: "",
+            blood_group: "",
+            password: "",
+            confirm_password: "",
+        }
+    });
+
+    const selectedBloodGroup = watch("blood_group");
 
     useEffect(() => {
         if (AuthClientService.isAuthenticated()) {
@@ -25,35 +81,23 @@ export default function RegisterPage() {
         }
     }, [router]);
 
-    async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-        event.preventDefault();
+    const onSubmit = (data: RegisterFormValues) => {
         setError(null);
-
-        const formData = new FormData(event.currentTarget);
-        const health_id = formData.get('health_id') as string;
-        const name = formData.get('name') as string;
-        const email = formData.get('email') as string;
-        const password = formData.get('password') as string;
-        const confirmPassword = formData.get('confirm_password') as string;
-
-        // Validation
-        if (password !== confirmPassword) {
-            setError('Les mots de passe ne correspondent pas');
-            return;
-        }
-
-        if (password.length < 8) {
-            setError('Le mot de passe doit contenir au moins 8 caractères');
-            return;
-        }
-
         startTransition(async () => {
             try {
-                await AuthClientService.register(health_id, name, email, password);
+                await AuthClientService.register(
+                    data.health_id,
+                    data.given_name,
+                    data.family_name,
+                    data.email,
+                    data.password,
+                    data.birth_date,
+                    data.gender,
+                    data.location,
+                    data.blood_group || undefined
+                );
 
-                // Rafraîchir les permissions après l'inscription
                 await refreshPermissions();
-
                 router.push('/dashboard');
                 router.refresh();
             } catch (err: any) {
@@ -63,7 +107,7 @@ export default function RegisterPage() {
     }
 
     return (
-        <div className="min-h-screen flex items-center justify-center p-6 relative">
+        <div className="min-h-screen flex items-center justify-center p-6 relative bg-medical-bg">
             <div className="noise" />
 
             {/* Background decorative element */}
@@ -72,7 +116,7 @@ export default function RegisterPage() {
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="w-full max-w-md"
+                className="w-full max-w-2xl"
             >
                 <div className="flex flex-col items-center mb-10 text-center">
                     <div className="w-16 h-16 rounded-2xl bg-vital-green flex items-center justify-center vital-glow mb-6">
@@ -92,79 +136,158 @@ export default function RegisterPage() {
                         </Link>
                     </div>
 
-                    <form onSubmit={handleSubmit} className="space-y-5">
-                        <div className="space-y-2">
-                            <Label htmlFor="health_id" className="text-xs text-medical-muted uppercase tracking-wider">Health ID</Label>
-                            <div className="relative">
-                                <IdCard className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-medical-muted" />
-                                <Input
-                                    id="health_id"
-                                    name="health_id"
-                                    type="text"
-                                    placeholder="ID Hospitalier"
-                                    required
-                                    disabled={isPending}
-                                    className="bg-medical-bg/50 border-white/10 h-12 pl-11 rounded-xl focus:border-vital-green/50"
-                                />
+                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div className="space-y-2">
+                                <Label htmlFor="health_id" className={cn("text-xs uppercase tracking-wider", errors.health_id ? "text-red-400" : "text-medical-muted")}>Health ID</Label>
+                                <div className="relative">
+                                    <IdCard className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-medical-muted" />
+                                    <Input
+                                        id="health_id"
+                                        {...register("health_id")}
+                                        placeholder="ID Hospitalier"
+                                        disabled={isPending}
+                                        className={cn("bg-medical-bg/50 border-white/10 h-12 pl-11 rounded-xl focus:border-vital-green/50", errors.health_id && "border-red-400/50")}
+                                    />
+                                </div>
+                                {errors.health_id && <p className="text-[10px] text-red-400 mt-1">{errors.health_id.message}</p>}
                             </div>
-                        </div>
 
-                        <div className="space-y-2">
-                            <Label htmlFor="name" className="text-xs text-medical-muted uppercase tracking-wider">Nom complet</Label>
-                            <div className="relative">
-                                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-medical-muted" />
-                                <Input
-                                    id="name"
-                                    name="name"
-                                    type="text"
-                                    placeholder="Dr. Jean Dupont"
-                                    required
-                                    disabled={isPending}
-                                    className="bg-medical-bg/50 border-white/10 h-12 pl-11 rounded-xl focus:border-vital-green/50"
-                                />
+                            <div className="space-y-2">
+                                <Label htmlFor="email" className={cn("text-xs uppercase tracking-wider", errors.email ? "text-red-400" : "text-medical-muted")}>Email</Label>
+                                <div className="relative">
+                                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-medical-muted" />
+                                    <Input
+                                        id="email"
+                                        {...register("email")}
+                                        type="email"
+                                        placeholder="jean.dupont@hopital.fr"
+                                        disabled={isPending}
+                                        className={cn("bg-medical-bg/50 border-white/10 h-12 pl-11 rounded-xl focus:border-vital-green/50", errors.email && "border-red-400/50")}
+                                    />
+                                </div>
+                                {errors.email && <p className="text-[10px] text-red-400 mt-1">{errors.email.message}</p>}
                             </div>
-                        </div>
 
-                        <div className="space-y-2">
-                            <Label htmlFor="email" className="text-xs text-medical-muted uppercase tracking-wider">Email</Label>
-                            <div className="relative">
-                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-medical-muted" />
-                                <Input
-                                    id="email"
-                                    name="email"
-                                    type="email"
-                                    placeholder="jean.dupont@hopital.fr"
-                                    required
-                                    disabled={isPending}
-                                    className="bg-medical-bg/50 border-white/10 h-12 pl-11 rounded-xl focus:border-vital-green/50"
-                                />
+                            <div className="space-y-2">
+                                <Label htmlFor="family_name" className={cn("text-xs uppercase tracking-wider", errors.family_name ? "text-red-400" : "text-medical-muted")}>Nom</Label>
+                                <div className="relative">
+                                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-medical-muted" />
+                                    <Input
+                                        id="family_name"
+                                        {...register("family_name")}
+                                        placeholder="Dupont"
+                                        disabled={isPending}
+                                        className={cn("bg-medical-bg/50 border-white/10 h-12 pl-11 rounded-xl focus:border-vital-green/50", errors.family_name && "border-red-400/50")}
+                                    />
+                                </div>
+                                {errors.family_name && <p className="text-[10px] text-red-400 mt-1">{errors.family_name.message}</p>}
                             </div>
-                        </div>
 
-                        <div className="space-y-2">
-                            <Label htmlFor="password" className="text-xs text-medical-muted uppercase tracking-wider">Mot de passe</Label>
-                            <Input
-                                id="password"
-                                name="password"
-                                type="password"
-                                placeholder="••••••••"
-                                required
-                                disabled={isPending}
-                                className="bg-medical-bg/50 border-white/10 h-12 rounded-xl focus:border-vital-green/50"
-                            />
-                        </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="given_name" className={cn("text-xs uppercase tracking-wider", errors.given_name ? "text-red-400" : "text-medical-muted")}>Prénom</Label>
+                                <div className="relative">
+                                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-medical-muted" />
+                                    <Input
+                                        id="given_name"
+                                        {...register("given_name")}
+                                        placeholder="Jean"
+                                        disabled={isPending}
+                                        className={cn("bg-medical-bg/50 border-white/10 h-12 pl-11 rounded-xl focus:border-vital-green/50", errors.given_name && "border-red-400/50")}
+                                    />
+                                </div>
+                                {errors.given_name && <p className="text-[10px] text-red-400 mt-1">{errors.given_name.message}</p>}
+                            </div>
 
-                        <div className="space-y-2">
-                            <Label htmlFor="confirm_password" className="text-xs text-medical-muted uppercase tracking-wider">Confirmer le mot de passe</Label>
-                            <Input
-                                id="confirm_password"
-                                name="confirm_password"
-                                type="password"
-                                placeholder="••••••••"
-                                required
-                                disabled={isPending}
-                                className="bg-medical-bg/50 border-white/10 h-12 rounded-xl focus:border-vital-green/50"
-                            />
+                            <div className="space-y-2">
+                                <Label htmlFor="birth_date" className={cn("text-xs uppercase tracking-wider", errors.birth_date ? "text-red-400" : "text-medical-muted")}>Date de naissance</Label>
+                                <Input
+                                    id="birth_date"
+                                    {...register("birth_date")}
+                                    type="date"
+                                    disabled={isPending}
+                                    className={cn("bg-medical-bg/50 border-white/10 h-12 rounded-xl focus:border-vital-green/50 px-4", errors.birth_date && "border-red-400/50")}
+                                />
+                                {errors.birth_date && <p className="text-[10px] text-red-400 mt-1">{errors.birth_date.message}</p>}
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="gender" className={cn("text-xs uppercase tracking-wider", errors.gender ? "text-red-400" : "text-medical-muted")}>Sexe</Label>
+                                <Controller
+                                    name="gender"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <CustomSelect
+                                            options={genderOptions}
+                                            value={field.value}
+                                            onChange={field.onChange}
+                                            placeholder="Choisir"
+                                            height="h-12"
+                                            className={cn(errors.gender && "border-red-400/50")}
+                                        />
+                                    )}
+                                />
+                                {errors.gender && <p className="text-[10px] text-red-400 mt-1">{errors.gender.message}</p>}
+                            </div>
+
+                            <div className="space-y-2 md:col-span-2">
+                                <Label htmlFor="location" className={cn("text-xs uppercase tracking-wider", errors.location ? "text-red-400" : "text-medical-muted")}>Localisation</Label>
+                                <Input
+                                    id="location"
+                                    {...register("location")}
+                                    placeholder="Ville, Quartier"
+                                    disabled={isPending}
+                                    className={cn("bg-medical-bg/50 border-white/10 h-12 rounded-xl focus:border-vital-green/50 px-4", errors.location && "border-red-400/50")}
+                                />
+                                {errors.location && <p className="text-[10px] text-red-400 mt-1">{errors.location.message}</p>}
+                            </div>
+
+                            <div className="space-y-2 md:col-span-2">
+                                <Label className="text-xs text-medical-muted uppercase tracking-wider">Groupe Sanguin</Label>
+                                <div className="grid grid-cols-4 sm:grid-cols-8 gap-2 mt-1">
+                                    {bloodGroups.map((bg) => (
+                                        <button
+                                            key={bg}
+                                            type="button"
+                                            onClick={() => setValue("blood_group", bg)}
+                                            className={cn(
+                                                "h-10 border rounded-lg text-sm font-medium transition-all active:scale-95",
+                                                selectedBloodGroup === bg
+                                                    ? "bg-vital-green text-medical-bg border-vital-green"
+                                                    : "border-white/10 bg-medical-bg/30 text-medical-muted hover:bg-vital-green/10 hover:border-vital-green/50"
+                                            )}
+                                        >
+                                            {bg}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="password" className={cn("text-xs uppercase tracking-wider", errors.password ? "text-red-400" : "text-medical-muted")}>Mot de passe</Label>
+                                <Input
+                                    id="password"
+                                    {...register("password")}
+                                    type="password"
+                                    placeholder="••••••••"
+                                    disabled={isPending}
+                                    className={cn("bg-medical-bg/50 border-white/10 h-12 rounded-xl focus:border-vital-green/50 px-4", errors.password && "border-red-400/50")}
+                                />
+                                {errors.password && <p className="text-[10px] text-red-400 mt-1">{errors.password.message}</p>}
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="confirm_password" className={cn("text-xs uppercase tracking-wider", errors.confirm_password ? "text-red-400" : "text-medical-muted")}>Confirmer le mot de passe</Label>
+                                <Input
+                                    id="confirm_password"
+                                    {...register("confirm_password")}
+                                    type="password"
+                                    placeholder="••••••••"
+                                    disabled={isPending}
+                                    className={cn("bg-medical-bg/50 border-white/10 h-12 rounded-xl focus:border-vital-green/50 px-4", errors.confirm_password && "border-red-400/50")}
+                                />
+                                {errors.confirm_password && <p className="text-[10px] text-red-400 mt-1">{errors.confirm_password.message}</p>}
+                            </div>
                         </div>
 
                         {error && (
@@ -177,7 +300,7 @@ export default function RegisterPage() {
                             </motion.p>
                         )}
 
-                        <Button type="submit" className="w-full py-6 text-lg" disabled={isPending}>
+                        <Button type="submit" className="w-full py-7 text-lg mt-4" disabled={isPending}>
                             {isPending ? "Inscription en cours..." : "S'inscrire"}
                         </Button>
                     </form>
