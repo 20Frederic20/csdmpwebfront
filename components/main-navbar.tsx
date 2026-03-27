@@ -74,7 +74,7 @@ export function MainNavbar() {
   ];
 
   return (
-    <nav className="bg-white border-b border-gray-200 shadow-sm">
+    <nav className="bg-sidebar border-b border-border shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Actions utilisateur */}
@@ -82,16 +82,16 @@ export function MainNavbar() {
             {/* Indicateur de chargement */}
             {isLoading && (
               <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
-                <span className="text-sm text-gray-600">Authentification...</span>
+                <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
+                <span className="text-sm text-muted-foreground">Authentification...</span>
               </div>
             )}
 
             {/* Menu utilisateur desktop */}
             <div className="hidden md:flex items-center space-x-3">
               <div className="flex items-center space-x-2 text-sm">
-                <User className="h-4 w-4 text-gray-500" />
-                <span className="text-gray-700">Utilisateur</span>
+                <User className="h-4 w-4 text-muted-foreground" />
+                <span className="text-foreground">Utilisateur</span>
               </div>
               <Button
                 onClick={handleLogout}
@@ -123,7 +123,7 @@ export function MainNavbar() {
 
         {/* Menu mobile déroulant */}
         {isMobileMenuOpen && (
-          <div className="md:hidden border-t border-gray-200 bg-white">
+          <div className="md:hidden border-t border-border bg-sidebar">
             <div className="px-2 pt-2 pb-3 space-y-1">
               {navigationItems.map((item) => {
                 const Icon = item.icon;
@@ -133,8 +133,8 @@ export function MainNavbar() {
                     href={item.href}
                     className={`block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 flex items-center space-x-3 ${
                       isActive(item.href)
-                        ? "bg-blue-100 text-blue-700"
-                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                        ? "bg-vital-green/10 text-vital-green"
+                        : "text-foreground hover:bg-accent"
                     }`}
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
@@ -143,12 +143,12 @@ export function MainNavbar() {
                   </Link>
                 );
               })}
-              
-              <div className="border-t border-gray-200 pt-3 mt-2">
+
+              <div className="border-t border-border pt-3 mt-2">
                 <div className="flex items-center justify-between px-3 py-2">
                   <div className="flex items-center space-x-2">
-                    <User className="h-4 w-4 text-gray-500" />
-                    <span className="text-gray-700 text-sm">Utilisateur</span>
+                    <User className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-foreground text-sm">Utilisateur</span>
                   </div>
                   <Button
                     onClick={handleLogout}

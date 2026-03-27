@@ -39,3 +39,7 @@ export const getPatientStatusBadge = (patient: Patient) => {
     variant: status === 'active' ? 'default' : 'secondary' as const,
   };
 };
+
+export const formatBloodGroup = (bloodGroup: string | null | undefined): string => {
+  return bloodGroup || '-';
+};

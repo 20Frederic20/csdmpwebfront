@@ -44,17 +44,17 @@ const Navbar = ({ onLoginClick, user, onLogout }: { onLoginClick: () => void, us
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   return (
-    <nav className="fixed top-0 left-0 w-full z-50 px-6 py-4 flex justify-between items-center bg-medical-bg/80 backdrop-blur-md border-b border-white/5">
+    <nav className="fixed top-0 left-0 w-full z-50 px-6 py-4 flex justify-between items-center bg-background/80 backdrop-blur-md border-b border-border">
       <div className="flex items-center gap-2 group cursor-pointer" onClick={() => window.location.href = '/'}>
-        <div className="w-10 h-10 rounded-xl bg-vital-green flex items-center justify-center vital-glow">
-          <Activity className="text-medical-bg w-6 h-6" />
+        <div className="w-10 h-10 rounded-xl bg-vital-green flex items-center justify-center shadow-lg">
+          <Activity className="text-white w-6 h-6" />
         </div>
-        <span className="font-display font-bold text-xl tracking-tight">
+        <span className="font-display font-bold text-xl tracking-tight text-foreground">
           CS<span className="text-vital-green">DMP</span>
         </span>
       </div>
 
-      <div className="hidden md:flex items-center gap-8 text-sm font-medium text-medical-muted">
+      <div className="hidden md:flex items-center gap-8 text-sm font-medium text-muted-foreground">
         <a href="#" className="hover:text-vital-green transition-colors">Services</a>
         <a href="#" className="hover:text-vital-green transition-colors">Sécurité</a>
         <a href="#" className="hover:text-vital-green transition-colors">Hôpitaux</a>
@@ -64,18 +64,18 @@ const Navbar = ({ onLoginClick, user, onLogout }: { onLoginClick: () => void, us
       <div className="flex items-center gap-4">
         {user ? (
           <div className="relative">
-            <button 
+            <button
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className="flex items-center gap-3 px-3 py-1.5 rounded-full bg-medical-card border border-white/10 hover:border-vital-green/30 transition-all"
+              className="flex items-center gap-3 px-3 py-1.5 rounded-full bg-card border border-border hover:border-vital-green/30 transition-all"
             >
-              <div className="w-8 h-8 rounded-full bg-vital-green flex items-center justify-center font-bold text-xs text-medical-bg">
+              <div className="w-8 h-8 rounded-full bg-vital-green flex items-center justify-center font-bold text-xs text-white">
                 {user.initials}
               </div>
               <div className="hidden sm:block text-left">
-                <p className="text-xs font-bold leading-none">{user.name}</p>
-                <p className="text-[10px] text-medical-muted uppercase tracking-wider">{user.role}</p>
+                <p className="text-xs font-bold leading-none text-foreground">{user.name}</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{user.role}</p>
               </div>
-              <ChevronDown className={cn("w-4 h-4 text-medical-muted transition-transform", isDropdownOpen && "rotate-180")} />
+              <ChevronDown className={cn("w-4 h-4 text-muted-foreground transition-transform", isDropdownOpen && "rotate-180")} />
             </button>
 
             <AnimatePresence>
@@ -84,24 +84,24 @@ const Navbar = ({ onLoginClick, user, onLogout }: { onLoginClick: () => void, us
                   initial={{ opacity: 0, y: 10, scale: 0.95 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                  className="absolute right-0 mt-2 w-56 rounded-2xl bg-medical-card border border-white/10 shadow-2xl overflow-hidden z-[60]"
+                  className="absolute right-0 mt-2 w-56 rounded-2xl bg-card border border-border shadow-xl overflow-hidden z-[60]"
                 >
                   <div className="p-2">
-                    <Link href="/dashboard" className="w-full flex items-center gap-3 px-4 py-3 text-sm hover:bg-white/5 rounded-xl transition-colors">
-                      <LayoutDashboard className="w-4 h-4 text-medical-muted" />
+                    <Link href="/dashboard" className="w-full flex items-center gap-3 px-4 py-3 text-sm hover:bg-accent rounded-xl transition-colors">
+                      <LayoutDashboard className="w-4 h-4 text-muted-foreground" />
                       Tableau de bord
                     </Link>
-                    <Link href="/profile" className="w-full flex items-center gap-3 px-4 py-3 text-sm hover:bg-white/5 rounded-xl transition-colors">
-                      <User className="w-4 h-4 text-medical-muted" />
+                    <Link href="/profile" className="w-full flex items-center gap-3 px-4 py-3 text-sm hover:bg-accent rounded-xl transition-colors">
+                      <User className="w-4 h-4 text-muted-foreground" />
                       Profil
                     </Link>
-                    <div className="h-px bg-white/5 my-1" />
-                    <button 
+                    <div className="h-px bg-border my-1" />
+                    <button
                       onClick={() => {
                         onLogout();
                         setIsDropdownOpen(false);
                       }}
-                      className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-400 hover:bg-red-500/10 rounded-xl transition-colors"
+                      className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-500 hover:bg-red-50 rounded-xl transition-colors"
                     >
                       <LogOut className="w-4 h-4" />
                       Se déconnecter
@@ -126,7 +126,7 @@ const Navbar = ({ onLoginClick, user, onLogout }: { onLoginClick: () => void, us
 
 const Hero = ({ onStart }: { onStart: () => void }) => {
   return (
-    <section className="relative pt-32 pb-20 px-6 overflow-hidden">
+    <section className="relative pt-32 pb-20 px-6 overflow-hidden bg-background">
       <div className="max-w-6xl mx-auto text-center relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -134,19 +134,19 @@ const Hero = ({ onStart }: { onStart: () => void }) => {
           transition={{ duration: 0.8 }}
         >
           <Badge>Santé Numérique, Sécurisée & Accessible</Badge>
-          <h1 className="text-5xl md:text-8xl font-bold mt-6 leading-[1.1] tracking-tight">
+          <h1 className="text-5xl md:text-8xl font-bold mt-6 leading-[1.1] tracking-tight text-foreground">
             Le Sanctuaire de vos <br />
             <span className="text-vital-green">Données Vitales</span>
           </h1>
-          <p className="mt-8 text-lg md:text-xl text-medical-muted max-w-2xl mx-auto leading-relaxed">
-            Une gestion hospitalière réinventée. Un registre digital inspiré par le soin, 
+          <p className="mt-8 text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+            Une gestion hospitalière réinventée. Un registre digital inspiré par le soin,
             propulsé par la technologie, dédié à la vie.
           </p>
           <div className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-6">
             <Button onClick={onStart} className="px-10 py-4 text-lg">Découvrir le Prototype</Button>
             <button className="flex items-center gap-2 font-display font-medium hover:text-vital-green transition-colors group">
               Voir la vidéo de présentation
-              <div className="w-8 h-8 rounded-full border border-white/20 flex items-center justify-center group-hover:border-vital-green transition-colors">
+              <div className="w-8 h-8 rounded-full border border-border flex items-center justify-center group-hover:border-vital-green transition-colors">
                 <ChevronRight className="w-4 h-4" />
               </div>
             </button>
@@ -155,7 +155,7 @@ const Hero = ({ onStart }: { onStart: () => void }) => {
       </div>
 
       {/* Decorative elements */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-vital-green/5 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-vital-green/10 rounded-full blur-[120px] pointer-events-none" />
     </section>
   );
 };
@@ -165,59 +165,59 @@ const LoginModal = ({ isOpen, onClose, onLogin }: { isOpen: boolean, onClose: ()
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={onClose}
-        className="absolute inset-0 bg-medical-bg/90 backdrop-blur-xl" 
+        className="absolute inset-0 bg-background/90 backdrop-blur-xl"
       />
       <motion.div
         initial={{ opacity: 0, scale: 0.9, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         className="relative w-full max-w-md"
       >
-        <GlassCard className="p-8 border-vital-green/20">
+        <div className="bg-card border border-border shadow-xl rounded-2xl p-8">
           <div className="flex justify-between items-center mb-8">
-            <h2 className="text-2xl font-bold">Accès Sécurisé</h2>
-            <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-full transition-colors">
+            <h2 className="text-2xl font-bold text-foreground">Accès Sécurisé</h2>
+            <button onClick={onClose} className="p-2 hover:bg-accent rounded-full transition-colors">
               <X className="w-5 h-5" />
             </button>
           </div>
 
           <div className="space-y-6">
-            <div className="p-6 rounded-2xl border border-white/5 bg-white/5 hover:border-vital-green/30 transition-all cursor-pointer group"
+            <div className="p-6 rounded-2xl border border-border bg-accent hover:border-vital-green/30 transition-all cursor-pointer group"
                  onClick={() => onLogin('admin')}>
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-xl bg-vital-green/10 flex items-center justify-center group-hover:bg-vital-green/20 transition-colors">
                   <Shield className="w-6 h-6 text-vital-green" />
                 </div>
                 <div>
-                  <h3 className="font-bold">Espace Hospitalier</h3>
-                  <p className="text-sm text-medical-muted">Administration & Personnel Médical</p>
+                  <h3 className="font-bold text-foreground">Espace Hospitalier</h3>
+                  <p className="text-sm text-muted-foreground">Administration & Personnel Médical</p>
                 </div>
               </div>
             </div>
 
-            <div className="p-6 rounded-2xl border border-white/5 bg-white/5 hover:border-vital-green/30 transition-all cursor-pointer group"
+            <div className="p-6 rounded-2xl border border-border bg-accent hover:border-vital-green/30 transition-all cursor-pointer group"
                  onClick={() => onLogin('patient')}>
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-xl bg-soft-teal/10 flex items-center justify-center group-hover:bg-soft-teal/20 transition-colors">
                   <User className="w-6 h-6 text-soft-teal" />
                 </div>
                 <div>
-                  <h3 className="font-bold">Espace Patient</h3>
-                  <p className="text-sm text-medical-muted">Dossier Personnel & Tuteurs</p>
+                  <h3 className="font-bold text-foreground">Espace Patient</h3>
+                  <p className="text-sm text-muted-foreground">Dossier Personnel & Tuteurs</p>
                 </div>
               </div>
             </div>
           </div>
 
-          <p className="mt-8 text-center text-xs text-medical-muted flex items-center justify-center gap-2">
+          <p className="mt-8 text-center text-xs text-muted-foreground flex items-center justify-center gap-2">
             <Lock className="w-3 h-3" />
             Chiffrement de bout en bout activé
           </p>
-        </GlassCard>
+        </div>
       </motion.div>
     </div>
   );

@@ -216,4 +216,24 @@ export class AuthClientService {
   static isAuthenticated(): boolean {
     return !!this.getRefreshToken();
   }
+
+  static async register(health_id: string, name: string, email: string, password: string): Promise<AuthResponse> {
+    const response = await fetch(`${this.API_URL}/account/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ health_id, name, email, password }),
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(errorText || 'Erreur lors de l\'inscription');
+    }
+
+    const data: AuthResponse = await response.json();
+
+    this.setTokens(data.access_token, data.refresh_token, data.expires_in, data.refresh_expires_in);
+
+    return data;
+  }
 }

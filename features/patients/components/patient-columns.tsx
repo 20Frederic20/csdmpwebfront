@@ -4,7 +4,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Eye, Edit, Trash2, RotateCcw } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Patient } from "@/features/patients";
-import { formatBirthDate, formatGender } from "@/features/patients/utils/patients.utils";
+import { formatBirthDate, formatGender, formatBloodGroup } from "@/features/patients/utils/patients.utils";
 import {
   createNameColumn,
   createDateColumn,
@@ -135,6 +135,13 @@ export const patientColumns: ColumnDef<Patient>[] = [
     accessorKey: "gender",
     header: "Sexe",
     cell: ({ row }) => formatGender(row.getValue("gender")),
+  },
+
+  // Colonne Groupe Sanguin
+  {
+    accessorKey: "blood_group",
+    header: "Groupe Sanguin",
+    cell: ({ row }) => formatBloodGroup(row.original.blood_group),
   },
 
   // Colonne Localisation

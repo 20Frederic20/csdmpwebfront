@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { GlassCard, Button } from "@/components/UI";
-import { ArrowLeft, Save, X } from "lucide-react";
+import { ArrowLeft, Save, X, Activity, Users, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { CreatePatientRequest, Patient, useCreatePatient, useUpdatePatient } from "@/features/patients";
 import { PatientService } from "@/features/patients";
@@ -31,6 +32,7 @@ interface PatientFormProps {
   onSuccess: () => void;
   title?: string;
   submitButtonText?: string;
+  showHeader?: boolean; // Pour afficher/masquer le header intégré
 }
 
 export function PatientForm({
@@ -38,8 +40,9 @@ export function PatientForm({
   onCancel,
   onSuccess,
   title = patient ? "Modifier le patient" : "Ajouter un patient",
-  submitButtonText = patient ? "Modifier" : "Créer"
-}: PatientFormProps) {
+  submitButtonText = patient ? "Modifier" : "Créer",
+  showHeader = true
+}: PatientFormProps & { showHeader?: boolean }) {
   const router = useRouter();
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
@@ -402,171 +405,169 @@ export function PatientForm({
   };
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button
-            variant="outline"
-            onClick={onCancel}
-            className="cursor-pointer"
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Retour
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
-            <p className="text-muted-foreground">
-              {patient ? "Modifiez les informations du patient" : "Remplissez les informations du nouveau patient"}
+    <div className="min-h-screen bg-white pb-32">
+      {/* Top Navigation Bar - seulement si showHeader est true */}
+      {showHeader && (
+        <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl shadow-[0_4px_24px_rgba(0,0,0,0.04)]">
+          <div className="flex items-center justify-between px-4 sm:px-6 h-16 w-full max-w-5xl mx-auto">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onCancel}
+              className="p-2 rounded-xl hover:bg-surface-container"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+            <h1 className="font-bold text-lg tracking-tight">{title}</h1>
+            <div className="w-10" />
+          </div>
+        </header>
+      )}
+
+      <main className={`${showHeader ? 'pt-20' : 'pt-6'} px-4 sm:px-6 w-full space-y-8 max-w-5xl mx-auto`}>
+        <form onSubmit={handleSubmit} className="space-y-8">
+          {/* Type de création - seulement pour l'ajout */}
+          {!patient && (
+            <div className="bg-white border border-border rounded-xl p-6 space-y-4 shadow-sm">
+              <div>
+                <h2 className="text-lg font-bold">Type de création</h2>
+                <p className="text-sm text-muted-foreground">
+                  Choisissez de créer un nouvel utilisateur ou d'utiliser un utilisateur existant
+                </p>
+              </div>
+              <CreationTypeSelector
+                createUser={createUser}
+                onCreateUserChange={setCreateUser}
+              />
+            </div>
+          )}
+
+          {/* Création d'utilisateur - seulement pour l'ajout */}
+          {createUser && !patient && (
+            <div className="bg-white border border-border rounded-xl p-6 space-y-4 shadow-sm">
+              <div>
+                <h2 className="text-lg font-bold">Création de l'utilisateur</h2>
+                <p className="text-sm text-muted-foreground">
+                  Créez un nouvel utilisateur qui sera associé à ce patient
+                </p>
+              </div>
+              <PatientUserCreationForm
+                userData={userData}
+                selectedRoles={selectedRoles}
+                onUserDataChange={handleUserDataChange}
+                onRolesChange={handleRolesChange}
+              />
+            </div>
+          )}
+
+          {/* Sélection d'utilisateur existant - seulement pour l'ajout */}
+          {!createUser && !patient && (
+            <div className="bg-white border border-border rounded-xl p-6 space-y-4 shadow-sm">
+              <div>
+                <h2 className="text-lg font-bold">Sélection de l'utilisateur</h2>
+                <p className="text-sm text-muted-foreground">
+                  Sélectionnez un utilisateur existant à associer à ce patient
+                </p>
+              </div>
+              <PatientOwnerSelector
+                users={users}
+                selectedOwner={formData.owner_id || ""}
+                onOwnerChange={(value) => handleInputChange('owner_id', value)}
+                isLoading={loadingUsers}
+                label="Utilisateur existant"
+                placeholder="Sélectionner un utilisateur existant"
+                showSelector={true}
+                required={true}
+              />
+            </div>
+          )}
+
+          {/* Informations du patient */}
+          <div className="bg-white border border-border rounded-xl p-6 shadow-sm">
+            <PatientInformationForm
+              givenName={formData.given_name}
+              familyName={formData.family_name}
+              birthDate={formData.birth_date}
+              gender={formData.gender}
+              location={formData.location || ""}
+              onFieldChange={handleInputChange}
+            />
+          </div>
+
+          {/* Informations additionnelles */}
+          <div className="bg-white border border-border rounded-xl p-6 shadow-sm">
+            <PatientAdditionalInfoForm
+              birthPlace={formData.birth_place}
+              residenceCity={formData.residence_city}
+              neighborhood={formData.neighborhood}
+              phoneNumber={formData.phone_number}
+              npiNumber={formData.npi_number}
+              bloodGroup={formData.blood_group}
+              fatherFullName={formData.father_full_name}
+              motherFullName={formData.mother_full_name}
+              emergencyContactName={formData.emergency_contact_name}
+              emergencyContactPhone={formData.emergency_contact_phone}
+              onFieldChange={handleInputChange}
+            />
+          </div>
+
+          {/* Propriétaire du patient - seulement pour la modification */}
+          {patient && (
+            <div className="bg-white border border-border rounded-xl p-6 space-y-4 shadow-sm">
+              <div>
+                <h2 className="text-lg font-bold">Propriétaire du patient</h2>
+                <p className="text-sm text-muted-foreground">
+                  Modifiez le propriétaire pour ce patient (optionnel)
+                </p>
+              </div>
+              <PatientOwnerSelector
+                users={users}
+                selectedOwner={formData.owner_id || ""}
+                onOwnerChange={(value) => handleInputChange('owner_id', value)}
+                isLoading={loadingUsers}
+                label="Propriétaire du patient"
+                placeholder="Sélectionner un propriétaire (optionnel)"
+                showSelector={true}
+              />
+            </div>
+          )}
+
+          {/* Action Button */}
+          <div className="pt-6 pb-12 space-y-4">
+            <Button
+              type="submit"
+              disabled={loading}
+              className="w-full h-14 bg-primary text-primary-foreground font-bold rounded-xl shadow-lg shadow-primary/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+            >
+              <Save className="w-5 h-5" />
+              {loading ? `${submitButtonText} en cours...` : submitButtonText}
+            </Button>
+            <p className="text-center text-xs text-muted-foreground uppercase tracking-widest">
+              Confidentialité médicale garantie • CSDMP
             </p>
           </div>
-        </div>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={resetForm}
-            className="cursor-pointer"
-          >
-            <X className="mr-2 h-4 w-4" />
-            Réinitialiser
-          </Button>
-        </div>
-      </div>
+        </form>
+      </main>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Type de création - seulement pour l'ajout */}
-        {!patient && (
-          <GlassCard className="p-6 space-y-4">
-            <div>
-              <h2 className="text-lg font-bold">Type de création</h2>
-              <p className="text-sm text-medical-muted">
-                Choisissez de créer un nouvel utilisateur ou d'utiliser un utilisateur existant
-              </p>
-            </div>
-            <CreationTypeSelector
-              createUser={createUser}
-              onCreateUserChange={setCreateUser}
-            />
-          </GlassCard>
-        )}
-
-        {/* Création d'utilisateur - seulement pour l'ajout */}
-        {createUser && !patient && (
-          <GlassCard className="p-6 space-y-4">
-            <div>
-              <h2 className="text-lg font-bold">Création de l'utilisateur</h2>
-              <p className="text-sm text-medical-muted">
-                Créez un nouvel utilisateur qui sera associé à ce patient
-              </p>
-            </div>
-            <PatientUserCreationForm
-              userData={userData}
-              selectedRoles={selectedRoles}
-              onUserDataChange={handleUserDataChange}
-              onRolesChange={handleRolesChange}
-            />
-          </GlassCard>
-        )}
-
-        {/* Sélection d'utilisateur existant - seulement pour l'ajout */}
-        {!createUser && !patient && (
-          <GlassCard className="p-6 space-y-4">
-            <div>
-              <h2 className="text-lg font-bold">Sélection de l'utilisateur</h2>
-              <p className="text-sm text-medical-muted">
-                Sélectionnez un utilisateur existant à associer à ce patient
-              </p>
-            </div>
-            <PatientOwnerSelector
-              users={users}
-              selectedOwner={formData.owner_id || ""}
-              onOwnerChange={(value) => handleInputChange('owner_id', value)}
-              isLoading={loadingUsers}
-              label="Utilisateur existant"
-              placeholder="Sélectionner un utilisateur existant"
-              showSelector={true}
-              required={true}
-            />
-          </GlassCard>
-        )}
-
-        {/* Informations du patient */}
-        <GlassCard className="p-6 space-y-4">
-          <h2 className="text-lg font-bold">Informations du patient</h2>
-          <PatientInformationForm
-            givenName={formData.given_name}
-            familyName={formData.family_name}
-            birthDate={formData.birth_date}
-            gender={formData.gender}
-            location={formData.location || ""}
-            onFieldChange={handleInputChange}
-          />
-        </GlassCard>
-
-        {/* Informations additionnelles */}
-        <GlassCard className="p-6 space-y-4">
-          <div>
-            <h2 className="text-lg font-bold">Informations additionnelles</h2>
-            <p className="text-sm text-medical-muted">
-              Informations médicales et contacts d'urgence (optionnel)
-            </p>
-          </div>
-          <PatientAdditionalInfoForm
-            birthPlace={formData.birth_place}
-            residenceCity={formData.residence_city}
-            neighborhood={formData.neighborhood}
-            phoneNumber={formData.phone_number}
-            npiNumber={formData.npi_number}
-            bloodGroup={formData.blood_group}
-            fatherFullName={formData.father_full_name}
-            motherFullName={formData.mother_full_name}
-            emergencyContactName={formData.emergency_contact_name}
-            emergencyContactPhone={formData.emergency_contact_phone}
-            onFieldChange={handleInputChange}
-          />
-        </GlassCard>
-
-        {/* Propriétaire du patient - seulement pour la modification */}
-        {patient && (
-          <GlassCard className="p-6 space-y-4">
-            <div>
-              <h2 className="text-lg font-bold">Propriétaire du patient</h2>
-              <p className="text-sm text-medical-muted">
-                Modifiez le propriétaire pour ce patient (optionnel)
-              </p>
-            </div>
-            <PatientOwnerSelector
-              users={users}
-              selectedOwner={formData.owner_id || ""}
-              onOwnerChange={(value) => handleInputChange('owner_id', value)}
-              isLoading={loadingUsers}
-              label="Propriétaire du patient"
-              placeholder="Sélectionner un propriétaire (optionnel)"
-              showSelector={true}
-            />
-          </GlassCard>
-        )}
-
-        {/* Actions */}
-        <GlassCard className="p-6 flex justify-end gap-3">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onCancel}
-            className="cursor-pointer border-white/10 hover:bg-white/5"
-          >
-            Annuler
-          </Button>
-          <Button
-            type="submit"
-            disabled={loading}
-            className="cursor-pointer"
-          >
-            <Save className="mr-2 h-4 w-4" />
-            {loading ? `${submitButtonText} en cours...` : submitButtonText}
-          </Button>
-        </GlassCard>
-      </form>
+      {/* Bottom Navigation Bar */}
+      <nav className="fixed bottom-0 left-0 right-0 z-50 flex justify-around items-center px-4 pt-3 pb-6 bg-background/90 backdrop-blur-xl rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.05)] border-t border-surface-container-highest md:hidden">
+        <Link href="/dashboard" className="flex flex-col items-center justify-center text-muted-foreground/60 px-3 py-2 hover:text-primary active:scale-90 transition-all flex-1 min-w-0">
+          <Activity className="w-5 h-5 mb-1" />
+          <span className="text-[10px] font-semibold uppercase tracking-tight truncate w-full text-center">Accueil</span>
+        </Link>
+        <Link href="/patients" className="flex flex-col items-center justify-center bg-primary/10 text-primary rounded-2xl px-3 py-2 active:scale-90 transition-all flex-1 min-w-0 mx-1">
+          <Users className="w-5 h-5 mb-1" />
+          <span className="text-[10px] font-semibold uppercase tracking-tight truncate w-full text-center">Patients</span>
+        </Link>
+        <Link href="/lab-results" className="flex flex-col items-center justify-center text-muted-foreground/60 px-3 py-2 hover:text-primary active:scale-90 transition-all flex-1 min-w-0">
+          <Activity className="w-5 h-5 mb-1" />
+          <span className="text-[10px] font-semibold uppercase tracking-tight truncate w-full text-center">Analyses</span>
+        </Link>
+        <Link href="/billing" className="flex flex-col items-center justify-center text-muted-foreground/60 px-3 py-2 hover:text-primary active:scale-90 transition-all flex-1 min-w-0">
+          <FileText className="w-5 h-5 mb-1" />
+          <span className="text-[10px] font-semibold uppercase tracking-tight truncate w-full text-center">Factures</span>
+        </Link>
+      </nav>
     </div>
   );
 }

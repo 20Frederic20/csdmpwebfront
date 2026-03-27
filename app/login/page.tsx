@@ -49,11 +49,9 @@ export default function LoginPage() {
     }
 
     return (
-        <div className="min-h-screen flex items-center justify-center p-6 relative">
-            <div className="noise" />
-            
+        <div className="min-h-screen flex items-center justify-center p-6 relative bg-background">
             {/* Background decorative element */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-vital-green/5 rounded-full blur-[120px] pointer-events-none" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-vital-green/10 rounded-full blur-[120px] pointer-events-none" />
 
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -61,18 +59,18 @@ export default function LoginPage() {
                 className="w-full max-w-md relative z-10"
             >
                 <div className="flex flex-col items-center mb-10 text-center">
-                    <div className="w-16 h-16 rounded-2xl bg-vital-green flex items-center justify-center vital-glow mb-6">
-                        <Activity className="text-medical-bg w-10 h-10" />
+                    <div className="w-16 h-16 rounded-2xl bg-vital-green flex items-center justify-center shadow-lg mb-6">
+                        <Activity className="text-white w-10 h-10" />
                     </div>
-                    <h1 className="font-display font-bold text-3xl tracking-tight">
+                    <h1 className="font-display font-bold text-3xl tracking-tight text-foreground">
                         CS<span className="text-vital-green">DMP</span>
                     </h1>
-                    <p className="text-medical-muted mt-2">Accès sécurisé à votre espace santé</p>
+                    <p className="text-muted-foreground mt-2">Accès sécurisé à votre espace santé</p>
                 </div>
 
-                <GlassCard className="p-8 border-vital-green/20">
+                <div className="bg-card border border-border shadow-xl rounded-2xl p-8">
                     <div className="flex justify-between items-center mb-8">
-                        <h2 className="text-2xl font-bold">Connexion</h2>
+                        <h2 className="text-2xl font-bold text-foreground">Connexion</h2>
                         <Link href="/" className="text-xs text-vital-green hover:underline">
                             Retour à l'accueil
                         </Link>
@@ -80,7 +78,7 @@ export default function LoginPage() {
 
                     <form onSubmit={handleSubmit} className="space-y-6">
                         <div className="space-y-2">
-                            <Label htmlFor="health_id" className="text-xs text-medical-muted uppercase tracking-wider">Health ID</Label>
+                            <Label htmlFor="health_id" className="text-xs text-muted-foreground uppercase tracking-wider">Health ID</Label>
                             <Input
                                 id="health_id"
                                 name="health_id"
@@ -88,14 +86,14 @@ export default function LoginPage() {
                                 placeholder="ID Hospitalier"
                                 required
                                 disabled={isPending}
-                                className="bg-medical-bg/50 border-white/10 h-12 rounded-xl focus:border-vital-green/50"
+                                className="bg-background border border-border h-12 rounded-xl focus:border-vital-green/50"
                             />
                         </div>
 
                         <div className="space-y-2">
                             <div className="flex items-center justify-between">
-                                <Label htmlFor="password" className="text-xs text-medical-muted uppercase tracking-wider">Mot de passe</Label>
-                                <a href="#" className="text-xs text-medical-muted hover:text-vital-green transition-colors">
+                                <Label htmlFor="password" className="text-xs text-muted-foreground uppercase tracking-wider">Mot de passe</Label>
+                                <a href="#" className="text-xs text-muted-foreground hover:text-vital-green transition-colors">
                                     Oublié ?
                                 </a>
                             </div>
@@ -105,15 +103,15 @@ export default function LoginPage() {
                                 type="password"
                                 required
                                 disabled={isPending}
-                                className="bg-medical-bg/50 border-white/10 h-12 rounded-xl focus:border-vital-green/50"
+                                className="bg-background border border-border h-12 rounded-xl focus:border-vital-green/50"
                             />
                         </div>
 
                         {error && (
-                            <motion.p 
+                            <motion.p
                                 initial={{ opacity: 0, x: -10 }}
                                 animate={{ opacity: 1, x: 0 }}
-                                className="text-sm text-red-400 text-center bg-red-400/10 py-2 rounded-lg border border-red-400/20"
+                                className="text-sm text-red-500 text-center bg-red-50 py-2 rounded-lg border border-red-200"
                             >
                                 {error}
                             </motion.p>
@@ -124,8 +122,8 @@ export default function LoginPage() {
                         </Button>
                     </form>
 
-                    <div className="mt-8 pt-8 border-t border-white/5 text-center">
-                        <p className="text-sm text-medical-muted">
+                    <div className="mt-8 pt-8 border-t border-border text-center">
+                        <p className="text-sm text-muted-foreground">
                             Pas encore de compte ?{" "}
                             <Link href="/register" className="text-vital-green font-bold hover:underline">
                                 S'inscrire
@@ -133,11 +131,11 @@ export default function LoginPage() {
                         </p>
                     </div>
 
-                    <p className="mt-8 text-center text-[10px] text-medical-muted flex items-center justify-center gap-2">
+                    <p className="mt-8 text-center text-[10px] text-muted-foreground flex items-center justify-center gap-2">
                         <Lock className="w-3 h-3" />
                         Chiffrement de bout en bout AES-256 activé
                     </p>
-                </GlassCard>
+                </div>
             </motion.div>
         </div>
     );

@@ -14,6 +14,7 @@ import { PermanentlyDeletePatientModal } from "@/features/patients/components/pe
 import { DataTableWithFilters } from "@/components/ui/data-table-with-filters";
 import { patientColumns } from "@/features/patients/components/patient-columns";
 import { PatientFiltersWrapper } from "@/features/patients/components/patient-filters-wrapper";
+import { SetPageTitle } from "@/components/page-title-provider";
 
 export default function PatientsPage() {
   const [currentPage, setCurrentPage] = useState(1);
@@ -116,7 +117,9 @@ export default function PatientsPage() {
   const total = patientsData?.total || 0;
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
+    <>
+      <SetPageTitle title="Patients" />
+      <div className="container mx-auto py-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -189,7 +192,8 @@ export default function PatientsPage() {
           onPatientDeleted={handlePatientPermanentlyDeleted}
         />
       )}
-    </div>
+      </div>
+    </>
   );
 }
 

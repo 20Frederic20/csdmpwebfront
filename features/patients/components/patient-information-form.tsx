@@ -30,74 +30,72 @@ export function PatientInformationForm({
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <div className="space-y-2">
-        <Label htmlFor="given_name">
-          Prénom <span className="text-red-500">*</span>
-        </Label>
-        <Input
-          id="given_name"
-          value={givenName}
-          onChange={(e) => onFieldChange('given_name', e.target.value)}
-          placeholder="Entrez le prénom"
-          required
-          className="h-10"
-        />
-      </div>
-      
-      <div className="space-y-2">
-        <Label htmlFor="family_name">
-          Nom <span className="text-red-500">*</span>
-        </Label>
-        <Input
-          id="family_name"
-          value={familyName}
-          onChange={(e) => onFieldChange('family_name', e.target.value)}
-          placeholder="Entrez le nom de famille"
-          required
-          className="h-10"
-        />
-      </div>
-      
-      <div className="space-y-2">
-        <Label htmlFor="birth_date">
-          Date de naissance <span className="text-red-500">*</span>
-        </Label>
-        <Input
-          id="birth_date"
-          type="date"
-          value={birthDate}
-          onChange={(e) => onFieldChange('birth_date', e.target.value)}
-          required
-          className="h-10"
-        />
-      </div>
-      
-      <div className="space-y-2">
-        <Label htmlFor="gender">
-          Genre <span className="text-red-500">*</span>
-        </Label>
-        <CustomSelect
-          options={genderOptions}
-          value={gender}
-          onChange={(value) => onFieldChange('gender', value as "male" | "female" | "other" | "unknown")}
-          placeholder="Sélectionner un genre"
-          height="h-10"
-        />
-      </div>
-      
-      <div className="space-y-2 md:col-span-2">
-        <Label htmlFor="location">
-          Localisation <span className="text-red-500">*</span>
-        </Label>
-        <Input
-          id="location"
-          value={location || ""}
-          onChange={(e) => onFieldChange('location', e.target.value || null)}
-          placeholder="Entrez la localisation"
-          required
-          className="h-10"
-        />
+    <div className="space-y-6">
+      {/* Identity Section */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <span className="text-[0.6875rem] font-medium uppercase tracking-wider text-muted-foreground">01. Identité</span>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="family_name" className="text-[0.6875rem] uppercase tracking-wider">Nom</Label>
+            <Input
+              id="family_name"
+              value={familyName}
+              onChange={(e) => onFieldChange('family_name', e.target.value)}
+              placeholder="Entrez le nom"
+              required
+              className="h-12"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="given_name" className="text-[0.6875rem] uppercase tracking-wider">Prénom</Label>
+            <Input
+              id="given_name"
+              value={givenName}
+              onChange={(e) => onFieldChange('given_name', e.target.value)}
+              placeholder="Entrez le prénom"
+              required
+              className="h-12"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="birth_date" className="text-[0.6875rem] uppercase tracking-wider">Date de naissance</Label>
+            <Input
+              id="birth_date"
+              type="date"
+              value={birthDate}
+              onChange={(e) => onFieldChange('birth_date', e.target.value)}
+              required
+              className="h-12"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="gender" className="text-[0.6875rem] uppercase tracking-wider">Sexe</Label>
+            <CustomSelect
+              options={genderOptions}
+              value={gender}
+              onChange={(value) => onFieldChange('gender', value as "male" | "female" | "other" | "unknown")}
+              placeholder="Choisir"
+              height="h-12"
+            />
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="location" className="text-[0.6875rem] uppercase tracking-wider">Localisation</Label>
+          <Input
+            id="location"
+            value={location || ""}
+            onChange={(e) => onFieldChange('location', e.target.value || null)}
+            placeholder="Entrez la localisation"
+            required
+            className="h-12"
+          />
+        </div>
       </div>
     </div>
   );
