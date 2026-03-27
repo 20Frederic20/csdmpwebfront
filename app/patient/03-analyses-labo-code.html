@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>CSDMP | Résultats de Laboratoire</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#2D9971",
+              "surface-variant": "#e1e3e2",
+              "surface": "#f8faf9",
+              "surface-tint": "#2D9971",
+              "on-error": "#ffffff",
+              "on-surface": "#191c1c",
+              "secondary": "#4c616c",
+              "inverse-surface": "#2e3131",
+              "secondary-fixed-dim": "#b4cad6",
+              "surface-bright": "#f8faf9",
+              "tertiary-fixed-dim": "#ffb3af",
+              "on-tertiary-fixed": "#400106",
+              "on-tertiary-fixed-variant": "#7b2c2c",
+              "on-surface-variant": "#3e4943",
+              "surface-container-highest": "#e1e3e2",
+              "tertiary-fixed": "#ffdad7",
+              "background": "#f8faf9",
+              "surface-container-low": "#f2f4f3",
+              "on-tertiary-container": "#fffbff",
+              "on-tertiary": "#ffffff",
+              "surface-container-lowest": "#ffffff",
+              "error": "#ba1a1a",
+              "inverse-primary": "#74daad",
+              "inverse-on-surface": "#eff1f0",
+              "primary-fixed-dim": "#74daad",
+              "on-primary-container": "#f5fff7",
+              "on-primary-fixed": "#002114",
+              "on-primary-fixed-variant": "#005138",
+              "tertiary-container": "#b55856",
+              "tertiary": "#97413f",
+              "outline": "#6e7a72",
+              "on-error-container": "#93000a",
+              "on-background": "#191c1c",
+              "on-primary": "#ffffff",
+              "secondary-fixed": "#cfe6f2",
+              "surface-container": "#eceeed",
+              "on-secondary-fixed-variant": "#354a53",
+              "on-secondary": "#ffffff",
+              "surface-dim": "#d8dada",
+              "outline-variant": "#bdcac1",
+              "secondary-container": "#cfe6f2",
+              "primary-container": "#2D9971",
+              "on-secondary-container": "#526772",
+              "primary-fixed": "#90f6c8",
+              "surface-container-high": "#e6e9e8",
+              "error-container": "#ffdad6",
+              "on-secondary-fixed": "#071e27"
+            },
+            fontFamily: {
+              "headline": ["Manrope"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {
+              "DEFAULT": "0.5rem",
+              "lg": "0.5rem",
+              "xl": "0.75rem",
+              "2xl": "1rem",
+              "full": "9999px"
+            },
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .tonal-layering {
+            background-image: radial-gradient(at 0% 0%, rgba(45, 153, 113, 0.03) 0px, transparent 50%),
+                              radial-gradient(at 100% 100%, rgba(45, 153, 113, 0.02) 0px, transparent 50%);
+        }
+    </style>
+</head>
+<body class="bg-background font-body text-on-surface min-h-screen tonal-layering pb-24 md:pb-0">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-[#f8faf9]/80 backdrop-blur-xl shadow-[0_4px_20px_-10px_rgba(25,28,28,0.08)] flex justify-between items-center px-6 h-16">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg overflow-hidden bg-surface-container-highest border border-outline-variant/20">
+<img alt="Profil du Patient" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAgwFvn6CRy8R7FbBNFBA_kfEqEgwzAqGv0c0BRYhRcIselNRVsSgrUz8SHRlVvdCaC8aw8Xpj2Yy_7pN-zrPoRllvE8_xIzq9Yw68SWV4ds_A_RlCkdKi15UFJBmnZNHqaFCm6rPo2NPCdgn4Ru7XxDKfTZaEL_FZW8DBdyDufKQ1iebV8DMqBKpBBllWjwZ44-ocpmTwokYh0OD3AwepzvwMyB0Z_dNwhVchXG-8fSmp_pN_H4xDjsCFjZ-WODAzYqFfovArcA1xH"/>
+</div>
+<span class="text-primary font-headline font-bold text-lg tracking-tight">CSDMP</span>
+</div>
+<button class="hover:bg-surface-container transition-colors p-2 rounded-lg active:scale-95 duration-200">
+<span class="material-symbols-outlined text-primary" data-icon="swap_horiz">swap_horiz</span>
+</button>
+</header>
+<main class="pt-24 px-6 max-w-6xl mx-auto mb-12">
+<!-- Hero Section -->
+<section class="mb-10">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+<div>
+<p class="font-label text-xs font-semibold uppercase tracking-wider text-primary mb-2">Dossiers Patients</p>
+<h1 class="font-headline text-4xl font-extrabold tracking-tight text-on-surface">Résultats de Laboratoire</h1>
+<p class="text-on-surface-variant mt-2 max-w-md">Vue d'ensemble complète des diagnostics cliniques récents et de l'historique des données.</p>
+</div>
+<div class="flex gap-3">
+<button class="flex-1 md:flex-none bg-surface-container-lowest text-primary font-semibold px-5 py-2.5 rounded-lg shadow-sm border border-outline-variant/10 flex items-center justify-center gap-2 hover:bg-surface-container transition-all active:scale-95">
+<span class="material-symbols-outlined text-sm" data-icon="filter_list">filter_list</span>
+                        Filtrer
+                    </button>
+<button class="flex-1 md:flex-none bg-primary text-on-primary font-semibold px-5 py-2.5 rounded-lg shadow-md flex items-center justify-center gap-2 hover:opacity-90 transition-all active:scale-95">
+<span class="material-symbols-outlined text-sm" data-icon="add">add</span>
+                        Nouvelle Demande
+                    </button>
+</div>
+</div>
+</section>
+<!-- Metrics Bento Grid -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+<div class="bg-surface-container-lowest p-6 rounded-lg shadow-sm border border-outline-variant/10">
+<span class="material-symbols-outlined text-primary mb-4" data-icon="pending_actions">pending_actions</span>
+<p class="font-label text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Tests en Attente</p>
+<p class="font-headline text-3xl font-bold mt-1">02</p>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-lg shadow-sm border border-outline-variant/10">
+<span class="material-symbols-outlined text-primary mb-4" data-icon="check_circle">check_circle</span>
+<p class="font-label text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Prêts à Consulter</p>
+<p class="font-headline text-3xl font-bold mt-1">14</p>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-lg shadow-sm border border-outline-variant/10">
+<span class="material-symbols-outlined text-tertiary mb-4" data-icon="priority_high">priority_high</span>
+<p class="font-label text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Alertes Critiques</p>
+<p class="font-headline text-3xl font-bold mt-1 text-tertiary">01</p>
+</div>
+</div>
+<!-- Call to Action Section: New Test Initiation -->
+<section class="mb-10 bg-primary/5 border border-primary/10 rounded-xl p-6">
+<div class="flex flex-col md:flex-row items-center justify-between gap-6">
+<div class="flex items-center gap-4 text-center md:text-left">
+<div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0 mx-auto md:mx-0">
+<span class="material-symbols-outlined text-2xl" data-icon="medical_services">medical_services</span>
+</div>
+<div>
+<h2 class="font-headline text-lg font-bold text-on-surface">Initier une demande de test</h2>
+<p class="text-sm text-on-surface-variant">Sélectionnez un examen pour soumettre une demande à votre médecin traitant.</p>
+</div>
+</div>
+<button class="w-full md:w-auto bg-primary text-on-primary font-bold px-6 py-3 rounded-lg shadow-md hover:bg-primary/90 transition-all flex items-center justify-center gap-2">
+<span class="material-symbols-outlined" data-icon="add_task">add_task</span>
+                    Lancer une Demande
+                </button>
+</div>
+</section>
+<!-- Laboratory Results List -->
+<div class="space-y-4">
+<!-- Row 1: Bilan Sanguin -->
+<div class="bg-surface-container-lowest rounded-lg p-6 flex flex-col md:flex-row items-center gap-6 shadow-sm border border-outline-variant/10 transition-all hover:shadow-md group">
+<div class="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
+<span class="material-symbols-outlined text-2xl" data-icon="bloodtype">bloodtype</span>
+</div>
+<div class="flex-grow text-center md:text-left">
+<h3 class="font-headline text-lg font-bold text-on-surface">Bilan Sanguin Complet</h3>
+<p class="text-sm text-on-surface-variant">Bilan métabolique et profil lipidique</p>
+</div>
+<div class="shrink-0 text-center md:text-left">
+<p class="font-label text-[10px] font-bold uppercase tracking-widest text-slate-400">Date Prélèvement</p>
+<p class="text-sm font-semibold">24 Oct, 2023</p>
+</div>
+<div class="shrink-0">
+<span class="px-4 py-1.5 rounded-full bg-primary-fixed text-on-primary-fixed-variant text-xs font-bold flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+                        Disponible
+                    </span>
+</div>
+<div class="shrink-0 flex gap-2">
+<button class="p-2.5 rounded-lg text-primary hover:bg-primary/5 transition-colors border border-outline-variant/20" title="Voir les Résultats">
+<span class="material-symbols-outlined" data-icon="visibility">visibility</span>
+</button>
+<button class="bg-surface-container-low text-on-surface-variant p-2.5 rounded-lg hover:bg-primary hover:text-white transition-all active:scale-95 group-hover:bg-primary/10 group-hover:text-primary">
+<span class="material-symbols-outlined" data-icon="download">download</span>
+</button>
+</div>
+</div>
+<!-- Row 2: Analyse d'urine -->
+<div class="bg-surface-container-lowest rounded-lg p-6 flex flex-col md:flex-row items-center gap-6 shadow-sm border border-outline-variant/10 transition-all hover:shadow-md group">
+<div class="w-12 h-12 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-600 shrink-0">
+<span class="material-symbols-outlined text-2xl" data-icon="science">science</span>
+</div>
+<div class="flex-grow text-center md:text-left">
+<h3 class="font-headline text-lg font-bold text-on-surface">Analyse d'urine</h3>
+<p class="text-sm text-on-surface-variant">Examen microscopique des urines</p>
+</div>
+<div class="shrink-0 text-center md:text-left">
+<p class="font-label text-[10px] font-bold uppercase tracking-widest text-slate-400">Date Prélèvement</p>
+<p class="text-sm font-semibold">26 Oct, 2023</p>
+</div>
+<div class="shrink-0">
+<span class="px-4 py-1.5 rounded-full bg-secondary-container text-on-secondary-container text-xs font-bold flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse"></span>
+                        En cours
+                    </span>
+</div>
+<div class="shrink-0 flex gap-2">
+<button class="p-2.5 rounded-lg text-slate-300 cursor-not-allowed border border-outline-variant/10">
+<span class="material-symbols-outlined" data-icon="visibility">visibility</span>
+</button>
+<button class="p-2.5 rounded-lg text-slate-300 cursor-not-allowed border border-outline-variant/10">
+<span class="material-symbols-outlined" data-icon="download">download</span>
+</button>
+</div>
+</div>
+<!-- Row 3: Biopsie -->
+<div class="bg-surface-container-lowest rounded-lg p-6 flex flex-col md:flex-row items-center gap-6 shadow-sm border border-outline-variant/10 transition-all hover:shadow-md group border-l-4 border-tertiary">
+<div class="w-12 h-12 rounded-lg bg-tertiary/10 flex items-center justify-center text-tertiary shrink-0">
+<span class="material-symbols-outlined text-2xl" data-icon="biotech">biotech</span>
+</div>
+<div class="flex-grow text-center md:text-left">
+<h3 class="font-headline text-lg font-bold text-on-surface">Biopsie Pulmonaire</h3>
+<p class="text-sm text-on-surface-variant">Rapport d'anatomopathologie tissulaire</p>
+</div>
+<div class="shrink-0 text-center md:text-left">
+<p class="font-label text-[10px] font-bold uppercase tracking-widest text-slate-400">Date Prélèvement</p>
+<p class="text-sm font-semibold">18 Oct, 2023</p>
+</div>
+<div class="shrink-0">
+<span class="px-4 py-1.5 rounded-full bg-surface-container-highest text-on-surface-variant text-xs font-bold flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-on-surface-variant"></span>
+                        Consulté
+                    </span>
+</div>
+<div class="shrink-0 flex gap-2">
+<button class="p-2.5 rounded-lg text-primary hover:bg-primary/5 transition-colors border border-outline-variant/20">
+<span class="material-symbols-outlined" data-icon="visibility">visibility</span>
+</button>
+<button class="bg-surface-container-low text-on-surface-variant p-2.5 rounded-lg hover:bg-primary hover:text-white transition-all active:scale-95 group-hover:bg-primary/10 group-hover:text-primary">
+<span class="material-symbols-outlined" data-icon="download">download</span>
+</button>
+</div>
+</div>
+<!-- Row 4: Électrocardiogramme -->
+<div class="bg-surface-container-lowest rounded-lg p-6 flex flex-col md:flex-row items-center gap-6 shadow-sm border border-outline-variant/10 transition-all hover:shadow-md group">
+<div class="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
+<span class="material-symbols-outlined text-2xl" data-icon="ecg">ecg</span>
+</div>
+<div class="flex-grow text-center md:text-left">
+<h3 class="font-headline text-lg font-bold text-on-surface">Électrocardiogramme (ECG)</h3>
+<p class="text-sm text-on-surface-variant">Surveillance cardiaque 12 dérivations</p>
+</div>
+<div class="shrink-0 text-center md:text-left">
+<p class="font-label text-[10px] font-bold uppercase tracking-widest text-slate-400">Date Prélèvement</p>
+<p class="text-sm font-semibold">12 Oct, 2023</p>
+</div>
+<div class="shrink-0">
+<span class="px-4 py-1.5 rounded-full bg-primary-fixed text-on-primary-fixed-variant text-xs font-bold flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+                        Disponible
+                    </span>
+</div>
+<div class="shrink-0 flex gap-2">
+<button class="p-2.5 rounded-lg text-primary hover:bg-primary/5 transition-colors border border-outline-variant/20">
+<span class="material-symbols-outlined" data-icon="visibility">visibility</span>
+</button>
+<button class="bg-surface-container-low text-on-surface-variant p-2.5 rounded-lg hover:bg-primary hover:text-white transition-all active:scale-95 group-hover:bg-primary/10 group-hover:text-primary">
+<span class="material-symbols-outlined" data-icon="download">download</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Featured Analysis Chart Section -->
+<section class="mt-12 bg-surface-container-low rounded-2xl p-8">
+<div class="flex flex-col md:flex-row gap-8 items-center">
+<div class="md:w-1/3">
+<h2 class="font-headline text-2xl font-bold mb-4">Analyses Clés</h2>
+<p class="text-on-surface-variant mb-6">Analyse comparative des taux de glucose sur les trois derniers rapports montrant une tendance positive à la baisse.</p>
+<div class="space-y-3">
+<div class="flex items-center justify-between p-3 bg-surface-container-lowest rounded-lg border border-outline-variant/10">
+<span class="text-sm font-medium">Taux HbA1c</span>
+<span class="text-primary font-bold">5.7%</span>
+</div>
+<div class="flex items-center justify-between p-3 bg-surface-container-lowest rounded-lg border border-outline-variant/10">
+<span class="text-sm font-medium">Statut</span>
+<span class="text-primary font-bold">Optimal</span>
+</div>
+</div>
+</div>
+<div class="md:w-2/3 w-full h-64 bg-surface-container-lowest rounded-xl flex items-end justify-between p-6 gap-2 md:gap-4 border border-outline-variant/10">
+<div class="w-full bg-primary/10 rounded-t-sm h-[40%]" title="Août"></div>
+<div class="w-full bg-primary/20 rounded-t-sm h-[65%]" title="Sept"></div>
+<div class="w-full bg-primary/40 rounded-t-sm h-[85%]" title="Oct"></div>
+<div class="w-full bg-primary/60 rounded-t-sm h-[60%]" title="Nov"></div>
+<div class="w-full bg-primary rounded-t-sm h-[50%]" title="Déc"></div>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full bg-white/80 backdrop-blur-xl flex justify-around items-center px-2 pb-6 pt-3 z-50 rounded-t-2xl shadow-[0_-4px_24px_rgba(0,0,0,0.04)]">
+<a class="flex flex-col items-center justify-center text-slate-500 px-2 py-1.5 hover:text-primary transition-all active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-body text-[10px] font-semibold uppercase tracking-wider mt-1">Accueil</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-500 px-2 py-1.5 hover:text-primary transition-all active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span class="font-body text-[10px] font-semibold uppercase tracking-wider mt-1">Patients</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-primary/10 text-primary rounded-xl px-2 py-1.5 transition-all active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="biotech">biotech</span>
+<span class="font-body text-[10px] font-semibold uppercase tracking-wider mt-1">Analyses</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-500 px-2 py-1.5 hover:text-primary transition-all active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="payments">payments</span>
+<span class="font-body text-[10px] font-semibold uppercase tracking-wider mt-1">Factures</span>
+</a>
+</nav>
+</body></html>
