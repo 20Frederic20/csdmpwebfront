@@ -57,7 +57,7 @@ export interface ListInvoicesQueryParams {
   patient_id?: string;
   health_facility_id?: string;
   consultation_id?: string;
-  sort_by?: 'created_at' | 'total_amount' | 'status';
+  sort_by?: 'created_at' | 'total_amount' | 'status' | 'health_facility_id';
   sort_order?: 'asc' | 'desc';
 }
 

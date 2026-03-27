@@ -5,14 +5,14 @@ import { DataTableWithFilters } from "@/components/ui/data-table-with-filters";
 import { billingColumns } from "@/features/billing/components/billing-columns";
 import { BillingFilters } from "@/features/billing/components/billing-filters";
 import { useInvoices, useMarkInvoiceAsPaid } from "@/features/billing/hooks/use-billing";
-import { Invoice } from "@/features/billing/types/billing.types";
+import { Invoice, PaymentMethod } from "@/features/billing/types/billing.types";
 import { usePermissionsContext } from "@/contexts/permissions-context";
 import { useAuthRefresh } from "@/hooks/use-auth-refresh";
 import { toast } from "sonner";
 
 export default function BillingPage() {
   const { isLoading: authLoading } = useAuthRefresh();
-  const { canAccess } = usePermissionsContext();
+  const { canAccess, user } = usePermissionsContext();
   
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
@@ -21,6 +21,8 @@ export default function BillingPage() {
   const { data, isLoading, isError, error } = useInvoices({
     limit: itemsPerPage,
     offset: (currentPage - 1) * itemsPerPage,
+    sort_by: 'health_facility_id',
+    health_facility_id: user?.health_facility_id,
     ...filters,
   });
 
@@ -47,7 +49,10 @@ export default function BillingPage() {
 
   const handleMarkAsPaid = async (invoice: Invoice) => {
     try {
-      await markAsPaid.mutateAsync(invoice.id);
+      await markAsPaid.mutateAsync({ 
+        id: invoice.id, 
+        payload: { payment_method: PaymentMethod.CASH } 
+      });
     } catch (err) {
       // Error handled by hook
     }

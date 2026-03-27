@@ -79,6 +79,11 @@ export const billingColumns: ColumnDef<Invoice>[] = [
     },
   },
   {
+    accessorKey: "health_facility_name",
+    header: "Établissement",
+    cell: ({ row }) => row.original.health_facility_name || "-",
+  },
+  {
     accessorKey: "created_at",
     header: "Date",
     cell: ({ row }) => {
