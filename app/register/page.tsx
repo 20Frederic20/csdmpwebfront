@@ -3,7 +3,7 @@
 import { useState, useTransition, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { usePermissionsContext } from '@/contexts/permissions-context';
-import { GlassCard, Button } from "@/components/UI"
+import { Button } from "@/components/UI"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Link from "next/link";
@@ -107,28 +107,98 @@ export default function RegisterPage() {
     }
 
     return (
-        <div className="min-h-screen flex items-center justify-center p-6 relative bg-medical-bg">
+        <div className="min-h-screen flex relative bg-medical-bg">
             <div className="noise" />
 
-            {/* Background decorative element */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-vital-green/5 rounded-full blur-[120px] pointer-events-none" />
+            {/* Panneau de session à gauche - visible sur tablette et desktop */}
+            <div className="hidden md:flex md:w-2/5 bg-vital-green flex-col justify-between p-12 relative overflow-hidden">
+                {/* Background decorative elements */}
+                <div className="absolute inset-0 bg-gradient-to-br from-vital-green/90 to-vital-green/70" />
+                <div className="absolute -top-24 -right-24 w-96 h-96 bg-white/10 rounded-full blur-[80px]" />
+                <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-white/10 rounded-full blur-[80px]" />
 
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="w-full max-w-2xl"
-            >
-                <div className="flex flex-col items-center mb-10 text-center">
-                    <div className="w-16 h-16 rounded-2xl bg-vital-green flex items-center justify-center vital-glow mb-6">
-                        <Activity className="text-medical-bg w-10 h-10" />
+                {/* Content */}
+                <div className="relative z-10">
+                    <div className="flex items-center gap-4 mb-8">
+                        <div className="w-14 h-14 rounded-2xl bg-medical-bg flex items-center justify-center shadow-lg">
+                            <Activity className="text-vital-green w-8 h-8" />
+                        </div>
+                        <h1 className="font-display font-bold text-3xl tracking-tight text-medical-bg">
+                            CS<span className="text-medical-bg/70">DMP</span>
+                        </h1>
                     </div>
-                    <h1 className="font-display font-bold text-3xl tracking-tight">
-                        CS<span className="text-vital-green">DMP</span>
-                    </h1>
-                    <p className="text-medical-muted mt-2">Créez votre espace santé sécurisé</p>
+
+                    <div className="space-y-8 mt-12">
+                        <div>
+                            <h2 className="text-4xl font-bold text-medical-bg mb-4">
+                                Rejoignez la plateforme<br/>de santé numérique
+                            </h2>
+                            <p className="text-medical-bg/80 text-lg leading-relaxed">
+                                Créez votre compte gratuitement et accédez à tous vos
+                                outils de santé en un seul endroit.
+                            </p>
+                        </div>
+
+                        <div className="space-y-6">
+                            <div className="flex items-start gap-4">
+                                <div className="w-12 h-12 rounded-xl bg-medical-bg/20 flex items-center justify-center flex-shrink-0">
+                                    <Shield className="text-medical-bg w-6 h-6" />
+                                </div>
+                                <div>
+                                    <h3 className="font-semibold text-medical-bg mb-1">Compte sécurisé</h3>
+                                    <p className="text-medical-bg/70 text-sm">Accès protégé à vos données médicales avec authentification forte</p>
+                                </div>
+                            </div>
+
+                            <div className="flex items-start gap-4">
+                                <div className="w-12 h-12 rounded-xl bg-medical-bg/20 flex items-center justify-center flex-shrink-0">
+                                    <User className="text-medical-bg w-6 h-6" />
+                                </div>
+                                <div>
+                                    <h3 className="font-semibold text-medical-bg mb-1">Profil personnalisé</h3>
+                                    <p className="text-medical-bg/70 text-sm">Groupe sanguin, antécédents, traitements - tout votre historique</p>
+                                </div>
+                            </div>
+
+                            <div className="flex items-start gap-4">
+                                <div className="w-12 h-12 rounded-xl bg-medical-bg/20 flex items-center justify-center flex-shrink-0">
+                                    <Activity className="text-medical-bg w-6 h-6" />
+                                </div>
+                                <div>
+                                    <h3 className="font-semibold text-medical-bg mb-1">Suivi complet</h3>
+                                    <p className="text-medical-bg/70 text-sm">Consultations, examens, ordonnances - centralisez votre parcours</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <GlassCard className="p-8 border-vital-green/20">
+                <div className="relative z-10">
+                    <div className="flex items-center gap-3 text-medical-bg/60 text-sm">
+                        <Lock className="w-4 h-4" />
+                        <span>Plateforme certifiée HDS - Données hébergées au Bénin</span>
+                    </div>
+                </div>
+            </div>
+
+            {/* Partie droite - Formulaire d'inscription */}
+            <div className="md:w-3/5 w-full flex items-center justify-center p-8 lg:p-12 relative bg-white overflow-y-auto">
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="w-full max-w-lg"
+                >
+                <div className="flex flex-col items-center mb-8 text-center">
+                    <div className="w-14 h-14 rounded-2xl bg-vital-green flex items-center justify-center shadow-lg mb-4">
+                        <Activity className="text-white w-8 h-8" />
+                    </div>
+                    <h1 className="font-display font-bold text-2xl tracking-tight">
+                        CS<span className="text-vital-green">DMP</span>
+                    </h1>
+                    <p className="text-muted-foreground mt-1 text-sm">Créez votre espace santé sécurisé</p>
+                </div>
+
+                <div className="w-full">
                     <div className="flex justify-between items-center mb-8">
                         <h2 className="text-2xl font-bold">Inscription</h2>
                         <Link href="/login" className="text-xs text-vital-green hover:underline">
@@ -300,7 +370,7 @@ export default function RegisterPage() {
                             </motion.p>
                         )}
 
-                        <Button type="submit" className="w-full py-7 text-lg mt-4" disabled={isPending}>
+                        <Button type="submit" className="w-full py-2 text-sm mt-4" disabled={isPending}>
                             {isPending ? "Inscription en cours..." : "S'inscrire"}
                         </Button>
                     </form>
@@ -318,12 +388,13 @@ export default function RegisterPage() {
                         </p>
                     </div>
 
-                    <p className="mt-8 text-center text-[10px] text-medical-muted flex items-center justify-center gap-2">
+                    <p className="mt-6 text-center text-[10px] text-muted-foreground flex items-center justify-center gap-2">
                         <Lock className="w-3 h-3" />
                         Chiffrement de bout en bout AES-256 activé
                     </p>
-                </GlassCard>
+                </div>
             </motion.div>
+            </div>
         </div>
     );
 }
