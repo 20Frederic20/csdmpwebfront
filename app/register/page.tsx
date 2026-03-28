@@ -1,8 +1,6 @@
 'use client';
 
-import { useState, useTransition, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { usePermissionsContext } from '@/contexts/permissions-context';
+import { useState, useTransition } from 'react';
 import { Button } from "@/components/UI"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -13,7 +11,6 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 
-import { AuthClientService } from '@/features/core/auth/services/auth-client.service';
 import CustomSelect from "@/components/ui/custom-select";
 import { cn } from "@/lib/utils";
 
@@ -45,8 +42,6 @@ const registerSchema = z.object({
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
 export default function RegisterPage() {
-    const { refreshPermissions } = usePermissionsContext();
-    const router = useRouter();
     const [error, setError] = useState<string | null>(null);
     const [isPending, startTransition] = useTransition();
 
@@ -76,30 +71,41 @@ export default function RegisterPage() {
     const selectedBloodGroup = watch("blood_group");
 
     useEffect(() => {
-        if (AuthClientService.isAuthenticated()) {
-            router.push('/dashboard');
-        }
-    }, [router]);
+        // Vérification côté serveur via middleware
+        // Cette vérification client est limitée car les cookies HTTP-only ne sont pas lisibles
+    }, []);
 
     const onSubmit = (data: RegisterFormValues) => {
         setError(null);
         startTransition(async () => {
             try {
-                await AuthClientService.register(
-                    data.health_id,
-                    data.given_name,
-                    data.family_name,
-                    data.email,
-                    data.password,
-                    data.birth_date,
-                    data.gender,
-                    data.location,
-                    data.blood_group || undefined
-                );
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        health_id: data.health_id,
+                        given_name: data.given_name,
+                        family_name: data.family_name,
+                        email: data.email,
+                        password: data.password,
+                        birth_date: data.birth_date,
+                        gender: data.gender,
+                        location: data.location,
+                        blood_group: data.blood_group || undefined,
+                    }),
+                    credentials: 'include',
+                });
 
-                await refreshPermissions();
-                router.push('/dashboard');
-                router.refresh();
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(errorText || 'Erreur lors de l\'inscription');
+                }
+
+                // Attendre que le navigateur traite les cookies Set-Cookie
+                await new Promise(resolve => setTimeout(resolve, 500));
+
+                // Navigation complète pour que le middleware puisse vérifier le cookie
+                window.location.href = '/dashboard';
             } catch (err: any) {
                 setError(err.message || 'Une erreur est survenue lors de l\'inscription.');
             }

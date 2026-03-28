@@ -1,29 +1,16 @@
 'use client';
 
-import { useState, useTransition, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { usePermissionsContext } from '@/contexts/permissions-context';
-import { GlassCard, Button } from "@/components/UI"
+import { useState, useTransition } from 'react';
+import { Button } from "@/components/UI"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Link from "next/link";
 import { Activity, Shield, Lock } from 'lucide-react';
 import { motion } from 'motion/react';
 
-import { AuthClientService } from '@/features/core/auth/services/auth-client.service';
-
 export default function LoginPage() {
-
-    const { refreshPermissions } = usePermissionsContext();
-    const router = useRouter();
     const [error, setError] = useState<string | null>(null);
     const [isPending, startTransition] = useTransition();
-
-    useEffect(() => {
-        if (AuthClientService.isAuthenticated()) {
-            router.push('/dashboard');
-        }
-    }, [router]);
 
     async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -35,13 +22,24 @@ export default function LoginPage() {
 
         startTransition(async () => {
             try {
-                await AuthClientService.login(health_id, password);
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ health_id, password }),
+                    credentials: 'include',
+                });
 
-                // Rafraîchir les permissions après la connexion
-                await refreshPermissions();
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(errorText || 'Identifiants invalides');
+                }
 
-                router.push('/dashboard');
-                router.refresh();
+                // Attendre que le navigateur traite les cookies Set-Cookie
+                // Utiliser un délai court mais suffisant
+                await new Promise(resolve => setTimeout(resolve, 500));
+
+                // Navigation complète pour que le middleware puisse vérifier le cookie
+                window.location.href = '/dashboard';
             } catch (err: any) {
                 setError(err.message || 'Une erreur est survenue lors de la connexion.');
             }
