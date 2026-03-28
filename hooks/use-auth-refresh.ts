@@ -1,6 +1,5 @@
 import { useState, useCallback } from 'react';
 import { AuthClientService } from '@/features/core/auth/services/auth-client.service';
-import { useAuthToken } from '@/hooks/use-auth-token';
 
 interface AuthState {
   isLoading: boolean;
@@ -15,11 +14,11 @@ export function useAuthRefresh() {
 
   const refreshAccessToken = useCallback(async (): Promise<string | null> => {
     setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
-    
+
     try {
-      const newToken = await AuthClientService.refreshToken();
+      const tokenData = await AuthClientService.refreshToken();
       setAuthState(prev => ({ ...prev, isLoading: false }));
-      return newToken?.access_token || null;
+      return tokenData?.access_token || null;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Erreur lors du rafraîchissement du token';
       setAuthState(prev => ({ ...prev, isLoading: false, error: errorMessage }));
@@ -44,11 +43,8 @@ export function useAuthRefresh() {
     setAuthState(prev => ({ ...prev, error: null }));
   }, []);
 
-  const logout = useCallback(() => {
-    // Nettoyer les tokens et rediriger
-    const { clearToken } = useAuthToken();
-    clearToken();
-    window.location.href = '/login';
+  const logout = useCallback(async () => {
+    await AuthClientService.logout();
   }, []);
 
   return {

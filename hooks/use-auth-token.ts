@@ -1,43 +1,37 @@
 import { useState, useEffect } from 'react';
 
+/**
+ * Hook pour gérer l'état d'authentification avec des cookies HTTP-only
+ * Note: Les cookies HTTP-only ne sont pas lisibles depuis JavaScript
+ * Ce hook sert principalement à déclencher des actions de logout
+ */
 export function useAuthToken() {
-  const [token, setToken] = useState<string | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(true);
 
-  // Synchroniser avec localStorage au montage
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const storedToken = localStorage.getItem('access_token');
-      if (storedToken !== token) {
-        setToken(storedToken);
-      }
-    }
-  }, []); // Seulement au montage
+  // On ne peut pas lire les cookies HTTP-only, donc on suppose authentifié par défaut
+  // La vérification réelle se fait côté serveur/middleware
 
-  const saveToken = (newToken: string) => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('access_token', newToken);
-      setToken(newToken);
+  const clearToken = async () => {
+    // Appeler l'API pour nettoyer les cookies
+    try {
+      await fetch('/api/auth/refresh', {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+    } catch (error) {
+      console.error('Error clearing token:', error);
     }
+    setIsAuthenticated(false);
   };
 
-  const clearToken = () => {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
-      localStorage.removeItem('token_expires_at');
-      localStorage.removeItem('refresh_token_expires_at');
-      setToken(null);
-    }
-  };
-
-  return { 
-    token, 
-    saveToken, 
+  return {
+    isAuthenticated,
     clearToken,
-    user: token ? {
-      name: "Jean Dupont",
-      initials: "JD",
-      role: token.includes('admin') ? 'Administrateur' : 'Patient'
+    // Pour récupérer les infos utilisateur, utiliser une API ou un contexte
+    user: isAuthenticated ? {
+      name: "Utilisateur",
+      initials: "UT",
+      role: 'Utilisateur'
     } : null
   };
 }
