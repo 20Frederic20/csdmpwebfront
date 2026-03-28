@@ -1,22 +1,13 @@
 import { PatientAllergy, PatientAllergiesResponse, CreateAllergyRequest, UpdateAllergyRequest, AllergiesQueryParams } from '../types/allergies.types';
+import { AuthClientService } from '@/features/core/auth/services/auth-client.service';
 
-const API_BASE = process.env.NODE_ENV === 'development' 
-  ? '/api/v1'  // Utilise le proxy Next.js en développement
-  : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1');
-
-// Helper pour obtenir le token d'authentification côté client
-function getAuthToken(): string | null {
-  if (typeof window !== 'undefined') {
-    return localStorage.getItem('access_token') || null;
-  }
-  return null;
-}
+// Utiliser le proxy Next.js pour que les cookies soient correctement envoyés
+const API_BASE = '/api/v1';
 
 export class AllergiesService {
-  static async getPatientAllergies(params: AllergiesQueryParams, token?: string): Promise<PatientAllergiesResponse> {
+  static async getPatientAllergies(params: AllergiesQueryParams): Promise<PatientAllergiesResponse> {
     const searchParams = new URLSearchParams();
-    
-    // Ajouter les paramètres de query (sauf patient_id qui est dans l'URL)
+
     if (params.limit) searchParams.append('limit', params.limit.toString());
     if (params.offset) searchParams.append('offset', params.offset.toString());
     if (params.sorting_field) searchParams.append('sorting_field', params.sorting_field);
@@ -24,22 +15,9 @@ export class AllergiesService {
     if (params.search) searchParams.append('search', params.search);
 
     const url = `${API_BASE}/patients/${params.patient_id}/allergies${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
-    
-    // Obtenir le token d'authentification (priorité au paramètre passé)
-    const authToken = token || getAuthToken();
-    
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-    
-    // Ajouter le token s'il existe
-    if (authToken) {
-      headers['Authorization'] = `Bearer ${authToken}`;
-    }
-    
-    const response = await fetch(url, {
+
+    const response = await AuthClientService.makeAuthenticatedRequest(url, {
       method: 'GET',
-      headers,
       cache: 'no-store',
     });
 
@@ -50,20 +28,9 @@ export class AllergiesService {
     return response.json();
   }
 
-  static async getAllergyById(id: string, token?: string): Promise<PatientAllergy> {
-    const authToken = token || getAuthToken();
-    
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-    
-    if (authToken) {
-      headers['Authorization'] = `Bearer ${authToken}`;
-    }
-    
-    const response = await fetch(`${API_BASE}/allergies/${id}`, {
+  static async getAllergyById(id: string): Promise<PatientAllergy> {
+    const response = await AuthClientService.makeAuthenticatedRequest(`${API_BASE}/allergies/${id}`, {
       method: 'GET',
-      headers,
       cache: 'no-store',
     });
 
@@ -74,20 +41,9 @@ export class AllergiesService {
     return response.json();
   }
 
-  static async createAllergy(allergyData: CreateAllergyRequest, patientId: string, token?: string): Promise<PatientAllergy> {
-    const authToken = token || getAuthToken();
-    
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-    
-    if (authToken) {
-      headers['Authorization'] = `Bearer ${authToken}`;
-    }
-    
-    const response = await fetch(`${API_BASE}/patients/${patientId}/allergies`, {
+  static async createAllergy(allergyData: CreateAllergyRequest, patientId: string): Promise<PatientAllergy> {
+    const response = await AuthClientService.makeAuthenticatedRequest(`${API_BASE}/patients/${patientId}/allergies`, {
       method: 'POST',
-      headers,
       body: JSON.stringify(allergyData),
     });
 
@@ -98,20 +54,9 @@ export class AllergiesService {
     return response.json();
   }
 
-  static async updateAllergy(id: string, allergyData: UpdateAllergyRequest, token?: string): Promise<PatientAllergy> {
-    const authToken = token || getAuthToken();
-    
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-    
-    if (authToken) {
-      headers['Authorization'] = `Bearer ${authToken}`;
-    }
-    
-    const response = await fetch(`${API_BASE}/allergies/${id}`, {
+  static async updateAllergy(id: string, allergyData: UpdateAllergyRequest): Promise<PatientAllergy> {
+    const response = await AuthClientService.makeAuthenticatedRequest(`${API_BASE}/allergies/${id}`, {
       method: 'PUT',
-      headers,
       body: JSON.stringify(allergyData),
     });
 
@@ -122,18 +67,9 @@ export class AllergiesService {
     return response.json();
   }
 
-  static async deleteAllergy(id: string, token?: string): Promise<void> {
-    const authToken = token || getAuthToken();
-    
-    const headers: Record<string, string> = {};
-    
-    if (authToken) {
-      headers['Authorization'] = `Bearer ${authToken}`;
-    }
-    
-    const response = await fetch(`${API_BASE}/allergies/${id}`, {
+  static async deleteAllergy(id: string): Promise<void> {
+    const response = await AuthClientService.makeAuthenticatedRequest(`${API_BASE}/allergies/${id}`, {
       method: 'DELETE',
-      headers,
     });
 
     if (!response.ok) {

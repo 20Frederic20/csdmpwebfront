@@ -14,9 +14,8 @@ export interface FetchOptions {
 }
 
 export class FetchService {
-  private static readonly BASE_URL = process.env.NODE_ENV === 'development'
-    ? (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1')
-    : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1');
+  // Utiliser le proxy Next.js pour que les cookies soient correctement envoyés
+  private static readonly BASE_URL = '/api/v1';
 
   static async fetchData<T>(
     endpoint: string,

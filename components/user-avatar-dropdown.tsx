@@ -27,12 +27,12 @@ export function UserAvatarDropdown() {
   const queryClient = useQueryClient();
   const router = useRouter();
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     // Nettoyer le cache React Query
     queryClient.clear();
 
-    // Supprimer le token du localStorage
-    clearToken();
+    // Appeler l'API pour nettoyer les cookies HTTP-only
+    await clearToken();
 
     // Nettoyer le cache des permissions (React Query)
     clearPermissionsCache();

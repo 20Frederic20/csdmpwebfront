@@ -1,22 +1,18 @@
-import { 
-  LabResult, 
-  CreateLabResultRequest, 
-  ListLabResultQueryParams, 
+import {
+  LabResult,
+  CreateLabResultRequest,
+  ListLabResultQueryParams,
   ListLabResultQM,
-  TestType 
+  TestType
 } from '../types/lab-results.types';
-import { AuthClientService } from '@/features/core/auth/services/auth-client.service';
 import { FetchService } from '@/features/core/services/fetch.service';
 
 export class LabResultsService {
-  private static readonly BASE_URL = process.env.NODE_ENV === 'development' 
-    ? (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1')
-    : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1');
-  private static readonly API_URL = `${this.BASE_URL}`;
+  private static readonly ENDPOINT = 'lab-results';
 
   static async getLabResults(params?: ListLabResultQueryParams): Promise<ListLabResultQM> {
     const queryParams = new URLSearchParams();
-    
+
     if (params?.patient_id) queryParams.append('patient_id', params.patient_id);
     if (params?.performer_id) queryParams.append('performer_id', params.performer_id);
     if (params?.test_type) queryParams.append('test_type', params.test_type);
@@ -31,67 +27,24 @@ export class LabResultsService {
     if (params?.sort_by) queryParams.append('sort_by', params.sort_by);
     if (params?.sort_order) queryParams.append('sort_order', params.sort_order);
 
-    const url = `${this.API_URL}/lab-results${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
-    console.log('Fetching lab results from:', url);
-    
-    const response = await AuthClientService.makeAuthenticatedRequest(url, {
-      method: 'GET',
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch lab results: ${response.statusText} (${response.status})`);
-    }
-
-    return response.json();
+    const endpoint = `${this.ENDPOINT}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+    return FetchService.get<ListLabResultQM>(endpoint, 'Lab results');
   }
 
   static async getLabResultById(id: string): Promise<LabResult> {
-    const url = `${this.API_URL}/lab-results/${id}`;
-    
-    const response = await AuthClientService.makeAuthenticatedRequest(url, {
-      method: 'GET',
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch lab result: ${response.statusText}`);
-    }
-
-    return response.json();
+    return FetchService.get<LabResult>(`${this.ENDPOINT}/${id}`, 'Lab result');
   }
 
   static async createLabResult(labResultData: CreateLabResultRequest): Promise<LabResult> {
-    const url = `${this.API_URL}/lab-results`;
-    
-    const response = await AuthClientService.makeAuthenticatedRequest(url, {
-      method: 'POST',
-      body: JSON.stringify(labResultData),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to create lab result: ${response.statusText}`);
-    }
-
-    return response.json();
+    return FetchService.post<LabResult>(this.ENDPOINT, labResultData, 'Lab result');
   }
 
   static async updateLabResult(id: string, labResultData: Partial<CreateLabResultRequest>): Promise<LabResult> {
-    const url = `${this.API_URL}/lab-results/${id}`;
-    
-    const response = await AuthClientService.makeAuthenticatedRequest(url, {
-      method: 'PUT',
-      body: JSON.stringify(labResultData),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to update lab result: ${response.statusText}`);
-    }
-
-    return response.json();
+    return FetchService.put<LabResult>(`${this.ENDPOINT}/${id}`, labResultData, 'Lab result');
   }
 
   static async deleteLabResult(id: string): Promise<void> {
-    console.log('Soft deleting lab result:', id);
-    return FetchService.delete<void>(`lab-results/${id}/soft-delete`, 'Lab result');
+    return FetchService.delete<void>(`${this.ENDPOINT}/${id}/soft-delete`, 'Lab result');
   }
 
   static async toggleLabResultStatus(id: string, isActive: boolean): Promise<LabResult> {
@@ -111,12 +64,10 @@ export class LabResultsService {
   }
 
   static async restoreLabResult(id: string): Promise<LabResult> {
-    console.log('Restoring lab result:', id);
-    return FetchService.patch<LabResult>(`lab-results/${id}/restore`, {}, 'Lab result');
+    return FetchService.patch<LabResult>(`${this.ENDPOINT}/${id}/restore`, {}, 'Lab result');
   }
 
   static async permanentlyDeleteLabResult(id: string): Promise<void> {
-    console.log('Permanently deleting lab result:', id);
-    return FetchService.delete<void>(`lab-results/${id}`, 'Lab result');
+    return FetchService.delete<void>(`${this.ENDPOINT}/${id}`, 'Lab result');
   }
 }

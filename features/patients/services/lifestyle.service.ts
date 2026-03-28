@@ -1,15 +1,8 @@
 import { PatientLifestyle, CreateLifestyleRequest, UpdateLifestyleRequest, PatientLifestyleResponse } from '../types/lifestyle.types';
+import { AuthClientService } from '@/features/core/auth/services/auth-client.service';
 
-const API_BASE = process.env.NODE_ENV === 'development' 
-  ? '/api/v1'  // Utilise le proxy Next.js en développement
-  : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1');
-
-const getAuthToken = (): string | null => {
-  if (typeof window !== 'undefined') {
-    return localStorage.getItem('access_token');
-  }
-  return null;
-};
+// Utiliser le proxy Next.js pour que les cookies soient correctement envoyés
+const API_BASE = '/api/v1';
 
 export interface LifestyleQueryParams {
   patient_id: string;
@@ -20,40 +13,18 @@ export interface LifestyleQueryParams {
 }
 
 export class LifestyleService {
-  static async getPatientLifestyle(params: LifestyleQueryParams, token?: string): Promise<PatientLifestyleResponse> {
-    const authToken = token || getAuthToken();
-    
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-    
-    if (authToken) {
-      headers['Authorization'] = `Bearer ${authToken}`;
-    }
-    
+  static async getPatientLifestyle(params: LifestyleQueryParams): Promise<PatientLifestyleResponse> {
     const queryParams = new URLSearchParams();
-    
-    if (params.limit) {
-      queryParams.append('limit', params.limit.toString());
-    }
-    
-    if (params.offset) {
-      queryParams.append('offset', params.offset.toString());
-    }
-    
-    if (params.sort_by) {
-      queryParams.append('sort_by', params.sort_by);
-    }
-    
-    if (params.sort_order) {
-      queryParams.append('sort_order', params.sort_order);
-    }
-    
+
+    if (params.limit) queryParams.append('limit', params.limit.toString());
+    if (params.offset) queryParams.append('offset', params.offset.toString());
+    if (params.sort_by) queryParams.append('sort_by', params.sort_by);
+    if (params.sort_order) queryParams.append('sort_order', params.sort_order);
+
     const url = `${API_BASE}/patients/${params.patient_id}/lifestyles?${queryParams.toString()}`;
-    
-    const response = await fetch(url, {
+
+    const response = await AuthClientService.makeAuthenticatedRequest(url, {
       method: 'GET',
-      headers,
       cache: 'no-store',
     });
 
@@ -64,20 +35,9 @@ export class LifestyleService {
     return response.json();
   }
 
-  static async getLifestyleById(id: string, token?: string): Promise<PatientLifestyle> {
-    const authToken = token || getAuthToken();
-    
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-    
-    if (authToken) {
-      headers['Authorization'] = `Bearer ${authToken}`;
-    }
-    
-    const response = await fetch(`${API_BASE}/lifestyles/${id}`, {
+  static async getLifestyleById(id: string): Promise<PatientLifestyle> {
+    const response = await AuthClientService.makeAuthenticatedRequest(`${API_BASE}/lifestyles/${id}`, {
       method: 'GET',
-      headers,
       cache: 'no-store',
     });
 
@@ -88,20 +48,9 @@ export class LifestyleService {
     return response.json();
   }
 
-  static async createLifestyle(lifestyleData: CreateLifestyleRequest, patientId: string, token?: string): Promise<PatientLifestyle> {
-    const authToken = token || getAuthToken();
-    
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-    
-    if (authToken) {
-      headers['Authorization'] = `Bearer ${authToken}`;
-    }
-    
-    const response = await fetch(`${API_BASE}/patients/${patientId}/lifestyles`, {
+  static async createLifestyle(lifestyleData: CreateLifestyleRequest, patientId: string): Promise<PatientLifestyle> {
+    const response = await AuthClientService.makeAuthenticatedRequest(`${API_BASE}/patients/${patientId}/lifestyles`, {
       method: 'POST',
-      headers,
       body: JSON.stringify(lifestyleData),
     });
 
@@ -112,20 +61,9 @@ export class LifestyleService {
     return response.json();
   }
 
-  static async updateLifestyle(id: string, lifestyleData: UpdateLifestyleRequest, token?: string): Promise<PatientLifestyle> {
-    const authToken = token || getAuthToken();
-    
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-    
-    if (authToken) {
-      headers['Authorization'] = `Bearer ${authToken}`;
-    }
-    
-    const response = await fetch(`${API_BASE}/lifestyles/${id}`, {
+  static async updateLifestyle(id: string, lifestyleData: UpdateLifestyleRequest): Promise<PatientLifestyle> {
+    const response = await AuthClientService.makeAuthenticatedRequest(`${API_BASE}/lifestyles/${id}`, {
       method: 'PUT',
-      headers,
       body: JSON.stringify(lifestyleData),
     });
 
@@ -136,20 +74,9 @@ export class LifestyleService {
     return response.json();
   }
 
-  static async deleteLifestyle(id: string, token?: string): Promise<void> {
-    const authToken = token || getAuthToken();
-    
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-    
-    if (authToken) {
-      headers['Authorization'] = `Bearer ${authToken}`;
-    }
-    
-    const response = await fetch(`${API_BASE}/lifestyles/${id}`, {
+  static async deleteLifestyle(id: string): Promise<void> {
+    const response = await AuthClientService.makeAuthenticatedRequest(`${API_BASE}/lifestyles/${id}`, {
       method: 'DELETE',
-      headers,
     });
 
     if (!response.ok) {

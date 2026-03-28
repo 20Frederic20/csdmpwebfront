@@ -1,23 +1,23 @@
 import { UUID } from "@/features/hospital-staff/types/hospital-staff.types";
-import { 
-  CreatePrescriptionRequest, 
-  CreatePrescriptionResponse, 
-  PrescriptionFilterParams, 
-  PrescriptionsResponse 
+import {
+  CreatePrescriptionRequest,
+  CreatePrescriptionResponse,
+  PrescriptionFilterParams,
+  PrescriptionsResponse
 } from '../types/prescriptions.types';
+import { AuthClientService } from '@/features/core/auth/services/auth-client.service';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL;
+// Utiliser le proxy Next.js pour que les cookies soient correctement envoyés
+const API_BASE = '/api/v1';
 
 export class PrescriptionService {
   static async createPrescription(
-    data: CreatePrescriptionRequest,
-    token?: string
+    data: CreatePrescriptionRequest
   ): Promise<CreatePrescriptionResponse> {
-    const response = await fetch(`${API_BASE}/prescriptions`, {
+    const response = await AuthClientService.makeAuthenticatedRequest(`${API_BASE}/prescriptions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        ...(token && { Authorization: `Bearer ${token}` }),
       },
       body: JSON.stringify(data),
     });
@@ -30,11 +30,10 @@ export class PrescriptionService {
   }
 
   static async getPrescriptions(
-    params: PrescriptionFilterParams = {},
-    token?: string
+    params: PrescriptionFilterParams = {}
   ): Promise<PrescriptionsResponse> {
     const queryParams = new URLSearchParams();
-    
+
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {
@@ -44,12 +43,9 @@ export class PrescriptionService {
     }
 
     const endpoint = `${API_BASE}/prescriptions${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
-    
-    const response = await fetch(endpoint, {
+
+    const response = await AuthClientService.makeAuthenticatedRequest(endpoint, {
       method: 'GET',
-      headers: {
-        ...(token && { Authorization: `Bearer ${token}` }),
-      },
     });
 
     if (!response.ok) {
@@ -61,14 +57,12 @@ export class PrescriptionService {
 
   static async updatePrescription(
     id: UUID,
-    data: Partial<CreatePrescriptionRequest>,
-    token?: string
+    data: Partial<CreatePrescriptionRequest>
   ): Promise<CreatePrescriptionResponse> {
-    const response = await fetch(`${API_BASE}/prescriptions/${id}`, {
+    const response = await AuthClientService.makeAuthenticatedRequest(`${API_BASE}/prescriptions/${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        ...(token && { Authorization: `Bearer ${token}` }),
       },
       body: JSON.stringify(data),
     });
@@ -81,14 +75,10 @@ export class PrescriptionService {
   }
 
   static async deletePrescription(
-    id: UUID,
-    token?: string
+    id: UUID
   ): Promise<void> {
-    const response = await fetch(`${API_BASE}/prescriptions/${id}`, {
+    const response = await AuthClientService.makeAuthenticatedRequest(`${API_BASE}/prescriptions/${id}`, {
       method: 'DELETE',
-      headers: {
-        ...(token && { Authorization: `Bearer ${token}` }),
-      },
     });
 
     if (!response.ok) {
@@ -97,14 +87,10 @@ export class PrescriptionService {
   }
 
   static async togglePrescriptionStatus(
-    id: UUID,
-    token?: string
+    id: UUID
   ): Promise<CreatePrescriptionResponse> {
-    const response = await fetch(`${API_BASE}/prescriptions/${id}/toggle-status`, {
+    const response = await AuthClientService.makeAuthenticatedRequest(`${API_BASE}/prescriptions/${id}/toggle-status`, {
       method: 'PATCH',
-      headers: {
-        ...(token && { Authorization: `Bearer ${token}` }),
-      },
     });
 
     if (!response.ok) {

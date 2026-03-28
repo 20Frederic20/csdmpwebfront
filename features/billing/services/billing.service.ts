@@ -1,10 +1,12 @@
 import { ListInvoicesQM, ListInvoicesQueryParams, Invoice, MarkAsPaidPayload, SubmitPaymentPayload } from '../types/billing.types';
-import { FetchService } from '@/features/core/services/fetch.service';
+import { AuthClientService } from '@/features/core/auth/services/auth-client.service';
+
+const API_BASE = '/api/v1';
 
 export class BillingService {
   static async getInvoices(params?: ListInvoicesQueryParams): Promise<ListInvoicesQM> {
     const queryParams = new URLSearchParams();
-    
+
     if (params?.limit) queryParams.append('limit', params.limit.toString());
     if (params?.offset) queryParams.append('offset', params.offset.toString());
     if (params?.status) queryParams.append('status', params.status);
@@ -14,19 +16,61 @@ export class BillingService {
     if (params?.sort_by) queryParams.append('sort_by', params.sort_by);
     if (params?.sort_order) queryParams.append('sort_order', params.sort_order);
 
-    const endpoint = `invoices${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
-    return FetchService.get<ListInvoicesQM>(endpoint, 'Invoices');
+    const endpoint = `${API_BASE}/invoices${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+    const response = await AuthClientService.makeAuthenticatedRequest(endpoint, {
+      method: 'GET',
+      cache: 'no-store',
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch invoices');
+    }
+
+    return response.json();
   }
 
   static async getInvoiceById(id: string): Promise<Invoice> {
-    return FetchService.get<Invoice>(`invoices/${id}`, 'Invoice');
+    const response = await AuthClientService.makeAuthenticatedRequest(`${API_BASE}/invoices/${id}`, {
+      method: 'GET',
+      cache: 'no-store',
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch invoice');
+    }
+
+    return response.json();
   }
 
   static async markAsPaid(id: string, payload: MarkAsPaidPayload): Promise<Invoice> {
-    return FetchService.post<Invoice>(`invoices/${id}/pay`, payload, 'Invoice');
+    const response = await AuthClientService.makeAuthenticatedRequest(`${API_BASE}/invoices/${id}/pay`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to mark invoice as paid');
+    }
+
+    return response.json();
   }
 
   static async submitPayment(id: string, payload: SubmitPaymentPayload): Promise<Invoice> {
-    return FetchService.post<Invoice>(`invoices/${id}/submit-payment`, payload, 'Invoice');
+    const response = await AuthClientService.makeAuthenticatedRequest(`${API_BASE}/invoices/${id}/submit-payment`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to submit payment');
+    }
+
+    return response.json();
   }
 }

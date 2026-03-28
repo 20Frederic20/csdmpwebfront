@@ -1,83 +1,35 @@
-import { 
-  HospitalStaff, 
-  CreateHospitalStaffRequest, 
-  UpdateHospitalStaffRequest, 
-  HospitalStaffResponse, 
-  HospitalStaffQueryParams 
+import {
+  HospitalStaff,
+  CreateHospitalStaffRequest,
+  UpdateHospitalStaffRequest,
+  HospitalStaffResponse,
+  HospitalStaffQueryParams
 } from '../types/hospital-staff.types';
+import { AuthClientService } from '@/features/core/auth/services/auth-client.service';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
-
-const getAuthToken = (): string | null => {
-  if (typeof window !== 'undefined') {
-    return localStorage.getItem('access_token');
-  }
-  return null;
-};
+// Utiliser le proxy Next.js pour que les cookies soient correctement envoyés
+const API_BASE = '/api/v1';
 
 export class HospitalStaffService {
-  static async getHospitalStaff(params: HospitalStaffQueryParams = {}, token?: string): Promise<HospitalStaffResponse> {
-    const authToken = token || getAuthToken();
-    
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-    
-    if (authToken) {
-      headers['Authorization'] = `Bearer ${authToken}`;
-    }
-    
+  static async getHospitalStaff(params: HospitalStaffQueryParams = {}): Promise<HospitalStaffResponse> {
     const queryParams = new URLSearchParams();
-    
-    if (params.limit) {
-      queryParams.append('limit', params.limit.toString());
-    }
-    
-    if (params.offset) {
-      queryParams.append('offset', params.offset.toString());
-    }
-    
-    if (params.sort_by) {
-      queryParams.append('sort_by', params.sort_by);
-    }
-    
-    if (params.sort_order) {
-      queryParams.append('sort_order', params.sort_order);
-    }
-    
-    if (params.search) {
-      queryParams.append('search', params.search);
-    }
-    
-    if (params.health_facility_id) {
-      queryParams.append('health_facility_id', params.health_facility_id);
-    }
-    
-    if (params.department_id) {
-      queryParams.append('department_id', params.department_id);
-    }
-    
-    if (params.specialty) {
-      queryParams.append('specialty', params.specialty);
-    }
-    
-    if (params.employment_status) {
-      queryParams.append('employment_status', params.employment_status);
-    }
-    
-    if (params.order_number) {
-      queryParams.append('order_number', params.order_number);
-    }
-    
-    if (params.include_deleted !== undefined) {
-      queryParams.append('include_deleted', params.include_deleted.toString());
-    }
-    
+
+    if (params.limit) queryParams.append('limit', params.limit.toString());
+    if (params.offset) queryParams.append('offset', params.offset.toString());
+    if (params.sort_by) queryParams.append('sort_by', params.sort_by);
+    if (params.sort_order) queryParams.append('sort_order', params.sort_order);
+    if (params.search) queryParams.append('search', params.search);
+    if (params.health_facility_id) queryParams.append('health_facility_id', params.health_facility_id);
+    if (params.department_id) queryParams.append('department_id', params.department_id);
+    if (params.specialty) queryParams.append('specialty', params.specialty);
+    if (params.employment_status) queryParams.append('employment_status', params.employment_status);
+    if (params.order_number) queryParams.append('order_number', params.order_number);
+    if (params.include_deleted !== undefined) queryParams.append('include_deleted', params.include_deleted.toString());
+
     const url = `${API_BASE}/hospital-staff?${queryParams.toString()}`;
-    
-    const response = await fetch(url, {
+
+    const response = await AuthClientService.makeAuthenticatedRequest(url, {
       method: 'GET',
-      headers,
       cache: 'no-store',
     });
 
@@ -88,20 +40,10 @@ export class HospitalStaffService {
     return response.json();
   }
 
-  static async getHospitalStaffById(id: string, token?: string): Promise<HospitalStaff> {
-    const authToken = token || getAuthToken();
-    
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-    
-    if (authToken) {
-      headers['Authorization'] = `Bearer ${authToken}`;
-    }
-    
-    const response = await fetch(`${API_BASE}/hospital-staff/${id}`, {
+  static async getHospitalStaffById(id: string): Promise<HospitalStaff> {
+    const response = await AuthClientService.makeAuthenticatedRequest(`${API_BASE}/hospital-staff/${id}`, {
       method: 'GET',
-      headers,
+      cache: 'no-store',
     });
 
     if (!response.ok) {
@@ -111,20 +53,9 @@ export class HospitalStaffService {
     return response.json();
   }
 
-  static async createHospitalStaff(staffData: CreateHospitalStaffRequest, token?: string): Promise<HospitalStaff> {
-    const authToken = token || getAuthToken();
-    
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-    
-    if (authToken) {
-      headers['Authorization'] = `Bearer ${authToken}`;
-    }
-    
-    const response = await fetch(`${API_BASE}/hospital-staff`, {
+  static async createHospitalStaff(staffData: CreateHospitalStaffRequest): Promise<HospitalStaff> {
+    const response = await AuthClientService.makeAuthenticatedRequest(`${API_BASE}/hospital-staff`, {
       method: 'POST',
-      headers,
       body: JSON.stringify(staffData),
     });
 
@@ -135,20 +66,9 @@ export class HospitalStaffService {
     return response.json();
   }
 
-  static async updateHospitalStaff(id: string, staffData: UpdateHospitalStaffRequest, token?: string): Promise<HospitalStaff> {
-    const authToken = token || getAuthToken();
-    
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-    
-    if (authToken) {
-      headers['Authorization'] = `Bearer ${authToken}`;
-    }
-    
-    const response = await fetch(`${API_BASE}/hospital-staff/${id}`, {
+  static async updateHospitalStaff(id: string, staffData: UpdateHospitalStaffRequest): Promise<HospitalStaff> {
+    const response = await AuthClientService.makeAuthenticatedRequest(`${API_BASE}/hospital-staff/${id}`, {
       method: 'PUT',
-      headers,
       body: JSON.stringify(staffData),
     });
 
@@ -159,20 +79,9 @@ export class HospitalStaffService {
     return response.json();
   }
 
-  static async deleteHospitalStaff(id: string, token?: string): Promise<void> {
-    const authToken = token || getAuthToken();
-    
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-    
-    if (authToken) {
-      headers['Authorization'] = `Bearer ${authToken}`;
-    }
-    
-    const response = await fetch(`${API_BASE}/hospital-staff/${id}/soft-delete`, {
+  static async deleteHospitalStaff(id: string): Promise<void> {
+    const response = await AuthClientService.makeAuthenticatedRequest(`${API_BASE}/hospital-staff/${id}/soft-delete`, {
       method: 'DELETE',
-      headers,
     });
 
     if (!response.ok) {
@@ -180,20 +89,9 @@ export class HospitalStaffService {
     }
   }
 
-  static async permanentlyDeleteHospitalStaff(id: string, token?: string): Promise<void> {
-    const authToken = token || getAuthToken();
-    
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-    
-    if (authToken) {
-      headers['Authorization'] = `Bearer ${authToken}`;
-    }
-    
-    const response = await fetch(`${API_BASE}/hospital-staff/${id}`, {
+  static async permanentlyDeleteHospitalStaff(id: string): Promise<void> {
+    const response = await AuthClientService.makeAuthenticatedRequest(`${API_BASE}/hospital-staff/${id}`, {
       method: 'DELETE',
-      headers,
     });
 
     if (!response.ok) {
@@ -201,20 +99,9 @@ export class HospitalStaffService {
     }
   }
 
-  static async restoreHospitalStaff(id: string, token?: string): Promise<HospitalStaff> {
-    const authToken = token || getAuthToken();
-    
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-    
-    if (authToken) {
-      headers['Authorization'] = `Bearer ${authToken}`;
-    }
-    
-    const response = await fetch(`${API_BASE}/hospital-staff/${id}/restore`, {
+  static async restoreHospitalStaff(id: string): Promise<HospitalStaff> {
+    const response = await AuthClientService.makeAuthenticatedRequest(`${API_BASE}/hospital-staff/${id}/restore`, {
       method: 'PATCH',
-      headers,
     });
 
     if (!response.ok) {
@@ -224,20 +111,9 @@ export class HospitalStaffService {
     return response.json();
   }
 
-  static async toggleHospitalStaffStatus(id: string, token?: string): Promise<HospitalStaff> {
-    const authToken = token || getAuthToken();
-    
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-    
-    if (authToken) {
-      headers['Authorization'] = `Bearer ${authToken}`;
-    }
-    
-    const response = await fetch(`${API_BASE}/hospital-staff/${id}/toggle-status`, {
+  static async toggleHospitalStaffStatus(id: string): Promise<HospitalStaff> {
+    const response = await AuthClientService.makeAuthenticatedRequest(`${API_BASE}/hospital-staff/${id}/toggle-status`, {
       method: 'PATCH',
-      headers,
     });
 
     if (!response.ok) {

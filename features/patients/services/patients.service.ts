@@ -2,12 +2,13 @@ import { PatientsResponse, PatientsQueryParams, Patient, CreatePatientRequest, U
 import { handleFetchError, createServiceErrorHandler } from '@/lib/error-handler';
 import { AuthClientService } from '@/features/core/auth/services/auth-client.service';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL;
+// Utiliser le proxy Next.js pour que les cookies soient correctement envoyés
+const API_BASE = '/api/v1';
 
 export class PatientService {
   private static errorHandler = createServiceErrorHandler('patients');
 
-  static async getPatients(params: PatientsQueryParams = {}, token?: string): Promise<PatientsResponse> {
+  static async getPatients(params: PatientsQueryParams = {}): Promise<PatientsResponse> {
     const searchParams = new URLSearchParams();
 
     // Ajouter les paramètres de query
@@ -36,7 +37,7 @@ export class PatientService {
     return response.json();
   }
 
-  static async getPatientById(id: string, token?: string): Promise<Patient> {
+  static async getPatientById(id: string): Promise<Patient> {
     const response = await AuthClientService.makeAuthenticatedRequest(`${API_BASE}/patients/${id}`, {
       method: 'GET',
       headers: {
@@ -51,7 +52,7 @@ export class PatientService {
     return response.json();
   }
 
-  static async createPatient(patientData: CreatePatientRequest, token?: string): Promise<Patient> {
+  static async createPatient(patientData: CreatePatientRequest): Promise<Patient> {
     const response = await AuthClientService.makeAuthenticatedRequest(`${API_BASE}/patients`, {
       method: 'POST',
       headers: {
@@ -67,7 +68,7 @@ export class PatientService {
     return response.json();
   }
 
-  static async updatePatient(id: string, patientData: UpdatePatientRequest, token?: string): Promise<Patient> {
+  static async updatePatient(id: string, patientData: UpdatePatientRequest): Promise<Patient> {
     const response = await AuthClientService.makeAuthenticatedRequest(`${API_BASE}/patients/${id}`, {
       method: 'PUT',
       headers: {
@@ -83,7 +84,7 @@ export class PatientService {
     return response.json();
   }
 
-  static async deletePatient(id: string, token?: string): Promise<void> {
+  static async deletePatient(id: string): Promise<void> {
     const response = await AuthClientService.makeAuthenticatedRequest(`${API_BASE}/patients/${id}`, {
       method: 'DELETE',
     });
@@ -93,7 +94,7 @@ export class PatientService {
     }
   }
 
-  static async softDeletePatient(id: string, token?: string): Promise<void> {
+  static async softDeletePatient(id: string): Promise<void> {
     const response = await AuthClientService.makeAuthenticatedRequest(`${API_BASE}/patients/${id}/soft-delete`, {
       method: 'DELETE',
     });
@@ -103,7 +104,7 @@ export class PatientService {
     }
   }
 
-  static async permanentlyDeletePatient(id: string, token?: string): Promise<void> {
+  static async permanentlyDeletePatient(id: string): Promise<void> {
     const response = await AuthClientService.makeAuthenticatedRequest(`${API_BASE}/patients/${id}/permanently-delete`, {
       method: 'DELETE',
     });
@@ -113,7 +114,7 @@ export class PatientService {
     }
   }
 
-  static async restorePatient(id: string, token?: string): Promise<Patient> {
+  static async restorePatient(id: string): Promise<Patient> {
     const response = await AuthClientService.makeAuthenticatedRequest(`${API_BASE}/patients/${id}/restore`, {
       method: 'PATCH',
       headers: {
@@ -128,7 +129,7 @@ export class PatientService {
     return response.json();
   }
 
-  static async togglePatientActivation(id: string, token?: string): Promise<Patient> {
+  static async togglePatientActivation(id: string): Promise<Patient> {
     const response = await AuthClientService.makeAuthenticatedRequest(`${API_BASE}/patients/${id}/toggle-activation`, {
       method: 'PATCH',
       headers: {

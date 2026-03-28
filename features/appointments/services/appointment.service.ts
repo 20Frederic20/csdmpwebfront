@@ -1,20 +1,22 @@
-import { 
-  Appointment, 
+import {
+  Appointment,
   AppointmentQM,
-  CreateAppointmentRequest, 
+  CreateAppointmentRequest,
   UpdateAppointmentRequest,
   AppointmentFilterParams,
   ListAppointmentsResponse,
   AppointmentStatus,
   AppointmentType
 } from '../types/appointments.types';
-import { FetchService } from '@/features/core/services/fetch.service';
+import { AuthClientService } from '@/features/core/auth/services/auth-client.service';
+
+const API_BASE = '/api/v1';
 
 export class AppointmentService {
-  
+
   static async getAppointments(params?: AppointmentFilterParams): Promise<ListAppointmentsResponse> {
     console.log('Fetching appointments with params:', params);
-    
+
     const queryParams = new URLSearchParams();
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
@@ -23,67 +25,172 @@ export class AppointmentService {
         }
       });
     }
-    
-    const endpoint = `appointments${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
-    return FetchService.get<ListAppointmentsResponse>(endpoint, 'Appointments');
+
+    const endpoint = `${API_BASE}/appointments${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+    const response = await AuthClientService.makeAuthenticatedRequest(endpoint, {
+      method: 'GET',
+      cache: 'no-store',
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch appointments');
+    }
+
+    return response.json();
   }
 
   static async getAppointmentById(id: string): Promise<Appointment> {
     console.log('Fetching appointment by ID:', id);
-    return FetchService.get<Appointment>(`appointments/${id}`, 'Appointment');
+    const response = await AuthClientService.makeAuthenticatedRequest(`${API_BASE}/appointments/${id}`, {
+      method: 'GET',
+      cache: 'no-store',
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch appointment');
+    }
+
+    return response.json();
   }
 
   static async createAppointment(data: CreateAppointmentRequest): Promise<Appointment> {
     console.log('Creating appointment:', data);
-    return FetchService.post<Appointment>('appointments', data, 'Appointment');
+    const response = await AuthClientService.makeAuthenticatedRequest(`${API_BASE}/appointments`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to create appointment');
+    }
+
+    return response.json();
   }
 
   static async updateAppointment(id: string, data: UpdateAppointmentRequest): Promise<Appointment> {
     console.log('Updating appointment:', id, data);
-    return FetchService.put<Appointment>(`appointments/${id}`, data, 'Appointment');
+    const response = await AuthClientService.makeAuthenticatedRequest(`${API_BASE}/appointments/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to update appointment');
+    }
+
+    return response.json();
   }
 
   static async deleteAppointment(id: string): Promise<void> {
     console.log('Soft deleting appointment:', id);
-    return FetchService.delete<void>(`appointments/${id}/soft-delete`, 'Appointment');
+    const response = await AuthClientService.makeAuthenticatedRequest(`${API_BASE}/appointments/${id}/soft-delete`, {
+      method: 'DELETE',
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to soft delete appointment');
+    }
   }
 
   static async permanentlyDeleteAppointment(id: string): Promise<void> {
     console.log('Permanently deleting appointment:', id);
-    return FetchService.delete<void>(`appointments/${id}`, 'Appointment');
+    const response = await AuthClientService.makeAuthenticatedRequest(`${API_BASE}/appointments/${id}`, {
+      method: 'DELETE',
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to permanently delete appointment');
+    }
   }
 
   static async restoreAppointment(id: string): Promise<Appointment> {
     console.log('Restoring appointment:', id);
-    return FetchService.patch<Appointment>(`appointments/${id}/restore`, {}, 'Appointment');
+    const response = await AuthClientService.makeAuthenticatedRequest(`${API_BASE}/appointments/${id}/restore`, {
+      method: 'PATCH',
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to restore appointment');
+    }
+
+    return response.json();
   }
 
   static async updateAppointmentStatus(id: string, status: AppointmentStatus): Promise<Appointment> {
     console.log('Updating appointment status:', id, status);
-    return FetchService.patch<Appointment>(`appointments/${id}/status`, { status }, 'Appointment');
+    const response = await AuthClientService.makeAuthenticatedRequest(`${API_BASE}/appointments/${id}/status`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ status }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to update appointment status');
+    }
+
+    return response.json();
   }
 
   static async confirmAppointmentByPatient(id: string): Promise<Appointment> {
     console.log('Confirming appointment by patient:', id);
-    return FetchService.patch<Appointment>(`appointments/${id}/confirm`, {}, 'Appointment');
+    const response = await AuthClientService.makeAuthenticatedRequest(`${API_BASE}/appointments/${id}/confirm`, {
+      method: 'PATCH',
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to confirm appointment by patient');
+    }
+
+    return response.json();
   }
 
   static async confirmAppointment(id: string): Promise<Appointment> {
     console.log('Confirming appointment:', id);
-    return FetchService.patch<Appointment>(`appointments/${id}/confirm`, {}, 'Appointment');
+    const response = await AuthClientService.makeAuthenticatedRequest(`${API_BASE}/appointments/${id}/confirm`, {
+      method: 'PATCH',
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to confirm appointment');
+    }
+
+    return response.json();
   }
 
   static async cancelAppointment(id: string): Promise<Appointment> {
     console.log('Cancelling appointment:', id);
-    return FetchService.patch<Appointment>(`appointments/${id}/cancel`, {}, 'Appointment');
+    const response = await AuthClientService.makeAuthenticatedRequest(`${API_BASE}/appointments/${id}/cancel`, {
+      method: 'PATCH',
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to cancel appointment');
+    }
+
+    return response.json();
   }
 
   static async completeAppointment(id: string): Promise<Appointment> {
     console.log('Completing appointment:', id);
-    return FetchService.patch<Appointment>(`appointments/${id}/complete`, {}, 'Appointment');
+    const response = await AuthClientService.makeAuthenticatedRequest(`${API_BASE}/appointments/${id}/complete`, {
+      method: 'PATCH',
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to complete appointment');
+    }
+
+    return response.json();
   }
 
-  // Helper methods
   static async getAppointmentsByPatientId(patientId: string, params?: Omit<AppointmentFilterParams, 'patient_id'>): Promise<ListAppointmentsResponse> {
     return this.getAppointments({ ...params, patient_id: patientId });
   }
@@ -101,8 +208,8 @@ export class AppointmentService {
   }
 
   static async getUpcomingAppointments(params?: Omit<AppointmentFilterParams, 'status'>): Promise<ListAppointmentsResponse> {
-    return this.getAppointments({ 
-      ...params, 
+    return this.getAppointments({
+      ...params,
       status: AppointmentStatus.SCHEDULED,
       sort_by: 'scheduled_at',
       sort_order: 'asc'
@@ -111,8 +218,8 @@ export class AppointmentService {
 
   static async getTodayAppointments(params?: AppointmentFilterParams): Promise<ListAppointmentsResponse> {
     const today = new Date().toISOString().split('T')[0];
-    return this.getAppointments({ 
-      ...params, 
+    return this.getAppointments({
+      ...params,
       scheduled_from: today,
       scheduled_to: today
     });

@@ -6,9 +6,10 @@ import {
   DepartmentsResponse,
   DepartmentResponse
 } from '../types/departments.types';
-import { FetchService } from '@/features/core/services/fetch.service';
+import { AuthClientService } from '@/features/core/auth/services/auth-client.service';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL;
+// Utiliser le proxy Next.js pour que les cookies soient correctement envoyés
+const API_BASE = '/api/v1';
 
 interface CacheEntry {
   data: DepartmentsResponse;
@@ -21,7 +22,6 @@ export class DepartmentService {
   private static CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
   private static getCacheKey(params: DepartmentFilterParams): string {
-    // Normaliser les paramètres pour ignorer les valeurs undefined
     const normalizedParams: any = {};
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {
@@ -56,19 +56,15 @@ export class DepartmentService {
   }
 
   static async getDepartments(
-    params: DepartmentFilterParams = {},
-    tokenOrSignal?: string | AbortSignal
+    params: DepartmentFilterParams = {}
   ): Promise<DepartmentsResponse> {
-    const signal = tokenOrSignal instanceof AbortSignal ? tokenOrSignal : undefined;
     const cacheKey = this.getCacheKey(params);
 
-    // 1. Vérifier le cache de données
     const cachedData = this.getCachedData(params);
     if (cachedData) {
       return cachedData;
     }
 
-    // 2. Vérifier si une requête identique est déjà en cours
     const pending = this.pendingRequests.get(cacheKey);
     if (pending) {
       console.log('Deduplicating concurrent request for:', cacheKey);
@@ -77,25 +73,32 @@ export class DepartmentService {
 
     console.log('Fetching departments with params:', params);
 
+    const queryParams = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          queryParams.append(key, value.toString());
+        }
+      });
+    }
+
+    const endpoint = `${API_BASE}/departments${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+
     const fetchPromise = (async () => {
       try {
-        const queryParams = new URLSearchParams();
-        if (params) {
-          Object.entries(params).forEach(([key, value]) => {
-            if (value !== undefined && value !== null) {
-              queryParams.append(key, value.toString());
-            }
-          });
+        const response = await AuthClientService.makeAuthenticatedRequest(endpoint, {
+          method: 'GET',
+          cache: 'no-store',
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch departments');
         }
 
-        const endpoint = `departments${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
-        const response = await FetchService.get<DepartmentsResponse>(endpoint, 'Departments', { signal });
-
-        // Mettre en cache la réponse
-        this.setCachedData(params, response);
-        return response;
+        const data = await response.json();
+        this.setCachedData(params, data);
+        return data;
       } finally {
-        // Supprimer des requêtes en cours une fois terminé
         this.pendingRequests.delete(cacheKey);
       }
     })();
@@ -104,74 +107,127 @@ export class DepartmentService {
     return fetchPromise;
   }
 
-  static async getDepartmentById(id: string, token?: string): Promise<Department> {
+  static async getDepartmentById(id: string): Promise<Department> {
     console.log('Fetching department by ID:', id);
-    return FetchService.get<Department>(`departments/${id}`, 'Department');
+    const response = await AuthClientService.makeAuthenticatedRequest(`${API_BASE}/departments/${id}`, {
+      method: 'GET',
+      cache: 'no-store',
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch department');
+    }
+
+    return response.json();
   }
 
   static async createDepartment(
-    departmentData: CreateDepartmentRequest,
-    token?: string
+    departmentData: CreateDepartmentRequest
   ): Promise<DepartmentResponse> {
     console.log('Creating department:', departmentData);
-    const response = await FetchService.post<DepartmentResponse>('departments', departmentData, 'Department');
-    // Invalider le cache après création
+    const response = await AuthClientService.makeAuthenticatedRequest(`${API_BASE}/departments`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(departmentData),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to create department');
+    }
+
     this.invalidateCache();
-    return response;
+    return response.json();
   }
 
   static async updateDepartment(
     id: string,
-    departmentData: UpdateDepartmentRequest,
-    token?: string
+    departmentData: UpdateDepartmentRequest
   ): Promise<DepartmentResponse> {
     console.log('Updating department:', id, departmentData);
-    const response = await FetchService.put<DepartmentResponse>(`departments/${id}`, departmentData, 'Department');
-    // Invalider le cache après modification
+    const response = await AuthClientService.makeAuthenticatedRequest(`${API_BASE}/departments/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(departmentData),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to update department');
+    }
+
     this.invalidateCache();
-    return response;
+    return response.json();
   }
 
-  static async deleteDepartment(id: string, token?: string): Promise<void> {
+  static async deleteDepartment(id: string): Promise<void> {
     console.log('Deleting department:', id);
-    const response = await FetchService.delete<void>(`departments/${id}`, 'Department');
-    // Invalider le cache après suppression
+    const response = await AuthClientService.makeAuthenticatedRequest(`${API_BASE}/departments/${id}`, {
+      method: 'DELETE',
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to delete department');
+    }
+
     this.invalidateCache();
-    return response;
   }
 
-  static async softDeleteDepartment(id: string, token?: string): Promise<void> {
+  static async softDeleteDepartment(id: string): Promise<void> {
     console.log('Soft deleting department:', id);
-    const response = await FetchService.delete<void>(`departments/${id}/soft-delete`, 'Department');
-    // Invalider le cache après suppression
+    const response = await AuthClientService.makeAuthenticatedRequest(`${API_BASE}/departments/${id}/soft-delete`, {
+      method: 'DELETE',
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to soft delete department');
+    }
+
     this.invalidateCache();
-    return response;
   }
 
-  static async permanentlyDeleteDepartment(id: string, token?: string): Promise<void> {
+  static async permanentlyDeleteDepartment(id: string): Promise<void> {
     console.log('Permanently deleting department:', id);
-    const response = await FetchService.delete<void>(`departments/${id}/permanently-delete`, 'Department');
-    // Invalider le cache après suppression
+    const response = await AuthClientService.makeAuthenticatedRequest(`${API_BASE}/departments/${id}/permanently-delete`, {
+      method: 'DELETE',
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to permanently delete department');
+    }
+
     this.invalidateCache();
-    return response;
   }
 
-  static async restoreDepartment(id: string, token?: string): Promise<DepartmentResponse> {
+  static async restoreDepartment(id: string): Promise<DepartmentResponse> {
     console.log('Restoring department:', id);
-    const response = await FetchService.patch<DepartmentResponse>(`departments/${id}/restore`, {}, 'Department');
-    // Invalider le cache après restauration
+    const response = await AuthClientService.makeAuthenticatedRequest(`${API_BASE}/departments/${id}/restore`, {
+      method: 'PATCH',
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to restore department');
+    }
+
     this.invalidateCache();
-    return response;
+    return response.json();
   }
 
   static async toggleDepartmentActivation(
-    id: string,
-    token?: string
+    id: string
   ): Promise<DepartmentResponse> {
     console.log('Toggling department activation:', id);
-    const response = await FetchService.patch<DepartmentResponse>(`departments/${id}/toggle-activation`, {}, 'Department');
-    // Invalider le cache après changement d'état
+    const response = await AuthClientService.makeAuthenticatedRequest(`${API_BASE}/departments/${id}/toggle-activation`, {
+      method: 'PATCH',
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to toggle department activation');
+    }
+
     this.invalidateCache();
-    return response;
+    return response.json();
   }
 }

@@ -1,66 +1,24 @@
 import { HealthFacility, CreateHealthFacilityRequest, UpdateHealthFacilityRequest, HealthFacilityResponse, HealthFacilityQueryParams as ServiceQueryParams } from '../types/health-facility.types';
+import { AuthClientService } from '@/features/core/auth/services/auth-client.service';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
-
-const getAuthToken = (): string | null => {
-  if (typeof window !== 'undefined') {
-    return localStorage.getItem('access_token');
-  }
-  return null;
-};
-
-export interface HealthFacilityServiceQueryParams {
-  limit?: number;
-  offset?: number;
-  sort_by?: string;
-  sort_order?: 'asc' | 'desc';
-  search?: string;
-  deleted_at?: string | null;
-}
+// Utiliser le proxy Next.js pour que les cookies soient correctement envoyés
+const API_BASE = '/api/v1';
 
 export class HealthFacilityService {
-  static async getHealthFacilities(params: ServiceQueryParams = {}, token?: string): Promise<HealthFacilityResponse> {
-    const authToken = token || getAuthToken();
-    
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-    
-    if (authToken) {
-      headers['Authorization'] = `Bearer ${authToken}`;
-    }
-    
+  static async getHealthFacilities(params: ServiceQueryParams = {}): Promise<HealthFacilityResponse> {
     const queryParams = new URLSearchParams();
-    
-    if (params.limit) {
-      queryParams.append('limit', params.limit.toString());
-    }
-    
-    if (params.offset) {
-      queryParams.append('offset', params.offset.toString());
-    }
-    
-    if (params.sort_by) {
-      queryParams.append('sort_by', params.sort_by);
-    }
-    
-    if (params.sort_order) {
-      queryParams.append('sort_order', params.sort_order);
-    }
-    
-    if (params.search) {
-      queryParams.append('search', params.search);
-    }
-    
-    if (params.deleted_at !== undefined) {
-      queryParams.append('deleted_at', params.deleted_at || '');
-    }
-    
+
+    if (params.limit) queryParams.append('limit', params.limit.toString());
+    if (params.offset) queryParams.append('offset', params.offset.toString());
+    if (params.sort_by) queryParams.append('sort_by', params.sort_by);
+    if (params.sort_order) queryParams.append('sort_order', params.sort_order);
+    if (params.search) queryParams.append('search', params.search);
+    if (params.deleted_at !== undefined) queryParams.append('deleted_at', params.deleted_at || '');
+
     const url = `${API_BASE}/health-facilities?${queryParams.toString()}`;
-    
-    const response = await fetch(url, {
+
+    const response = await AuthClientService.makeAuthenticatedRequest(url, {
       method: 'GET',
-      headers,
       cache: 'no-store',
     });
 
@@ -71,20 +29,10 @@ export class HealthFacilityService {
     return response.json();
   }
 
-  static async getHealthFacilityById(id: string, token?: string): Promise<HealthFacility> {
-    const authToken = token || getAuthToken();
-    
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-    
-    if (authToken) {
-      headers['Authorization'] = `Bearer ${authToken}`;
-    }
-    
-    const response = await fetch(`${API_BASE}/health-facilities/${id}`, {
+  static async getHealthFacilityById(id: string): Promise<HealthFacility> {
+    const response = await AuthClientService.makeAuthenticatedRequest(`${API_BASE}/health-facilities/${id}`, {
       method: 'GET',
-      headers,
+      cache: 'no-store',
     });
 
     if (!response.ok) {
@@ -94,20 +42,9 @@ export class HealthFacilityService {
     return response.json();
   }
 
-  static async createHealthFacility(facilityData: CreateHealthFacilityRequest, token?: string): Promise<HealthFacility> {
-    const authToken = token || getAuthToken();
-    
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-    
-    if (authToken) {
-      headers['Authorization'] = `Bearer ${authToken}`;
-    }
-    
-    const response = await fetch(`${API_BASE}/health-facilities`, {
+  static async createHealthFacility(facilityData: CreateHealthFacilityRequest): Promise<HealthFacility> {
+    const response = await AuthClientService.makeAuthenticatedRequest(`${API_BASE}/health-facilities`, {
       method: 'POST',
-      headers,
       body: JSON.stringify(facilityData),
     });
 
@@ -118,20 +55,9 @@ export class HealthFacilityService {
     return response.json();
   }
 
-  static async updateHealthFacility(id: string, facilityData: UpdateHealthFacilityRequest, token?: string): Promise<HealthFacility> {
-    const authToken = token || getAuthToken();
-    
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-    
-    if (authToken) {
-      headers['Authorization'] = `Bearer ${authToken}`;
-    }
-    
-    const response = await fetch(`${API_BASE}/health-facilities/${id}`, {
+  static async updateHealthFacility(id: string, facilityData: UpdateHealthFacilityRequest): Promise<HealthFacility> {
+    const response = await AuthClientService.makeAuthenticatedRequest(`${API_BASE}/health-facilities/${id}`, {
       method: 'PUT',
-      headers,
       body: JSON.stringify(facilityData),
     });
 
@@ -142,20 +68,9 @@ export class HealthFacilityService {
     return response.json();
   }
 
-  static async deleteHealthFacility(id: string, token?: string): Promise<void> {
-    const authToken = token || getAuthToken();
-    
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-    
-    if (authToken) {
-      headers['Authorization'] = `Bearer ${authToken}`;
-    }
-    
-    const response = await fetch(`${API_BASE}/health-facilities/${id}/soft-delete`, {
+  static async deleteHealthFacility(id: string): Promise<void> {
+    const response = await AuthClientService.makeAuthenticatedRequest(`${API_BASE}/health-facilities/${id}/soft-delete`, {
       method: 'DELETE',
-      headers,
     });
 
     if (!response.ok) {
@@ -163,20 +78,9 @@ export class HealthFacilityService {
     }
   }
 
-  static async permanentlyDeleteHealthFacility(id: string, token?: string): Promise<void> {
-    const authToken = token || getAuthToken();
-    
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-    
-    if (authToken) {
-      headers['Authorization'] = `Bearer ${authToken}`;
-    }
-    
-    const response = await fetch(`${API_BASE}/health-facilities/${id}`, {
+  static async permanentlyDeleteHealthFacility(id: string): Promise<void> {
+    const response = await AuthClientService.makeAuthenticatedRequest(`${API_BASE}/health-facilities/${id}`, {
       method: 'DELETE',
-      headers,
     });
 
     if (!response.ok) {
@@ -184,20 +88,9 @@ export class HealthFacilityService {
     }
   }
 
-  static async restoreHealthFacility(id: string, token?: string): Promise<HealthFacility> {
-    const authToken = token || getAuthToken();
-    
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-    
-    if (authToken) {
-      headers['Authorization'] = `Bearer ${authToken}`;
-    }
-    
-    const response = await fetch(`${API_BASE}/health-facilities/${id}/restore`, {
+  static async restoreHealthFacility(id: string): Promise<HealthFacility> {
+    const response = await AuthClientService.makeAuthenticatedRequest(`${API_BASE}/health-facilities/${id}/restore`, {
       method: 'PATCH',
-      headers,
     });
 
     if (!response.ok) {
@@ -207,20 +100,9 @@ export class HealthFacilityService {
     return response.json();
   }
 
-  static async toggleHealthFacilityStatus(id: string, token?: string): Promise<HealthFacility> {
-    const authToken = token || getAuthToken();
-    
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-    
-    if (authToken) {
-      headers['Authorization'] = `Bearer ${authToken}`;
-    }
-    
-    const response = await fetch(`${API_BASE}/health-facilities/${id}/toggle-status`, {
+  static async toggleHealthFacilityStatus(id: string): Promise<HealthFacility> {
+    const response = await AuthClientService.makeAuthenticatedRequest(`${API_BASE}/health-facilities/${id}/toggle-status`, {
       method: 'PATCH',
-      headers,
     });
 
     if (!response.ok) {

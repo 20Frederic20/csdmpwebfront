@@ -1,12 +1,22 @@
-import { FetchService } from '@/features/core/services/fetch.service';
+import { AuthClientService } from '@/features/core/auth/services/auth-client.service';
 import { UserWithRoles, PermissionsResponse, UserRole } from '../types/roles.types';
+
+const API_BASE = '/api/v1';
 
 export class PermissionsService {
 
   static async getUserPermissions(): Promise<UserWithRoles> {
     try {
-      const result = await FetchService.get<UserWithRoles>('me/permissions', 'User permissions');
-      return result;
+      const response = await AuthClientService.makeAuthenticatedRequest(`${API_BASE}/me/permissions`, {
+        method: 'GET',
+        cache: 'no-store',
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch user permissions: ${response.statusText}`);
+      }
+
+      return response.json();
     } catch (error) {
       console.error('Failed to fetch user permissions:', error);
 
@@ -16,7 +26,7 @@ export class PermissionsService {
         error.message.includes('Failed to refresh token') ||
         error.message.includes('Unauthorized')
       )) {
-        throw error; // Propager l'erreur pour déclencher la redirection vers login
+        throw error;
       }
 
       // Pour les autres erreurs, retourner un utilisateur par défaut
@@ -32,7 +42,16 @@ export class PermissionsService {
   }
 
   static async getAllPermissions(): Promise<PermissionsResponse> {
-    return FetchService.get<PermissionsResponse>('permissions', 'All permissions');
+    const response = await AuthClientService.makeAuthenticatedRequest(`${API_BASE}/permissions`, {
+      method: 'GET',
+      cache: 'no-store',
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch all permissions');
+    }
+
+    return response.json();
   }
 
   static async getUserRoles(): Promise<UserRole[]> {
