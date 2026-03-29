@@ -6,7 +6,22 @@ const authPages = ['/login', '/register'];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const accessToken = request.cookies.get('access_token')?.value;
+  
+  // Recomposition du token si partitionné
+  let accessToken = request.cookies.get('access_token')?.value;
+  const partsCount = request.cookies.get('access_token_parts')?.value;
+  
+  if (!accessToken && partsCount) {
+    const parts = [];
+    const count = parseInt(partsCount, 10);
+    for (let i = 0; i < count; i++) {
+      const part = request.cookies.get(`access_token_${i}`)?.value;
+      if (part) parts.push(part);
+    }
+    if (parts.length === count) {
+      accessToken = parts.join('');
+    }
+  }
 
   // Ne pas intercepter les routes API d'authentification
   const isAuthApiPath = authApiPaths.some(p => pathname.startsWith(p));

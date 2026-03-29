@@ -1,24 +1,44 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-function setAuthCookies(response: NextResponse, accessToken: string, refreshToken: string, expiresIn: number, refreshExpiresIn: number) {
+function setAuthCookies(request: NextRequest, response: NextResponse, accessToken: string, refreshToken: string, expiresIn: number, refreshExpiresIn: number) {
   const isProd = process.env.NODE_ENV === 'production';
+  const isSecure = isProd && !request.nextUrl.hostname.includes('localhost') && request.nextUrl.protocol === 'https:';
 
-  // Access token cookie (court terme)
-  response.cookies.set('access_token', accessToken, {
+  const cookieOptions = {
     httpOnly: true,
-    secure: isProd,
-    sameSite: 'lax',
-    maxAge: expiresIn,
+    secure: isSecure,
+    sameSite: 'lax' as const,
     path: '/',
-  });
+  };
 
-  // Refresh token cookie (long terme)
+  if (accessToken.length <= 3800) {
+    response.cookies.set('access_token', accessToken, {
+      ...cookieOptions,
+      maxAge: expiresIn,
+    });
+    response.cookies.delete('access_token_parts');
+  } else {
+    const CHUNK_SIZE = 3500;
+    const chunks = [];
+    for (let i = 0; i < accessToken.length; i += CHUNK_SIZE) {
+      chunks.push(accessToken.substring(i, i + CHUNK_SIZE));
+    }
+    response.cookies.set('access_token_parts', chunks.length.toString(), {
+      ...cookieOptions,
+      maxAge: expiresIn,
+    });
+    chunks.forEach((chunk, index) => {
+      response.cookies.set(`access_token_${index}`, chunk, {
+        ...cookieOptions,
+        maxAge: expiresIn,
+      });
+    });
+    response.cookies.delete('access_token');
+  }
+
   response.cookies.set('refresh_token', refreshToken, {
-    httpOnly: true,
-    secure: isProd,
-    sameSite: 'lax',
+    ...cookieOptions,
     maxAge: refreshExpiresIn,
-    path: '/',
   });
 }
 
@@ -56,6 +76,7 @@ export async function POST(request: NextRequest) {
     });
 
     setAuthCookies(
+      request,
       nextResponse,
       data.access_token,
       data.refresh_token,

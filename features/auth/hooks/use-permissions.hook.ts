@@ -11,6 +11,6 @@ export function usePermissionsQuery() {
         queryFn: () => PermissionsService.getUserPermissions(),
         staleTime: CACHE_TIME,
         gcTime: CACHE_TIME,
-        retry: false, // Éviter les boucles si pas connecté
+        retry: false,
     });
 }

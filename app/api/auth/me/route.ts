@@ -20,7 +20,20 @@ function decodeJwt(token: string): Record<string, unknown> | null {
 }
 
 export async function GET(request: NextRequest) {
-  const accessToken = request.cookies.get('access_token')?.value;
+  let accessToken = request.cookies.get('access_token')?.value;
+  const partsCount = request.cookies.get('access_token_parts')?.value;
+
+  if (!accessToken && partsCount) {
+    const parts = [];
+    const count = parseInt(partsCount, 10);
+    for (let i = 0; i < count; i++) {
+      const part = request.cookies.get(`access_token_${i}`)?.value;
+      if (part) parts.push(part);
+    }
+    if (parts.length === count) {
+      accessToken = parts.join('');
+    }
+  }
 
   if (!accessToken) {
     return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });

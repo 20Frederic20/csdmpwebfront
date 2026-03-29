@@ -10,40 +10,37 @@ import { motion } from 'motion/react';
 
 export default function LoginPage() {
     const [error, setError] = useState<string | null>(null);
-    const [isPending, startTransition] = useTransition();
+    const [isLoading, setIsLoading] = useState(false);
 
     async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();
         setError(null);
+        setIsLoading(true);
 
         const formData = new FormData(event.currentTarget);
         const health_id = formData.get('health_id') as string;
         const password = formData.get('password') as string;
 
-        startTransition(async () => {
-            try {
-                const response = await fetch('/api/auth/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ health_id, password }),
-                    credentials: 'include',
-                });
+        try {
+            const response = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ health_id, password }),
+                credentials: 'include',
+            });
 
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(errorText || 'Identifiants invalides');
-                }
-
-                // Attendre que le navigateur traite les cookies Set-Cookie
-                // Utiliser un délai court mais suffisant
-                await new Promise(resolve => setTimeout(resolve, 500));
-
-                // Navigation complète pour que le middleware puisse vérifier le cookie
-                window.location.href = '/dashboard';
-            } catch (err: any) {
-                setError(err.message || 'Une erreur est survenue lors de la connexion.');
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData?.error || 'Identifiants invalides');
             }
-        });
+
+            // Navigation immédiate. Le cookie est déjà traité par le navigateur via les headers Set-Cookie.
+            // window.location.href assure un rechargement complet, essentiel pour le middleware.
+            window.location.href = '/dashboard';
+        } catch (err: any) {
+            setError(err.message || 'Une erreur est survenue lors de la connexion.');
+            setIsLoading(false);
+        }
     }
 
     return (
@@ -153,7 +150,7 @@ export default function LoginPage() {
                                 type="text"
                                 placeholder="ID Hospitalier"
                                 required
-                                disabled={isPending}
+                                disabled={isLoading}
                                 className="bg-background border border-border h-12 rounded-xl focus:border-vital-green/50"
                             />
                         </div>
@@ -170,7 +167,7 @@ export default function LoginPage() {
                                 name="password"
                                 type="password"
                                 required
-                                disabled={isPending}
+                                disabled={isLoading}
                                 className="bg-background border border-border h-12 rounded-xl focus:border-vital-green/50"
                             />
                         </div>
@@ -185,8 +182,8 @@ export default function LoginPage() {
                             </motion.p>
                         )}
 
-                        <Button type="submit" className="w-full py-2 text-sm" disabled={isPending}>
-                            {isPending ? "Authentification..." : "Se connecter"}
+                        <Button type="submit" className="w-full py-2 text-sm" disabled={isLoading}>
+                            {isLoading ? "Authentification..." : "Se connecter"}
                         </Button>
                     </form>
 
