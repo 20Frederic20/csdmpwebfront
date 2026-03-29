@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 const protectedPaths = ['/dashboard', '/profile', '/settings'];
-const authApiPaths = ['/api/auth/login', '/api/auth/register', '/api/auth/refresh'];
+const authApiPaths = ['/api/auth/login', '/api/auth/register', '/api/auth/refresh', '/api/auth/me'];
 const authPages = ['/login', '/register'];
 
 export async function middleware(request: NextRequest) {

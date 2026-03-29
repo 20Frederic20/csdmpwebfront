@@ -1,62 +1,45 @@
-import { AuthClientService } from '@/features/core/auth/services/auth-client.service';
-import { UserWithRoles, PermissionsResponse, UserRole } from '../types/roles.types';
+import { UserWithRoles, UserRole } from '../types/roles.types';
 
-const API_BASE = '/api/v1';
-
+/**
+ * Service de permissions basé sur les claims du JWT.
+ * Les données sont lues depuis /api/auth/me (décodage côté serveur Next.js)
+ * sans aucun appel au backend de permissions.
+ */
 export class PermissionsService {
 
   static async getUserPermissions(): Promise<UserWithRoles> {
     try {
-      const response = await AuthClientService.makeAuthenticatedRequest(`${API_BASE}/me/permissions`, {
+      const response = await fetch('/api/auth/me', {
         method: 'GET',
+        credentials: 'include',
         cache: 'no-store',
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to fetch user permissions: ${response.statusText}`);
+        if (response.status === 401) {
+          throw new Error('Unauthorized');
+        }
+        throw new Error(`Failed to decode token: ${response.statusText}`);
       }
 
       return response.json();
     } catch (error) {
-      console.error('Failed to fetch user permissions:', error);
+      console.error('Failed to get user from token:', error);
 
-      // Si l'erreur est liée à l'authentification, ne pas retourner de faux utilisateur
       if (error instanceof Error && (
         error.message.includes('401') ||
-        error.message.includes('Failed to refresh token') ||
         error.message.includes('Unauthorized')
       )) {
         throw error;
       }
 
-      // Pour les autres erreurs, retourner un utilisateur par défaut
+      // Pour les autres erreurs, retourner un utilisateur vide
       return {
         id: '',
-        email: '',
-        given_name: '',
-        family_name: '',
         roles: [],
-        permissions: []
+        permissions: [],
       };
     }
-  }
-
-  static async getAllPermissions(): Promise<PermissionsResponse> {
-    const response = await AuthClientService.makeAuthenticatedRequest(`${API_BASE}/permissions`, {
-      method: 'GET',
-      cache: 'no-store',
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch all permissions');
-    }
-
-    return response.json();
-  }
-
-  static async getUserRoles(): Promise<UserRole[]> {
-    const user = await this.getUserPermissions();
-    return user.roles;
   }
 
   static hasRole(user: UserWithRoles, role: UserRole): boolean {
@@ -70,6 +53,7 @@ export class PermissionsService {
   }
 
   static canAccess(user: UserWithRoles, resource: string, action: string = 'read'): boolean {
-    return this.hasPermission(user, resource, action) || this.hasRole(user, UserRole.SUPER_ADMIN);
+    if (user.is_superadmin) return true;
+    return this.hasPermission(user, resource, action);
   }
 }

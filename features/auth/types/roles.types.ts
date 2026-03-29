@@ -20,14 +20,25 @@ export interface Role {
 
 export interface UserWithRoles {
   id: string;
-  email: string;
-  given_name: string;
-  family_name: string;
-  health_facility_id?: string;
-  patient_id?: string;
-  hospital_staff_id?: string;
+  health_id?: string;
+  email?: string;
+  name?: string;
+  /** @deprecated Utiliser `name` (claim du token). Conservé pour compatibilité. */
+  given_name?: string;
+  /** @deprecated Utiliser `name` (claim du token). Conservé pour compatibilité. */
+  family_name?: string;
+  is_admin?: boolean;
+  is_superadmin?: boolean;
   roles: UserRole[];
   permissions: Permission[];
+  // Profils liés
+  patient_id?: string;
+  hospital_staff_id?: string;
+  hospital_staff_matricule?: string;
+  hospital_staff_specialty?: string;
+  health_facility_id?: string;
+  health_facility_name?: string;
+  health_facility_phone?: string;
 }
 
 export interface PermissionsResponse {
