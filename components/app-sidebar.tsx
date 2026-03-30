@@ -497,6 +497,13 @@ export function AppSidebar() {
           }
         }
       ]
+    },
+    {
+      title: "Rôles & Permissions",
+      url: "/roles-permissions",
+      icon: Shield,
+      isActive: pathname.startsWith("/roles-permissions"),
+      // No required permission for now as requested
     }
   ];
 
