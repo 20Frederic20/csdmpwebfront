@@ -15,11 +15,10 @@ import {
 import { useHospitalStaffMutations } from "@/features/hospital-staff/hooks/use-hospital-staff-mutations";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { usePermissionsContext } from "@/contexts/permissions-context";
-import { UserRole } from "@/features/users/types/user.types";
 import { toast } from "sonner";
 import { ArrowLeft, Save, X } from "lucide-react";
-import { HealthFacility } from "@/features/health-facilities";
-import { HealthFacilityService, HealthFacilityServiceQueryParams } from "@/features/health-facilities/services/health-facility.service";
+import { HealthFacility, HealthFacilityQueryParams } from "@/features/health-facilities";
+import { HealthFacilityService } from "@/features/health-facilities/services/health-facility.service";
 import { User as UserType, ListUsersQueryParams } from "@/features/users";
 import { UserService } from "@/features/users/services/user.service";
 import { CreationTypeSelector } from "@/features/hospital-staff/components/creation-type-selector";
@@ -27,6 +26,7 @@ import { HealthFacilitySelect } from "@/features/health-facilities/components/he
 import { UserSelector } from "@/components/ui/user-selector";
 import { UserCreationForm } from "@/features/hospital-staff/components/user-creation-form";
 import { StaffInformationForm } from "@/features/hospital-staff/components/staff-information-form";
+
 
 export default function AddHospitalStaffPage() {
   const router = useRouter();
@@ -53,8 +53,8 @@ export default function AddHospitalStaffPage() {
       roles: [],
     },
   });
-  const [selectedRoles, setSelectedRoles] = useState<UserRole[]>([]);
-  const { token } = useAuthToken();
+  const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
+  const { isAuthenticated } = useAuthToken();
   const { user } = usePermissionsContext();
 
   // Pré-sélectionner l'établissement en fonction de l'utilisateur connecté
@@ -78,11 +78,10 @@ export default function AddHospitalStaffPage() {
         let hasMore = true;
 
         while (hasMore) {
-          const params: HealthFacilityServiceQueryParams = {
+          const response = await HealthFacilityService.getHealthFacilities({
             limit,
             offset,
-          };
-          const response = await HealthFacilityService.getHealthFacilities(params, token || undefined);
+          });
           allFacilities = [...allFacilities, ...(response.data || [])];
 
           if (response.data && response.data.length < limit) {
@@ -103,7 +102,7 @@ export default function AddHospitalStaffPage() {
     };
 
     loadHealthFacilities();
-  }, [token]);
+  }, []);
 
   // Charger les utilisateurs
   useEffect(() => {
@@ -121,7 +120,7 @@ export default function AddHospitalStaffPage() {
             offset,
             is_active: true,
           };
-          const response = await UserService.getUsers(params, token || undefined);
+          const response = await UserService.getUsers(params);
           allUsers = [...allUsers, ...(response.data || [])];
 
           if (response.data && response.data.length < limit) {
@@ -142,7 +141,7 @@ export default function AddHospitalStaffPage() {
     };
 
     loadUsers();
-  }, [token]);
+  }, []);
 
   const { createStaff, isCreating } = useHospitalStaffMutations();
 
@@ -209,7 +208,7 @@ export default function AddHospitalStaffPage() {
           family_name: formData.user_data?.family_name || "",
           health_id: formData.user_data?.health_id || "",
           password: formData.user_data?.password || "",
-          roles: selectedRoles,
+          roles: selectedRoles as any,
         } : undefined,
       };
 
@@ -272,6 +271,8 @@ export default function AddHospitalStaffPage() {
     setSelectedRoles([]);
     setCreateUser(true);
   };
+
+
 
   return (
     <div className="container mx-auto py-6 space-y-6">
@@ -374,7 +375,7 @@ export default function AddHospitalStaffPage() {
             <CardContent>
               <UserCreationForm
                 userData={formData.user_data || {}}
-                selectedRoles={selectedRoles}
+                selectedRoleIds={selectedRoles}
                 onUserDataChange={handleUserDataChange}
                 onRolesChange={setSelectedRoles}
               />

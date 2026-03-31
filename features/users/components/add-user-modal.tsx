@@ -2,50 +2,18 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
-import { Plus, X } from "lucide-react";
+import { Plus } from "lucide-react";
 import { toast } from "sonner";
-import { User, CreateUserRequest, UserRole } from "@/features/users/types/user.types";
+import { CreateUserRequest } from "@/features/users/types/user.types";
 import { UserService } from "@/features/users/services/user.service";
 import { useAuthToken } from "@/hooks/use-auth-token";
+import { UserFields } from "./UserFields";
+import { RoleSelector } from "@/features/roles-permissions/components/RoleSelector";
 
 interface AddUserModalProps {
   onUserAdded: () => void;
 }
-
-const userRoles: UserRole[] = [
-  "USER",
-  "PARENT", 
-  "PATIENT",
-  "HEALTH_PRO",
-  "DOCTOR",
-  "NURSE",
-  "MIDWIFE",
-  "LAB_TECHNICIAN",
-  "PHARMACIST",
-  "COMMUNITY_AGENT",
-  "ADMIN",
-  "SUPER_ADMIN"
-];
-
-const roleLabels: Record<UserRole, string> = {
-  "USER": "Utilisateur",
-  "PARENT": "Parent",
-  "PATIENT": "Patient", 
-  "HEALTH_PRO": "Professionnel de santé",
-  "DOCTOR": "Médecin",
-  "NURSE": "Infirmier",
-  "MIDWIFE": "Sage-femme",
-  "LAB_TECHNICIAN": "Technicien de labo",
-  "PHARMACIST": "Pharmacien",
-  "COMMUNITY_AGENT": "Agent communautaire",
-  "ADMIN": "Administrateur",
-  "SUPER_ADMIN": "Super administrateur"
-};
 
 export function AddUserModal({ onUserAdded }: AddUserModalProps) {
   const [open, setOpen] = useState(false);
@@ -57,8 +25,8 @@ export function AddUserModal({ onUserAdded }: AddUserModalProps) {
     password: "",
     roles: [],
   });
-  const [selectedRoles, setSelectedRoles] = useState<UserRole[]>([]);
-  const { token } = useAuthToken();
+  const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
+  const { isAuthenticated } = useAuthToken();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,21 +61,13 @@ export function AddUserModal({ onUserAdded }: AddUserModalProps) {
     try {
       const userData: CreateUserRequest = {
         ...formData,
-        roles: selectedRoles,
+        roles: selectedRoles as any,
       };
 
-      await UserService.createUser(userData, token || undefined);
+      await UserService.createUser(userData);
       toast.success("Utilisateur créé avec succès");
       
-      // Réinitialiser le formulaire
-      setFormData({
-        given_name: "",
-        family_name: "",
-        health_id: "",
-        password: "",
-        roles: [],
-      });
-      setSelectedRoles([]);
+      handleReset();
       setOpen(false);
       
       // Notifier le parent
@@ -120,21 +80,11 @@ export function AddUserModal({ onUserAdded }: AddUserModalProps) {
     }
   };
 
-  const handleInputChange = (field: keyof CreateUserRequest, value: string) => {
+  const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }));
-  };
-
-  const toggleRole = (role: UserRole) => {
-    setSelectedRoles(prev => {
-      if (prev.includes(role)) {
-        return prev.filter(r => r !== role);
-      } else {
-        return [...prev, role];
-      }
-    });
   };
 
   const handleReset = () => {
@@ -162,100 +112,22 @@ export function AddUserModal({ onUserAdded }: AddUserModalProps) {
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Informations personnelles */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Informations personnelles</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="given_name">Prénom *</Label>
-                <Input
-                  id="given_name"
-                  value={formData.given_name}
-                  onChange={(e) => handleInputChange('given_name', e.target.value)}
-                  placeholder="Entrez le prénom"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="family_name">Nom de famille *</Label>
-                <Input
-                  id="family_name"
-                  value={formData.family_name}
-                  onChange={(e) => handleInputChange('family_name', e.target.value)}
-                  placeholder="Entrez le nom de famille"
-                  required
-                />
-              </div>
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-lg font-semibold mb-4">Informations utilisateur</h3>
+              <UserFields 
+                userData={formData} 
+                onUserDataChange={handleInputChange} 
+              />
             </div>
-          </div>
 
-          {/* Informations système */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Informations système</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="health_id">ID Santé *</Label>
-                <Input
-                  id="health_id"
-                  value={formData.health_id}
-                  onChange={(e) => handleInputChange('health_id', e.target.value)}
-                  placeholder="Entrez l'ID santé"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">Mot de passe *</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={formData.password}
-                  onChange={(e) => handleInputChange('password', e.target.value)}
-                  placeholder="Entrez le mot de passe"
-                  required
-                  minLength={6}
-                />
-              </div>
+            <div className="pt-6 border-t">
+              <RoleSelector
+                selectedRoleIds={selectedRoles}
+                onChange={setSelectedRoles}
+                label="Rôles de l'utilisateur"
+              />
             </div>
-          </div>
-
-          {/* Rôles */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Rôles *</h3>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              {userRoles.map((role) => (
-                <div
-                  key={role}
-                  className={`flex items-center gap-2 p-3 border rounded-lg cursor-pointer transition-colors ${
-                    selectedRoles.includes(role)
-                      ? 'border-primary bg-primary/10'
-                      : 'border-border hover:bg-muted/50'
-                  }`}
-                  onClick={() => toggleRole(role)}
-                >
-                  <input
-                    type="checkbox"
-                    checked={selectedRoles.includes(role)}
-                    onChange={() => toggleRole(role)}
-                    className="sr-only"
-                  />
-                  <span className="text-md">{roleLabels[role]}</span>
-                </div>
-              ))}
-            </div>
-            {selectedRoles.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-2">
-                <span className="text-md text-muted-foreground">Rôles sélectionnés:</span>
-                {selectedRoles.map((role) => (
-                  <Badge key={role} variant="secondary" className="cursor-pointer">
-                    {roleLabels[role]}
-                    <X
-                      className="h-3 w-3 ml-1"
-                      onClick={() => toggleRole(role)}
-                    />
-                  </Badge>
-                ))}
-              </div>
-            )}
           </div>
 
           {/* Actions */}
@@ -289,3 +161,4 @@ export function AddUserModal({ onUserAdded }: AddUserModalProps) {
     </Dialog>
   );
 }
+

@@ -16,7 +16,7 @@ import { PatientOwnerSelector } from "./patient-owner-selector";
 import { PatientAdditionalInfoForm } from "./patient-additional-info-form";
 import { CreationTypeSelector } from "./creation-type-selector";
 import { PatientUserCreationForm } from "./patient-user-creation-form";
-import { UserRole } from "@/features/users/types/user.types";
+import { useRoles } from "@/features/roles-permissions/hooks/use-roles-permissions";
 import LocationService from "@/features/location/services/location.service";
 import { getCityOptions } from "@/features/location/utils/location.utils";
 import { City } from "@/features/location/types/location.types";
@@ -53,7 +53,8 @@ export function PatientForm({
     health_id: "",
     password: "",
   });
-  const [selectedRoles, setSelectedRoles] = useState<UserRole[]>(['PATIENT']);
+  const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
+  const { data: rolesResponse } = useRoles({ limit: 100 });
 
   // État pour la gestion des villes
   const [cities, setCities] = useState<City[]>([]);
@@ -77,7 +78,7 @@ export function PatientForm({
     emergency_contact_phone: patient?.emergency_contact_phone || null,
     is_main: patient?.is_main || false,
   });
-  const { token } = useAuthToken();
+  const { isAuthenticated } = useAuthToken();
 
   // Charger les villes
   useEffect(() => {
@@ -116,7 +117,7 @@ export function PatientForm({
             offset,
             is_active: true,
           };
-          const response = await UserService.getUsers(params, token || undefined);
+          const response = await UserService.getUsers(params);
           allUsers = [...allUsers, ...(response.data || [])];
 
           if (response.data && response.data.length < limit) {
@@ -136,7 +137,7 @@ export function PatientForm({
     };
 
     loadUsers();
-  }, [token, createUser, users.length]);
+  }, [createUser, users.length]);
 
   // Si on est en mode modification, on ne propose pas de créer un utilisateur
   useEffect(() => {
@@ -173,6 +174,16 @@ export function PatientForm({
       }));
     }
   }, [users, patient]);
+
+  // Résoudre le rôle PATIENT par défaut
+  useEffect(() => {
+    if (rolesResponse?.data && selectedRoles.length === 0 && !patient) {
+      const patientRole = rolesResponse.data.find(r => r.name === 'PATIENT');
+      if (patientRole) {
+        setSelectedRoles([patientRole.id_]);
+      }
+    }
+  }, [rolesResponse, selectedRoles.length, patient]);
 
   const { mutateAsync: createPatient, isPending: isCreating } = useCreatePatient();
   const { mutateAsync: updatePatient, isPending: isUpdating } = useUpdatePatient();
@@ -339,7 +350,7 @@ export function PatientForm({
     }
   };
 
-  const handleRolesChange = (roles: UserRole[]) => {
+  const handleRolesChange = (roles: string[]) => {
     setSelectedRoles(roles);
   };
 
@@ -404,6 +415,7 @@ export function PatientForm({
     setSelectedRoles(['PATIENT']);
   };
 
+
   return (
     <div className="min-h-screen bg-white pb-32">
       {/* Top Navigation Bar - seulement si showHeader est true */}
@@ -411,8 +423,7 @@ export function PatientForm({
         <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl shadow-[0_4px_24px_rgba(0,0,0,0.04)]">
           <div className="flex items-center justify-between px-4 sm:px-6 h-16 w-full max-w-5xl mx-auto">
             <Button
-              variant="ghost"
-              size="icon"
+              variant="secondary"
               onClick={onCancel}
               className="p-2 rounded-xl hover:bg-surface-container"
             >
@@ -453,7 +464,7 @@ export function PatientForm({
               </div>
               <PatientUserCreationForm
                 userData={userData}
-                selectedRoles={selectedRoles}
+                selectedRoleIds={selectedRoles}
                 onUserDataChange={handleUserDataChange}
                 onRolesChange={handleRolesChange}
               />
