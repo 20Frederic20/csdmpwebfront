@@ -1,3 +1,5 @@
+import { PaymentMethod } from "@/features/billing/types/billing.types";
+
 export enum AppointmentStatus {
   SCHEDULED = "SCHEDULED",
   CONFIRMED = "CONFIRMED",
@@ -32,6 +34,7 @@ export interface CreateAppointmentRequest {
   estimated_duration?: number | null; // en minutes
   reason?: string | null;
   status?: AppointmentStatus;
+  payment_method?: PaymentMethod;
   is_confirmed_by_patient?: boolean;
   is_active?: boolean;
 }
@@ -124,6 +127,7 @@ export interface AppointmentFilterParams {
   department_id?: string | null;
   appointment_type?: AppointmentType | null;
   status?: AppointmentStatus | null;
+  payment_method?: PaymentMethod | null;
   is_confirmed_by_patient?: boolean | null;
   is_active?: boolean | null;
   scheduled_from?: string | null;

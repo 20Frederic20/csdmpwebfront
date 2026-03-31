@@ -24,7 +24,7 @@ export default function HospitalStaffPage() {
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [sortingColumn, setSortingColumn] = useState<string>('user_given_name');
   const [sortingOrder, setSortingOrder] = useState<'asc' | 'desc'>('asc');
-  const { token } = useAuthToken();
+  const { isAuthenticated } = useAuthToken();
   const { canAccess } = usePermissionsContext();
 
   // Mémoriser les permissions pour éviter les rechargements infinis

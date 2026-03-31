@@ -919,25 +919,18 @@ export default function App() {
   const [view, setView] = useState<'landing' | 'admin' | 'patient'>('landing');
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const { token, saveToken, clearToken, user } = useAuthToken();
+  const { isAuthenticated, clearToken, user } = useAuthToken();
   const queryClient = useQueryClient();
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50);
     window.addEventListener('scroll', handleScroll);
     
-    // Check for existing token and set view
-    if (token) {
-      // In a real app, we'd verify the token and get the role
-      // For this prototype, we'll default to 'admin' if token exists
-      // but let's keep it simple and just stay on landing if not explicitly set
-    }
-
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [token]);
+  }, [isAuthenticated]);
 
   const handleLogin = (role: 'admin' | 'patient') => {
-    saveToken(`mock_token_${role}`);
+    // saveToken is no longer available via useAuthToken (it's cookie-based)
     setView(role);
     setIsLoginOpen(false);
     window.scrollTo(0, 0);

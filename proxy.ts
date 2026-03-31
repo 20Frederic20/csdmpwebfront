@@ -4,7 +4,7 @@ const protectedPaths = ['/dashboard', '/profile', '/settings'];
 const authApiPaths = ['/api/auth/login', '/api/auth/register', '/api/auth/refresh', '/api/auth/me'];
 const authPages = ['/login', '/register'];
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
   // Recomposition du token si partitionné

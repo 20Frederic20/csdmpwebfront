@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useEffect } from 'react';
 import { Button } from "@/components/UI"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"

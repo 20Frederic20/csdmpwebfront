@@ -56,7 +56,8 @@ export class DepartmentService {
   }
 
   static async getDepartments(
-    params: DepartmentFilterParams = {}
+    params: DepartmentFilterParams = {},
+    signal?: AbortSignal
   ): Promise<DepartmentsResponse> {
     const cacheKey = this.getCacheKey(params);
 
@@ -89,6 +90,7 @@ export class DepartmentService {
         const response = await AuthClientService.makeAuthenticatedRequest(endpoint, {
           method: 'GET',
           cache: 'no-store',
+          signal,
         });
 
         if (!response.ok) {

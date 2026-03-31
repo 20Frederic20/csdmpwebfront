@@ -24,7 +24,7 @@ import { UserRole } from "@/features/auth/types/roles.types";
 
 export default function AddHealthFacilityPage() {
   const router = useRouter();
-  const { token } = useAuthToken();
+  const { isAuthenticated } = useAuthToken();
   const { hasRole, loading: permissionsLoading } = usePermissionsContext();
   const { mutateAsync: createFacility, isPending: loading } = useCreateHealthFacility();
   const [adminMode, setAdminMode] = useState<'create' | 'select'>('select');
@@ -184,17 +184,17 @@ export default function AddHealthFacilityPage() {
         const response = await UserService.getUsers({
           limit: 100,
           is_active: true
-        }, token || undefined);
+        });
         setAvailableUsers(response.data || []);
       } catch (error) {
         console.error('Error loading users:', error);
       }
     };
 
-    if (token) {
+    if (isAuthenticated) {
       loadUsers();
     }
-  }, [token]);
+  }, [isAuthenticated]);
 
   const handleInputChange = (field: string, value: string | boolean | null) => {
     setFormData(prev => ({
@@ -231,7 +231,7 @@ export default function AddHealthFacilityPage() {
         admin_user_id: adminMode === 'select' ? formData.admin_user_id : null,
       };
 
-      await createFacility({ data: submitData, token: token || undefined });
+      await createFacility(submitData);
       router.push("/health-facilities");
     } catch (error) {
       // Handled by hook

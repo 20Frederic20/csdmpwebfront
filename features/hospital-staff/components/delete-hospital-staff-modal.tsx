@@ -20,12 +20,12 @@ interface DeleteHospitalStaffModalProps {
 
 export function DeleteHospitalStaffModal({ staff, isOpen, onClose, onStaffDeleted }: DeleteHospitalStaffModalProps) {
   const [loading, setLoading] = useState(false);
-  const { token } = useAuthToken();
+  const { isAuthenticated } = useAuthToken();
 
   const handleDelete = async () => {
     setLoading(true);
     try {
-      await HospitalStaffService.deleteHospitalStaff(staff.id_, token || undefined);
+      await HospitalStaffService.deleteHospitalStaff(staff.id_);
       toast.success("Membre du personnel supprimé avec succès");
       onClose();
       onStaffDeleted();

@@ -13,7 +13,8 @@ import { ArrowLeft, Calendar, Clock, User, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { usePermissionsContext } from "@/contexts/permissions-context";
-import { CreateAppointmentRequest, AppointmentStatus, AppointmentType, PaymentMethod } from "@/features/appointments/types/appointments.types";
+import { CreateAppointmentRequest, AppointmentStatus, AppointmentType } from "@/features/appointments/types/appointments.types";
+import { PaymentMethod } from "@/features/billing/types/billing.types";
 import { AppointmentService } from "@/features/appointments/services/appointment.service";
 import { Patient } from "@/features/patients";
 import { PatientService } from "@/features/patients";
@@ -23,7 +24,7 @@ import CustomSelect from '@/components/ui/custom-select';
 
 export default function AddAppointmentPage() {
   const router = useRouter();
-  const { token } = useAuthToken();
+  const { isAuthenticated } = useAuthToken();
   const { user } = usePermissionsContext();
 
   const [loading, setLoading] = useState(false);
@@ -52,12 +53,12 @@ export default function AddAppointmentPage() {
   useEffect(() => {
     loadPatients();
     loadDoctors();
-  }, [token, user?.health_facility_id]);
+  }, [user?.health_facility_id]);
 
   const loadPatients = async () => {
     setLoadingPatients(true);
     try {
-      const response = await PatientService.getPatients({ limit: 50 }, token || undefined);
+      const response = await PatientService.getPatients({ limit: 50 });
       setPatients(response.data || []);
     } catch (error: any) {
       console.error('Error loading patients:', error);
@@ -73,7 +74,7 @@ export default function AddAppointmentPage() {
       const response = await HospitalStaffService.getHospitalStaff({
         limit: 50,
         health_facility_id: user?.health_facility_id || undefined
-      }, token || undefined);
+      });
       setDoctors(response.data || []);
     } catch (error: any) {
       console.error('Error loading doctors:', error);

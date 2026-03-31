@@ -17,8 +17,8 @@ import { useHospitalStaffMutations } from "@/features/hospital-staff/hooks/use-h
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { toast } from "sonner";
 import { ArrowLeft, Save, X } from "lucide-react";
-import { HealthFacility } from "@/features/health-facilities";
-import { HealthFacilityService, HealthFacilityServiceQueryParams } from "@/features/health-facilities/services/health-facility.service";
+import { HealthFacilityService } from "@/features/health-facilities/services/health-facility.service";
+import { HealthFacility, HealthFacilityQueryParams } from "@/features/health-facilities/types/health-facility.types";
 import { User as UserType, ListUsersQueryParams } from "@/features/users";
 import { UserService } from "@/features/users/services/user.service";
 import { HealthFacilitySelect } from "@/features/health-facilities/components/health-facility-select";
@@ -29,7 +29,7 @@ import CustomSelect from "@/components/ui/custom-select";
 export default function EditHospitalStaffPage() {
   const params = useParams();
   const router = useRouter();
-  const { token } = useAuthToken();
+  const { isAuthenticated } = useAuthToken();
   const [loadingStaff, setLoadingStaff] = useState(true);
   const [healthFacilities, setHealthFacilities] = useState<HealthFacility[]>([]);
   const [users, setUsers] = useState<UserType[]>([]);
@@ -54,7 +54,7 @@ export default function EditHospitalStaffPage() {
     const loadStaff = async () => {
       setLoadingStaff(true);
       try {
-        const staffData = await HospitalStaffService.getHospitalStaffById(staffId, token || undefined);
+        const staffData = await HospitalStaffService.getHospitalStaffById(staffId);
         setStaff(staffData);
 
         // Initialiser le formulaire avec les données existantes
@@ -78,7 +78,7 @@ export default function EditHospitalStaffPage() {
     };
 
     loadStaff();
-  }, [staffId, token, router]);
+  }, [staffId, isAuthenticated, router]);
 
   // Charger les établissements de santé
   useEffect(() => {
@@ -91,11 +91,11 @@ export default function EditHospitalStaffPage() {
         let hasMore = true;
 
         while (hasMore) {
-          const params: HealthFacilityServiceQueryParams = {
+          const params: HealthFacilityQueryParams = {
             limit,
             offset,
           };
-          const response = await HealthFacilityService.getHealthFacilities(params, token || undefined);
+          const response = await HealthFacilityService.getHealthFacilities(params);
           allFacilities = [...allFacilities, ...(response.data || [])];
 
           if (response.data && response.data.length < limit) {
@@ -115,7 +115,7 @@ export default function EditHospitalStaffPage() {
     };
 
     loadHealthFacilities();
-  }, [token]);
+  }, [isAuthenticated]);
 
   // Charger les utilisateurs
   useEffect(() => {
@@ -133,7 +133,7 @@ export default function EditHospitalStaffPage() {
             offset,
             is_active: true,
           };
-          const response = await UserService.getUsers(params, token || undefined);
+          const response = await UserService.getUsers(params);
           allUsers = [...allUsers, ...(response.data || [])];
 
           if (response.data && response.data.length < limit) {
@@ -153,7 +153,7 @@ export default function EditHospitalStaffPage() {
     };
 
     loadUsers();
-  }, [token]);
+  }, [isAuthenticated]);
 
   const { updateStaff, isUpdating } = useHospitalStaffMutations();
 

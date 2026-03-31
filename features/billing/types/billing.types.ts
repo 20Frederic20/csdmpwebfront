@@ -3,7 +3,8 @@ export enum PaymentMethod {
   CASH = "CASH",
   MOMO = "MOMO",
   CARD = "CARD",
-  INSURANCE = "INSURANCE"
+  INSURANCE = "INSURANCE",
+  FREE_OF_CHARGE = "FREE_OF_CHARGE"
 }
 
 export interface MarkAsPaidPayload {

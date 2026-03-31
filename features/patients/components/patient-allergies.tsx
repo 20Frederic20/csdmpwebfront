@@ -16,12 +16,12 @@ interface PatientAllergiesProps {
 export function PatientAllergies({ patientId }: PatientAllergiesProps) {
   const [allergies, setAllergies] = useState<PatientAllergy[]>([]);
   const [loading, setLoading] = useState(true);
-  const { token } = useAuthToken();
+  const { isAuthenticated } = useAuthToken();
 
   const loadAllergies = async () => {
     try {
       setLoading(true);
-      const data = await AllergiesService.getPatientAllergies({ patient_id: patientId }, token || undefined);
+      const data = await AllergiesService.getPatientAllergies({ patient_id: patientId });
       
       // L'API retourne { data: [...], total: 3 }
       const allergiesArray = (data as any)?.data || [];

@@ -31,7 +31,7 @@ export default function PrescriptionsPage() {
   const [selectedRows, setSelectedRows] = useState<Record<string, boolean>>({});
   const [error, setError] = useState<string | null>(null);
 
-  const { token } = useAuthToken();
+  const { isAuthenticated } = useAuthToken();
   const { canAccess } = usePermissionsContext();
 
   const loadPrescriptions = async () => {
@@ -47,7 +47,7 @@ export default function PrescriptionsPage() {
         offset,
         sort_by: sortingColumn,
         sort_order: sortingOrder,
-      }, token || undefined);
+      }, );
 
       setPrescriptions(response.data || []);
       setTotal(response.total || 0);
@@ -94,10 +94,10 @@ export default function PrescriptionsPage() {
   }), [currentPage, itemsPerPage, sortingColumn, sortingOrder, filters.search, filters.consultation_id, filters.is_active]);
 
   useEffect(() => {
-    if (token) {
+    if (isAuthenticated) {
       loadPrescriptions();
     }
-  }, [params, token]);
+  }, [params, isAuthenticated]);
 
   return (
     <div className="flex flex-col gap-4">

@@ -16,17 +16,17 @@ export const healthFacilitiesKeys = {
     detail: (id: string) => [...healthFacilitiesKeys.details(), id] as const,
 };
 
-export function useHealthFacilities(params: HealthFacilityQueryParams, token?: string) {
+export function useHealthFacilities(params: HealthFacilityQueryParams) {
     return useQuery({
         queryKey: healthFacilitiesKeys.list(params),
-        queryFn: () => HealthFacilityService.getHealthFacilities(params, token),
+        queryFn: () => HealthFacilityService.getHealthFacilities(params),
     });
 }
 
-export function useHealthFacility(id: string, token?: string) {
+export function useHealthFacility(id: string) {
     return useQuery({
         queryKey: healthFacilitiesKeys.detail(id),
-        queryFn: () => HealthFacilityService.getHealthFacilityById(id, token),
+        queryFn: () => HealthFacilityService.getHealthFacilityById(id),
         enabled: !!id,
     });
 }
@@ -34,8 +34,8 @@ export function useHealthFacility(id: string, token?: string) {
 export function useCreateHealthFacility() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({ data, token }: { data: CreateHealthFacilityRequest; token?: string }) =>
-            HealthFacilityService.createHealthFacility(data, token),
+        mutationFn: (data: CreateHealthFacilityRequest) =>
+            HealthFacilityService.createHealthFacility(data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: healthFacilitiesKeys.lists() });
             toast.success('Établissement créé avec succès');
@@ -49,8 +49,8 @@ export function useCreateHealthFacility() {
 export function useUpdateHealthFacility() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({ id, data, token }: { id: string; data: UpdateHealthFacilityRequest; token?: string }) =>
-            HealthFacilityService.updateHealthFacility(id, data, token),
+        mutationFn: ({ id, data }: { id: string; data: UpdateHealthFacilityRequest }) =>
+            HealthFacilityService.updateHealthFacility(id, data),
         onSuccess: (data) => {
             queryClient.invalidateQueries({ queryKey: healthFacilitiesKeys.lists() });
             queryClient.invalidateQueries({ queryKey: healthFacilitiesKeys.detail(data.id_) });
@@ -65,8 +65,8 @@ export function useUpdateHealthFacility() {
 export function useDeleteHealthFacility() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({ id, token }: { id: string; token?: string }) =>
-            HealthFacilityService.deleteHealthFacility(id, token),
+        mutationFn: (id: string) =>
+            HealthFacilityService.deleteHealthFacility(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: healthFacilitiesKeys.lists() });
             toast.success('Établissement supprimé avec succès');
@@ -80,8 +80,8 @@ export function useDeleteHealthFacility() {
 export function useRestoreHealthFacility() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({ id, token }: { id: string; token?: string }) =>
-            HealthFacilityService.restoreHealthFacility(id, token),
+        mutationFn: (id: string) =>
+            HealthFacilityService.restoreHealthFacility(id),
         onSuccess: (data) => {
             queryClient.invalidateQueries({ queryKey: healthFacilitiesKeys.lists() });
             queryClient.invalidateQueries({ queryKey: healthFacilitiesKeys.detail(data.id_) });
@@ -96,8 +96,8 @@ export function useRestoreHealthFacility() {
 export function useToggleHealthFacilityStatus() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({ id, token }: { id: string; token?: string }) =>
-            HealthFacilityService.toggleHealthFacilityStatus(id, token),
+        mutationFn: (id: string) =>
+            HealthFacilityService.toggleHealthFacilityStatus(id),
         onSuccess: (data) => {
             queryClient.invalidateQueries({ queryKey: healthFacilitiesKeys.lists() });
             queryClient.invalidateQueries({ queryKey: healthFacilitiesKeys.detail(data.id_) });

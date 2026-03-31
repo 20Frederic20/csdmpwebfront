@@ -31,7 +31,7 @@ export default function AddPrescriptionPage() {
     is_active: true,
   });
 
-  const { token } = useAuthToken();
+  const { isAuthenticated } = useAuthToken();
   const { canAccess } = usePermissionsContext();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -39,7 +39,7 @@ export default function AddPrescriptionPage() {
     setLoading(true);
 
     try {
-      const response = await PrescriptionService.createPrescription(formData, token || undefined);
+      const response = await PrescriptionService.createPrescription(formData);
       toast.success('Prescription créée avec succès');
       router.push('/prescriptions');
     } catch (error: any) {

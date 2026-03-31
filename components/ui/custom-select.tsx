@@ -15,6 +15,7 @@ interface CustomSelectProps {
   onChange?: (value: string | string[] | null) => void;
   placeholder?: string;
   isMulti?: boolean;
+  isClearable?: boolean;
   isDisabled?: boolean;
   isLoading?: boolean;
   className?: string;
@@ -29,6 +30,7 @@ export default function CustomSelect({
   onChange,
   placeholder = 'Sélectionnez...',
   isMulti = false,
+  isClearable = false,
   isDisabled = false,
   isLoading = false,
   className,
@@ -136,6 +138,7 @@ export default function CustomSelect({
           onChange={handleChange}
           placeholder={placeholder}
           isMulti={isMulti}
+          isClearable={isClearable}
           isDisabled={isDisabled}
           isLoading={isLoading}
           noOptionsMessage={() => 'Aucune option trouvée'}

@@ -32,7 +32,7 @@ export function EditHospitalStaffModal({ staff, isOpen, onClose, onStaffUpdated 
     specialty: staff.specialty,
     department_id: staff.department_id,
   });
-  const { token } = useAuthToken();
+  const { isAuthenticated } = useAuthToken();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,7 +49,7 @@ export function EditHospitalStaffModal({ staff, isOpen, onClose, onStaffUpdated 
 
     setLoading(true);
     try {
-      await HospitalStaffService.updateHospitalStaff(staff.id_, formData, token || undefined);
+      await HospitalStaffService.updateHospitalStaff(staff.id_, formData);
       toast.success("Informations du personnel mises à jour avec succès");
       onClose();
       onStaffUpdated();

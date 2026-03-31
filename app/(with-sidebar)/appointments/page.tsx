@@ -22,7 +22,7 @@ export default function AppointmentsPage() {
   const router = useRouter();
   const { isLoading: authLoading } = useAuthRefresh();
   const { canAccess } = usePermissionsContext();
-  const { token } = useAuthToken();
+  const { isAuthenticated } = useAuthToken();
 
   const [appointmentsData, setAppointmentsData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
@@ -140,10 +140,10 @@ export default function AppointmentsPage() {
       }
     };
 
-    if (token) {
+    if (isAuthenticated) {
       loadAppointments();
     }
-  }, [currentPage, itemsPerPage, filters, token, refreshKey]);
+  }, [currentPage, itemsPerPage, filters, isAuthenticated, refreshKey]);
 
   if (authLoading) {
     return (

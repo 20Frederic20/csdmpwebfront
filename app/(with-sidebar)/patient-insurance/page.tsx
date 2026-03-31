@@ -26,7 +26,7 @@ import { PatientInsuranceFiltersWrapper } from "@/features/patient-insurance/com
 export default function PatientInsurancePage() {
   const { isLoading: authLoading } = useAuthRefresh();
   const { canAccess } = usePermissionsContext();
-  const { token } = useAuthToken();
+  const { isAuthenticated } = useAuthToken();
 
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
@@ -53,7 +53,7 @@ export default function PatientInsurancePage() {
   if (filters.priority) queryParams.priority = parseInt(filters.priority);
   if (filters.is_active !== undefined && filters.is_active !== null) queryParams.is_active = filters.is_active;
 
-  const { data: response, isLoading: loading, error: queryError } = usePatientInsurances(queryParams, token || undefined);
+  const { data: response, isLoading: loading, error: queryError } = usePatientInsurances(queryParams);
   const { mutateAsync: toggleStatus } = useTogglePatientInsuranceStatus();
   const { mutateAsync: softDelete } = useDeletePatientInsurance();
   const { mutateAsync: restore } = useRestorePatientInsurance();

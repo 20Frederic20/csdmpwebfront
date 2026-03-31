@@ -28,7 +28,7 @@ import {
 export default function HospitalStaffDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const { token } = useAuthToken();
+  const { isAuthenticated } = useAuthToken();
   const [staff, setStaff] = useState<HospitalStaff | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -37,7 +37,7 @@ export default function HospitalStaffDetailPage() {
 
   const loadStaff = async () => {
     try {
-      const staffData = await HospitalStaffService.getHospitalStaffById(staffId, token || undefined);
+      const staffData = await HospitalStaffService.getHospitalStaffById(staffId);
       setStaff(staffData);
     } catch (error: any) {
       console.error('Error loading staff:', error);
@@ -52,7 +52,7 @@ export default function HospitalStaffDetailPage() {
     if (staffId) {
       loadStaff();
     }
-  }, [staffId, token, router]);
+  }, [staffId, isAuthenticated, router]);
 
   const handleToggleStatus = async () => {
     if (!staff) return;

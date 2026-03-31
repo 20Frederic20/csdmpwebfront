@@ -41,7 +41,7 @@ export default function UsersPage() {
   const [total, setTotal] = useState(0);
   const [sortingField, setSortingField] = useState('family_name');
   const [sortingOrder, setSortingOrder] = useState<'asc' | 'desc'>('asc');
-  const { token } = useAuthToken();
+  const { isAuthenticated } = useAuthToken();
 
   const loadUsers = async () => {
     setLoading(true);
@@ -55,7 +55,7 @@ export default function UsersPage() {
         sort_order: sortingOrder,
       };
 
-      const response = await UserService.getUsers(params, token || undefined);
+      const response = await UserService.getUsers(params);
       setUsers(response.data || []);
       setTotal(response.total || 0);
     } catch (error) {
@@ -142,7 +142,7 @@ export default function UsersPage() {
 
   const handleToggleStatus = async (userId: string, currentStatus: boolean) => {
     try {
-      await UserService.toggleUserStatus(userId, !currentStatus, token || undefined);
+      await UserService.toggleUserStatus(userId, !currentStatus);
       toast.success(`Utilisateur ${!currentStatus ? 'activé' : 'désactivé'} avec succès`);
       loadUsers(); // Recharger la liste
     } catch (error) {
@@ -157,7 +157,7 @@ export default function UsersPage() {
     }
 
     try {
-      await UserService.deleteUser(userId, token || undefined);
+      await UserService.deleteUser(userId);
       toast.success('Utilisateur supprimé avec succès');
       loadUsers(); // Recharger la liste
     } catch (error) {

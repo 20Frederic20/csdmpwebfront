@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import CustomSelect from "@/components/ui/custom-select";
-import { HealthFacility } from "@/features/health-facilities/types/health-facility.types";
-import { HealthFacilityService, HealthFacilityServiceQueryParams } from "@/features/health-facilities/services/health-facility.service";
+import { HealthFacility, HealthFacilityQueryParams } from "@/features/health-facilities/types/health-facility.types";
+import { HealthFacilityService } from "@/features/health-facilities/services/health-facility.service";
 
 interface HealthFacilitySelectProps {
   value?: string;
@@ -35,8 +35,8 @@ export function HealthFacilitySelect({
       try {
         setLoading(true);
         const facilities = onlyActive 
-          ? (await HealthFacilityService.getHealthFacilities({ limit: 100, deleted_at: null } as HealthFacilityServiceQueryParams)).data
-          : (await HealthFacilityService.getHealthFacilities({ limit: 100 } as HealthFacilityServiceQueryParams)).data;
+          ? (await HealthFacilityService.getHealthFacilities({ limit: 100, deleted_at: null } as HealthFacilityQueryParams)).data
+          : (await HealthFacilityService.getHealthFacilities({ limit: 100 } as HealthFacilityQueryParams)).data;
         
         setHealthFacilities(facilities);
       } catch (error) {

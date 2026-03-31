@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 
 export const PATIENT_INSURANCES_KEY = 'patient-insurances';
 
-export function usePatientInsurances(params?: ListPatientInsuranceQueryParams, token?: string) {
+export function usePatientInsurances(params?: ListPatientInsuranceQueryParams) {
     return useQuery({
         queryKey: [PATIENT_INSURANCES_KEY, params],
         queryFn: () => PatientInsuranceService.getPatientInsurances(params),
@@ -16,7 +16,7 @@ export function usePatientInsurances(params?: ListPatientInsuranceQueryParams, t
     });
 }
 
-export function usePatientInsurance(id: string, token?: string) {
+export function usePatientInsurance(id: string) {
     return useQuery({
         queryKey: [PATIENT_INSURANCES_KEY, id],
         queryFn: () => PatientInsuranceService.getPatientInsuranceById(id),

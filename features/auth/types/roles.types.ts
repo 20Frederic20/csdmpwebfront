@@ -29,6 +29,7 @@ export interface UserWithRoles {
   family_name?: string;
   is_admin?: boolean;
   is_superadmin?: boolean;
+  is_active?: boolean;
   roles: UserRole[];
   permissions: Permission[];
   // Profils liés

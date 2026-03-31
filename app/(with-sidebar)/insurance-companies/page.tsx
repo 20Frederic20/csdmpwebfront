@@ -25,7 +25,7 @@ export default function InsuranceCompaniesPage() {
   const router = useRouter();
   const { isLoading: authLoading } = useAuthRefresh();
   const { canAccess } = usePermissionsContext();
-  const { token } = useAuthToken();
+  const { isAuthenticated } = useAuthToken();
 
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -45,7 +45,7 @@ export default function InsuranceCompaniesPage() {
     is_active: filters.is_active !== undefined && filters.is_active !== null ? filters.is_active : undefined,
   };
 
-  const { data: response, isLoading: loading, error: queryError } = useInsuranceCompanies(queryParams, token || undefined);
+  const { data: response, isLoading: loading, error: queryError } = useInsuranceCompanies(queryParams);
   const { mutateAsync: toggleStatus } = useToggleInsuranceCompanyStatus();
   const { mutateAsync: softDelete } = useDeleteInsuranceCompany();
   const { mutateAsync: restore } = useRestoreInsuranceCompany();

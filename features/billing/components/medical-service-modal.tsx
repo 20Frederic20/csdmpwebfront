@@ -28,16 +28,14 @@ import { useCreateMedicalService, useUpdateMedicalService } from "../hooks/use-m
 import { useHealthFacilities } from "@/features/health-facilities/hooks/use-health-facilities";
 import { usePermissionsContext } from "@/contexts/permissions-context";
 
-const medicalServiceSchema = z.object({
-  health_facility_id: z.string().min(1, "L'établissement est requis"),
-  code: z.string().min(1, "Le code est requis"),
-  label: z.string().min(1, "La désignation est requise"),
-  base_price: z.coerce.number().min(0, "Le prix doit être un nombre positif"),
-  category: z.nativeEnum(ServiceMainCategory),
-  is_active: z.boolean().default(true),
-});
-
-type MedicalServiceFormValues = z.infer<typeof medicalServiceSchema>;
+interface MedicalServiceFormValues {
+  health_facility_id: string;
+  code: string;
+  label: string;
+  base_price: number;
+  category: ServiceMainCategory;
+  is_active: boolean;
+}
 
 interface MedicalServiceModalProps {
   open: boolean;
@@ -65,7 +63,14 @@ export function MedicalServiceModal({
     setValue,
     formState: { errors },
   } = useForm<MedicalServiceFormValues>({
-    resolver: zodResolver(medicalServiceSchema),
+    resolver: zodResolver(z.object({
+      health_facility_id: z.string().min(1, "L'établissement est requis"),
+      code: z.string().min(1, "Le code est requis"),
+      label: z.string().min(1, "La désignation est requise"),
+      base_price: z.preprocess((v) => Number(v), z.number().min(0, "Le prix doit être un nombre positif")),
+      category: z.nativeEnum(ServiceMainCategory),
+      is_active: z.boolean(),
+    })) as any,
     defaultValues: {
       health_facility_id: user?.health_facility_id || "",
       code: "",
@@ -235,7 +240,7 @@ export function MedicalServiceModal({
             <Input
               id="base_price"
               type="number"
-              {...register("base_price")}
+              {...register("base_price", { valueAsNumber: true })}
             />
             {errors.base_price && (
               <p className="text-sm text-red-500">{errors.base_price.message}</p>

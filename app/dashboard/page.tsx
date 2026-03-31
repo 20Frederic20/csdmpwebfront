@@ -117,12 +117,12 @@ function TimelineEvent({ icon, iconBg, timestamp, title, subtitle, isLast = fals
 }
 
 export default function Dashboard() {
-  const { token } = useAuthToken();
+  const { isAuthenticated } = useAuthToken();
   const { canAccess, user } = usePermissionsContext();
   const isSuperadmin = user?.roles?.some(role => role === 'SUPER_ADMIN') || false;
 
   // Metrics Queries
-  const { data: facilitiesData, isLoading: loadingFacilities } = useHealthFacilities({ limit: 1, offset: 0 }, token || undefined);
+  const { data: facilitiesData, isLoading: loadingFacilities } = useHealthFacilities({ limit: 1, offset: 0 });
   const { data: patientsData, isLoading: loadingPatients } = usePatients({ limit: 6, offset: 0 });
   const { data: staffData, isLoading: loadingStaff } = useHospitalStaffs({ limit: 1, offset: 0 });
   const { data: consultationsData, isLoading: loadingConsultations } = useConsultations({ limit: 5, offset: 0 });
@@ -144,7 +144,7 @@ export default function Dashboard() {
     id_: patient.id_,
     given_name: patient.given_name,
     family_name: patient.family_name,
-    photo_url: patient.photo_url,
+    photo_url: patient.photo_url ?? undefined,
     status: 'Stable' as PatientStatus,
     department: patient.last_consultation_department || 'Général',
     doctor: patient.last_consultation_doctor || 'Inconnu',

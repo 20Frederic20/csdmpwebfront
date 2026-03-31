@@ -16,7 +16,7 @@ import { useUpdateLabResult } from "../hooks/use-lab-results";
 import { getTestTypeOptions } from "../utils/lab-results.utils";
 import { usePermissionsContext } from "@/contexts/permissions-context";
 import { DynamicTestFields } from "./DynamicTestFields";
-import { TEST_FIELDS_CONFIG } from "../config/test-fields.config";
+import { useExamParameters } from '../hooks/use-lab-exam-definitions';
 import { HealthFacilitySelect } from "@/features/health-facilities/components/health-facility-select";
 import { HospitalStaffSelect } from "@/features/hospital-staff/components/hospital-staff-select";
 
@@ -88,27 +88,36 @@ export function EditLabResultModal({ isOpen, onClose, labResult, onUpdate }: Edi
   const patientId = watch('patient_id');
   const isActive = watch('is_active');
   const testType = watch('test_type');
+  const issuingFacility = watch('issuing_facility');
+
+  // 1. Fetch exam parameters and patient-specific norms
+  const { data: examParams, isLoading: isLoadingFields } = useExamParameters(
+    testType,
+    issuingFacility || undefined,
+    patientId || undefined
+  );
+
+  const parameters = examParams?.parameters ?? [];
 
   // Gérer le changement de type de test (réinitialiser les champs dynamiques)
   useEffect(() => {
     // Ne pas réinitialiser lors du premier chargement ou si c'est le type initial du labResult
-    if (labResult && testType === labResult.test_type) return;
-
-    const fields = TEST_FIELDS_CONFIG[testType] || [];
-    const newExtractedValues: any = {};
-    fields.forEach((f: any) => {
-      if (f.type === 'number') {
-        newExtractedValues[f.name] = { 
-          value: null, 
-          min_ref: f.defaultMin !== undefined ? f.defaultMin : null, 
-          max_ref: f.defaultMax !== undefined ? f.defaultMax : null 
+    if (labResult && testType === labResult.test_type && issuingFacility === (labResult.issuing_facility || '')) {
+      return; 
+    }
+    
+    if (!isLoadingFields && parameters.length > 0) {
+      const newExtractedValues: Record<string, any> = {};
+      parameters.forEach((param) => {
+        newExtractedValues[param.parameter_code] = {
+          value: null,
+          min_ref: param.min_value,
+          max_ref: param.max_value,
         };
-      } else {
-        newExtractedValues[f.name] = '';
-      }
-    });
-    setValue('extracted_values', newExtractedValues);
-  }, [testType, setValue, labResult]);
+      });
+      setValue('extracted_values', newExtractedValues);
+    }
+  }, [testType, issuingFacility, isLoadingFields, parameters, setValue, labResult]);
 
   const onSubmit = async (data: LabResultFormValues) => {
     try {
@@ -139,7 +148,6 @@ export function EditLabResultModal({ isOpen, onClose, labResult, onUpdate }: Edi
     }
   };
 
-  const issuingFacility = watch('issuing_facility');
   const testTypeOptions = getTestTypeOptions();
 
   return (
@@ -247,8 +255,9 @@ export function EditLabResultModal({ isOpen, onClose, labResult, onUpdate }: Edi
         <div className="space-y-4">
           <Label className="text-lg font-semibold">Valeurs de l'examen</Label>
           <DynamicTestFields 
-            testType={testType} 
+            parameters={parameters} 
             register={register} 
+            isLoading={isLoadingFields}
           />
         </div>
 

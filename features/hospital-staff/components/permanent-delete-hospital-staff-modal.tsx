@@ -25,12 +25,12 @@ export function PermanentDeleteHospitalStaffModal({
   onStaffDeleted 
 }: PermanentDeleteHospitalStaffModalProps) {
   const [loading, setLoading] = useState(false);
-  const { token } = useAuthToken();
+  const { isAuthenticated } = useAuthToken();
 
   const handlePermanentDelete = async () => {
     setLoading(true);
     try {
-      await HospitalStaffService.permanentlyDeleteHospitalStaff(staff.id_, token || undefined);
+      await HospitalStaffService.permanentlyDeleteHospitalStaff(staff.id_);
       toast.success("Membre du personnel supprimé définitivement avec succès");
       onClose();
       onStaffDeleted();

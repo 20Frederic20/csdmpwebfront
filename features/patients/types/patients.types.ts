@@ -21,6 +21,10 @@ export interface Patient {
   emergency_contact_phone?: string | null;
   deleted_at?: string | null;
   version?: number | null;
+  photo_url?: string | null;
+  last_consultation_department?: string | null;
+  last_consultation_doctor?: string | null;
+  needs_appointment?: boolean | null;
 }
 
 export interface CreatePatientRequest {

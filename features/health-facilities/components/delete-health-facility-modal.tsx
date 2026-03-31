@@ -9,7 +9,6 @@ import { Trash2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { HealthFacility } from "@/features/health-facilities";
 import { HealthFacilityService } from "@/features/health-facilities";
-import { useAuthToken } from "@/hooks/use-auth-token";
 import { getHealthFacilityStatusBadge } from "@/features/health-facilities/utils/health-facility.utils";
 
 interface DeleteHealthFacilityModalProps {
@@ -20,12 +19,11 @@ interface DeleteHealthFacilityModalProps {
 export function DeleteHealthFacilityModal({ facility, onFacilityDeleted }: DeleteHealthFacilityModalProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { token } = useAuthToken();
 
   const handleDelete = async () => {
     setLoading(true);
     try {
-      await HealthFacilityService.deleteHealthFacility(facility.id_, token || undefined);
+      await HealthFacilityService.deleteHealthFacility(facility.id_);
       toast.success("Établissement supprimé avec succès");
       setOpen(false);
       onFacilityDeleted();

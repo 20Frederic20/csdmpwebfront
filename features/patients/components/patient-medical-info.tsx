@@ -39,7 +39,7 @@ export function PatientMedicalInfo({ patientId }: PatientMedicalInfoProps) {
   const [lifestyle, setLifestyle] = useState<PatientLifestyle[]>([]);
   const [medicalHistory, setMedicalHistory] = useState<PatientMedicalHistory[]>([]);
   const [loading, setLoading] = useState(false);
-  const { token } = useAuthToken();
+  const { isAuthenticated } = useAuthToken();
 
   const sections: SectionData[] = [
     {
@@ -106,7 +106,7 @@ export function PatientMedicalInfo({ patientId }: PatientMedicalInfoProps) {
   const loadAllergies = async () => {
     try {
       setLoading(true);
-      const data = await AllergiesService.getPatientAllergies({ patient_id: patientId }, token || undefined);
+      const data = await AllergiesService.getPatientAllergies({ patient_id: patientId });
       setAllergies(data.allergies || []);
     } catch (error) {
       console.error('Error loading allergies:', error);
@@ -118,7 +118,7 @@ export function PatientMedicalInfo({ patientId }: PatientMedicalInfoProps) {
   const loadLifestyle = async () => {
     try {
       setLoading(true);
-      const data = await LifestyleService.getPatientLifestyle({ patient_id: patientId }, token || undefined);
+      const data = await LifestyleService.getPatientLifestyle({ patient_id: patientId });
       setLifestyle(data.data || []);
     } catch (error) {
       console.error('Error loading lifestyle:', error);
@@ -130,7 +130,7 @@ export function PatientMedicalInfo({ patientId }: PatientMedicalInfoProps) {
   const loadMedicalHistory = async () => {
     try {
       setLoading(true);
-      const data = await MedicalHistoryService.getPatientMedicalHistory({ patient_id: patientId }, token || undefined);
+      const data = await MedicalHistoryService.getPatientMedicalHistory({ patient_id: patientId });
       setMedicalHistory(data.data || []);
     } catch (error) {
       console.error('Error loading medical history:', error);
@@ -189,12 +189,12 @@ export function PatientMedicalInfo({ patientId }: PatientMedicalInfoProps) {
 function PatientAllergiesCollapse({ patientId }: { patientId: string }) {
   const [allergies, setAllergies] = useState<PatientAllergy[]>([]);
   const [loading, setLoading] = useState(true);
-  const { token } = useAuthToken();
+  const { isAuthenticated } = useAuthToken();
 
   const loadAllergies = async () => {
     try {
       setLoading(true);
-      const data = await AllergiesService.getPatientAllergies({ patient_id: patientId }, token || undefined);
+      const data = await AllergiesService.getPatientAllergies({ patient_id: patientId });
       setAllergies(data.allergies || []);
     } catch (error) {
       console.error('Error loading allergies:', error);

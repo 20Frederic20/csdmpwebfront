@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 
 export const INSURANCE_COMPANIES_KEY = 'insurance-companies';
 
-export function useInsuranceCompanies(params?: ListInsuranceCompanyQueryParams, token?: string) {
+export function useInsuranceCompanies(params?: ListInsuranceCompanyQueryParams) {
     return useQuery({
         queryKey: [INSURANCE_COMPANIES_KEY, params],
         queryFn: () => InsuranceCompaniesService.getInsuranceCompanies(params),
@@ -16,7 +16,7 @@ export function useInsuranceCompanies(params?: ListInsuranceCompanyQueryParams, 
     });
 }
 
-export function useInsuranceCompany(id: string, token?: string) {
+export function useInsuranceCompany(id: string) {
     return useQuery({
         queryKey: [INSURANCE_COMPANIES_KEY, id],
         queryFn: () => InsuranceCompaniesService.getInsuranceCompanyById(id),

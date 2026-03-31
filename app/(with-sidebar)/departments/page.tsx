@@ -32,7 +32,7 @@ export default function DepartmentsPage() {
     is_active: null,
   });
   const [selectedRows, setSelectedRows] = useState<Record<string, boolean>>({});
-  const { token } = useAuthToken();
+  const { isAuthenticated } = useAuthToken();
   const { user, loading: permissionsLoading, canAccess } = usePermissionsContext();
 
   const { data: departmentsData, isLoading: loading, error: queryError, refetch } = useDepartments({

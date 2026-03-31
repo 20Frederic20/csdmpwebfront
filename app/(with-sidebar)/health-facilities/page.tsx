@@ -41,14 +41,14 @@ export default function HealthFacilitiesPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
-  const { token } = useAuthToken();
+  const { isAuthenticated } = useAuthToken();
   const { canAccess, user: currentUser } = usePermissionsContext();
 
   const { data: response, isLoading: loading } = useHealthFacilities({
     search: searchTerm || undefined,
     limit: itemsPerPage,
     offset: (currentPage - 1) * itemsPerPage,
-  }, token || undefined);
+  });
 
   const { mutateAsync: toggleStatus } = useToggleHealthFacilityStatus();
   const { mutateAsync: deleteFacility } = useDeleteHealthFacility();
@@ -87,7 +87,7 @@ export default function HealthFacilitiesPage() {
 
   const handleFacilitySoftDeleted = async (id: string) => {
     try {
-      await deleteFacility({ id, token: token || undefined });
+      await deleteFacility(id);
     } catch (error) {
       // Error handled by mutation hook toast
     }
@@ -95,7 +95,7 @@ export default function HealthFacilitiesPage() {
 
   const handleFacilityPermanentlyDeleted = async (id: string) => {
     try {
-      await HealthFacilityService.permanentlyDeleteHealthFacility(id, token || undefined);
+      await HealthFacilityService.permanentlyDeleteHealthFacility(id);
       // We don't have a hook for permanent delete yet, or we use Service directly
       // but we should probably refresh query client manually if we use Service
       loadFacilities(); // Fallback for now or I should have created usePermanentlyDeleteHealthFacility
@@ -107,7 +107,7 @@ export default function HealthFacilitiesPage() {
 
   const handleFacilityRestored = async (id: string) => {
     try {
-      await restoreFacility({ id, token: token || undefined });
+      await restoreFacility(id);
     } catch (error) {
       // Handled by hook
     }
@@ -115,7 +115,7 @@ export default function HealthFacilitiesPage() {
 
   const handleToggleStatus = async (id: string) => {
     try {
-      await toggleStatus({ id, token: token || undefined });
+      await toggleStatus(id);
     } catch (error) {
       // Handled by hook
     }
