@@ -68,7 +68,23 @@ export function UserAvatarDropdown() {
   }
 
   // Générer les initiales
-  const initials = `${user.given_name?.charAt(0) || ''}${user.family_name?.charAt(0) || ''}`.toUpperCase();
+  let initials = '';
+  if (user.given_name || user.family_name) {
+    initials = `${user.given_name?.charAt(0) || ''}${user.family_name?.charAt(0) || ''}`.toUpperCase();
+  } else if (user.name) {
+    const parts = user.name.split(' ').filter(Boolean);
+    if (parts.length >= 2) {
+      initials = `${parts[0].charAt(0)}${parts[1].charAt(0)}`.toUpperCase();
+    } else {
+      initials = user.name.substring(0, 2).toUpperCase();
+    }
+  } else if (user.email) {
+    initials = user.email.substring(0, 2).toUpperCase();
+  } else {
+    initials = 'U';
+  }
+
+  const displayName = user.name || `${user.given_name || ''} ${user.family_name || ''}`.trim() || user.email;
 
   return (
     <DropdownMenu>
@@ -88,7 +104,7 @@ export function UserAvatarDropdown() {
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-bold leading-none text-white">
-              {user.given_name} {user.family_name}
+              {displayName}
             </p>
             <p className="text-xs leading-none text-medical-muted">
               {user.email}
