@@ -2,7 +2,7 @@ import { AuthResponse } from '../types/auth.types';
 
 export async function authenticateUser(health_id: string, password: string): Promise<AuthResponse> {
   // URL complète et valide pour l'API backend
-  const API_BASE = 'http://localhost:8000/api/v1';
+  const API_BASE = 'http://192.168.0.3:8000/api/v1';
 
   console.log('Attempting login to:', `${API_BASE}/account/login`); // Debug
 

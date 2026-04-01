@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 function setAuthCookies(request: NextRequest, response: NextResponse, accessToken: string, refreshToken: string, expiresIn: number, refreshExpiresIn: number) {
   const isProd = process.env.NODE_ENV === 'production';
-  const isSecure = isProd && !request.nextUrl.hostname.includes('localhost') && request.nextUrl.protocol === 'https:';
+  const isSecure = isProd && !request.nextUrl.hostname.includes('192.168.0.3') && request.nextUrl.protocol === 'https:';
 
   const cookieOptions = {
     httpOnly: true,
@@ -48,8 +48,8 @@ export async function POST(request: NextRequest) {
     const { health_id, name, email, password } = body;
 
     const API_BASE = process.env.NODE_ENV === 'development'
-      ? 'http://localhost:8000/api/v1'
-      : 'http://localhost:8000/api/v1';
+      ? 'http://192.168.0.3:8000/api/v1'
+      : 'http://192.168.0.3:8000/api/v1';
 
     const response = await fetch(`${API_BASE}/patients`, {
       method: 'POST',

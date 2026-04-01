@@ -109,7 +109,7 @@ describe('HospitalStaffService', () => {
       const result = await HospitalStaffService.getHospitalStaffById('123e4567-e89b-12d3-a456-426614174000', mockToken);
 
       expect(global.fetch).toHaveBeenCalledWith(
-        'http://localhost:8000/api/v1/hospital-staff/123e4567-e89b-12d3-a456-426614174000',
+        'http://192.168.0.3:8000/api/v1/hospital-staff/123e4567-e89b-12d3-a456-426614174000',
         expect.objectContaining({
           method: 'GET',
           headers: {
@@ -142,7 +142,7 @@ describe('HospitalStaffService', () => {
       const result = await HospitalStaffService.createHospitalStaff(createRequest, mockToken);
 
       expect(global.fetch).toHaveBeenCalledWith(
-        'http://localhost:8000/api/v1/hospital-staff',
+        'http://192.168.0.3:8000/api/v1/hospital-staff',
         expect.objectContaining({
           method: 'POST',
           headers: {
@@ -174,7 +174,7 @@ describe('HospitalStaffService', () => {
       const result = await HospitalStaffService.updateHospitalStaff('123e4567-e89b-12d3-a456-426614174000', updateRequest, mockToken);
 
       expect(global.fetch).toHaveBeenCalledWith(
-        'http://localhost:8000/api/v1/hospital-staff/123e4567-e89b-12d3-a456-426614174000',
+        'http://192.168.0.3:8000/api/v1/hospital-staff/123e4567-e89b-12d3-a456-426614174000',
         expect.objectContaining({
           method: 'PUT',
           headers: {
@@ -199,7 +199,7 @@ describe('HospitalStaffService', () => {
       const result = await HospitalStaffService.deleteHospitalStaff('123e4567-e89b-12d3-a456-426614174000', mockToken);
 
       expect(global.fetch).toHaveBeenCalledWith(
-        'http://localhost:8000/api/v1/hospital-staff/123e4567-e89b-12d3-a456-426614174000/soft-delete',
+        'http://192.168.0.3:8000/api/v1/hospital-staff/123e4567-e89b-12d3-a456-426614174000/soft-delete',
         expect.objectContaining({
           method: 'DELETE',
           headers: {

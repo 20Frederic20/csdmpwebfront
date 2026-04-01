@@ -1,58 +1,34 @@
-# Multi-stage Dockerfile for Next.js with pnpm
+# Multi-stage Dockerfile for Next.js Development with pnpm
+FROM node:20-alpine AS base
 
-# Stage 1: Dependencies
-FROM node:20-alpine AS deps
-WORKDIR /app
-
-# Install dependencies needed for pnpm
+# Install pnpm and dependencies needed for node_modules
 RUN apk add --no-cache libc6-compat
 RUN npm install -g pnpm
+WORKDIR /app
 
+# Stage 1: Dependencies
+FROM base AS deps
 # Copy package files
 COPY package.json pnpm-lock.yaml* pnpm-workspace.yaml* ./
-RUN pnpm install --frozen-lockfile
+# Install all dependencies (including devDependencies for dev mode)
+RUN pnpm install
 
-# Stage 2: Builder
-FROM node:20-alpine AS builder
+# Stage 2: Development Runner
+FROM base AS runner
 WORKDIR /app
 
-# Enable pnpm
-RUN npm install -g pnpm
-
+# Copy node_modules from deps stage
 COPY --from=deps /app/node_modules ./node_modules
+# Copy source code
 COPY . .
 
-# Set environment variables for build time
-ENV NEXT_TELEMETRY_DISABLED 1
-
-RUN pnpm build
-
-# Stage 3: Runner
-FROM node:20-alpine AS runner
-WORKDIR /app
-
-ENV NODE_ENV production
-ENV NEXT_TELEMETRY_DISABLED 1
-
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
-
-# Set the correct permission for prerender cache
-RUN mkdir .next
-RUN chown nextjs:nodejs .next
-
-# Automatically leverage output traces to reduce image size
-# https://nextjs.org/docs/advanced-features/output-file-tracing
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-COPY --from=builder --chown=nextjs:nodejs /app/public ./public
-
-USER nextjs
+# Set environment variables for development
+ENV NODE_ENV=development
+ENV NEXT_TELEMETRY_DISABLED=1
 
 EXPOSE 3000
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
 
-ENV PORT 3000
-# set hostname to localhost
-ENV HOSTNAME "0.0.0.0"
-
-CMD ["node", "server.js"]
+# Command to run development server
+CMD ["pnpm", "dev"]

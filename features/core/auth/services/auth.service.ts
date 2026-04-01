@@ -34,7 +34,7 @@ export async function getCurrentUser(): Promise<User | null> {
   if (!token) return null;
 
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'}/users/me`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://192.168.0.3:8000/api/v1'}/users/me`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
