@@ -1,21 +1,17 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
 import {
-  DepartmentsResponse,
   Department,
   DepartmentFilterParams,
   useDepartments,
   useDepartmentMutations
 } from "@/features/departments";
-import { DepartmentService } from "@/features/departments/services/departments.service";
 import { useAuthToken } from "@/hooks/use-auth-token";
 import { usePermissionsContext } from "@/contexts/permissions-context";
-import Link from "next/link";
 import { DataTableWithFilters } from "@/components/ui/data-table-with-filters";
 import { DeleteDepartmentModal } from "@/features/departments/components/delete-department-modal";
 import { AddDepartmentModal } from "@/features/departments/components/add-department-modal";

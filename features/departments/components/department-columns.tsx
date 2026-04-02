@@ -112,11 +112,11 @@ export const departmentColumns: ColumnDef<Department>[] = [
 
   // Colonne Établissement de santé
   {
-    accessorKey: "health_facility_id",
+    accessorKey: "health_facility_name",
     header: "Établissement",
     cell: ({ row }) => {
-      const facilityId = row.getValue("health_facility_id") as string;
-      return facilityId ? `ID: ${facilityId.substring(0, 8)}` : '-';
+      const facilityName = row.getValue("health_facility_name") as string;
+      return facilityName || '-';
     },
   },
 

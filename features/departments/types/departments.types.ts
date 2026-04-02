@@ -35,6 +35,7 @@ export enum HospitalDepartment {
 export interface Department {
   id_: string;
   health_facility_id: string;
+  health_facility_name?: string;
   name: string;
   code: HospitalDepartment;
   is_active: boolean;
@@ -89,6 +90,7 @@ export interface DepartmentsResponse {
 export interface DepartmentQueryModel {
   id_: string;
   health_facility_id: string;
+  health_facility_name: string;
   name: string;
   code: HospitalDepartment;
   is_active: boolean;
