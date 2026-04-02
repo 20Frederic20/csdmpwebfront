@@ -1,6 +1,6 @@
 'use client';
 
-import { Bell } from "lucide-react";
+import { Bell, Check, CheckCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -11,33 +11,39 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useNotifications, useMarkNotificationRead, useMarkAllNotificationsRead } from "@/features/notifications/hooks/use-notifications.hook";
+import { formatDistanceToNow } from "date-fns";
+import { fr } from "date-fns/locale";
 
 export function NotificationDropdown() {
-  const notifications = [
-    {
-      id: 1,
-      title: "Nouveau patient",
-      description: "Jean Dupont a été admis en Cardiologie.",
-      time: "Il y a 5 min",
-      unread: true,
-    },
-    {
-      id: 2,
-      title: "Rendez-vous annulé",
-      description: "Le RDV de Marie Martin à 14h30 est annulé.",
-      time: "Il y a 1h",
-      unread: false,
-    },
-    {
-      id: 3,
-      title: "Résultat d'analyse",
-      description: "Les analyses pour Marc Durand sont disponibles.",
-      time: "Il y a 3h",
-      unread: false,
-    },
-  ];
+  const { data: notifications = [], isLoading } = useNotifications();
+  const markAsReadMutation = useMarkNotificationRead();
+  const markAllAsReadMutation = useMarkAllNotificationsRead();
 
-  const unreadCount = notifications.filter(n => n.unread).length;
+  // Handle differences in API schema gracefully (id vs id_)
+  const getId = (n: any) => n.id_ || n.id;
+  const isUnread = (n: any) => !n.is_read;
+
+  const unreadCount = notifications.filter(isUnread).length;
+
+  const handleMarkAsRead = (id: string | number) => {
+    markAsReadMutation.mutate(id);
+  };
+
+  const handleMarkAllAsRead = () => {
+    markAllAsReadMutation.mutate();
+  };
+
+  const formatTime = (timeStr?: string) => {
+    if (!timeStr) return '';
+    try {
+      const date = new Date(timeStr);
+      if (isNaN(date.getTime())) return timeStr;
+      return formatDistanceToNow(date, { addSuffix: true, locale: fr });
+    } catch {
+      return timeStr;
+    }
+  };
 
   return (
     <DropdownMenu>
@@ -65,29 +71,65 @@ export function NotificationDropdown() {
         </TooltipContent>
       </Tooltip>
       <DropdownMenuContent className="w-80 bg-white border-slate-100 shadow-lg" align="end">
-        <DropdownMenuLabel className="font-bold text-slate-900">Notifications</DropdownMenuLabel>
-        <DropdownMenuSeparator className="bg-slate-100" />
-        {notifications.length > 0 ? (
-          <div className="max-h-[300px] overflow-y-auto">
-            {notifications.map((notification) => (
-              <DropdownMenuItem
-                key={notification.id}
-                className="flex flex-col items-start gap-1 p-3 cursor-pointer hover:bg-slate-50 focus:bg-slate-50"
+        <div className="flex justify-between items-center pr-2">
+            <DropdownMenuLabel className="font-bold text-slate-900">Notifications</DropdownMenuLabel>
+            {unreadCount > 0 && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-7 text-xs text-vital-green" 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleMarkAllAsRead();
+                }}
+                disabled={markAllAsReadMutation.isPending}
               >
-                <div className="flex w-full justify-between items-center">
-                  <span className={`font-bold text-sm ${notification.unread ? 'text-slate-900' : 'text-slate-600'}`}>
-                    {notification.title}
-                  </span>
-                  <span className="text-[10px] text-slate-400">{notification.time}</span>
-                </div>
-                <p className="text-xs text-slate-500 line-clamp-2">
-                  {notification.description}
-                </p>
-                {notification.unread && (
-                  <div className="h-1.5 w-1.5 rounded-full bg-vital-green mt-1" />
-                )}
-              </DropdownMenuItem>
-            ))}
+                <CheckCheck className="mr-1 h-3 w-3" />
+                Tout marquer lu
+              </Button>
+            )}
+        </div>
+        <DropdownMenuSeparator className="bg-slate-100" />
+        
+        {isLoading ? (
+          <div className="p-4 flex justify-center text-sm text-slate-500">
+            <div className="h-4 w-4 rounded-full border-2 border-slate-300 border-t-vital-green animate-spin mr-2" />
+            Chargement...
+          </div>
+        ) : notifications.length > 0 ? (
+          <div className="max-h-[300px] overflow-y-auto">
+            {notifications.map((notification) => {
+              const unread = isUnread(notification);
+              const notificationId = getId(notification);
+              return (
+                <DropdownMenuItem
+                  key={notificationId}
+                  className="flex flex-col items-start gap-1 p-3 cursor-pointer hover:bg-slate-50 focus:bg-slate-50"
+                  onClick={() => {
+                    if (unread) handleMarkAsRead(notificationId);
+                  }}
+                >
+                  <div className="flex w-full justify-between items-center gap-2">
+                    <span className={`font-bold text-sm truncate ${unread ? 'text-slate-900' : 'text-slate-600'}`}>
+                      {notification.title}
+                    </span>
+                    <span className="text-[10px] text-slate-400 whitespace-nowrap">
+                      {formatTime(notification.created_at)}
+                    </span>
+                  </div>
+                  <div className="flex w-full justify-between items-start gap-2">
+                    <p className="text-xs text-slate-500 line-clamp-2">
+                      {notification.message}
+                    </p>
+                    {unread && (
+                      <div className="shrink-0 flex items-center justify-center mt-0.5">
+                         <div className="h-2 w-2 rounded-full bg-vital-green" />
+                      </div>
+                    )}
+                  </div>
+                </DropdownMenuItem>
+              );
+            })}
           </div>
         ) : (
           <div className="p-4 text-center text-sm text-slate-500">
