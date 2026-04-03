@@ -22,7 +22,8 @@ import { useHospitalStaffMutations } from "@/features/hospital-staff/hooks/use-h
 import { useAuthToken } from "@/hooks/use-auth-token";
 import {
   formatSpecialty,
-  formatDepartment
+  formatDepartment,
+  formatEmploymentStatus
 } from "@/features/hospital-staff/utils/hospital-staff.utils";
 
 export default function HospitalStaffDetailPage() {
@@ -128,26 +129,7 @@ export default function HospitalStaffDetailPage() {
           </div>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" className="cursor-pointer">
-            <Edit className="mr-2 h-4 w-4" />
-            Modifier
-          </Button>
-          <Button
-            variant="outline"
-            onClick={handleToggleStatus}
-            className="cursor-pointer"
-          >
-            <UserCheck className="mr-2 h-4 w-4" />
-            {staff.is_active ? 'Désactiver' : 'Activer'}
-          </Button>
-          <Button
-            variant="destructive"
-            onClick={handleDelete}
-            className="cursor-pointer"
-          >
-            <Trash2 className="mr-2 h-4 w-4" />
-            Supprimer
-          </Button>
+          {/* Action buttons removed as requested */}
         </div>
       </div>
 
@@ -158,74 +140,67 @@ export default function HospitalStaffDetailPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Stethoscope className="h-5 w-5" />
-              Informations du personnel
+              Information Professionnelle: {staff.user_full_name}
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Identité */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Identité</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <CardContent className="space-y-8">
+            {/* Infos de base */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-1">
+                <label className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Matricule</label>
+                <p className="text-lg font-mono font-bold">{staff.matricule}</p>
+              </div>
+              <div className="space-y-1">
+                <label className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Statut du compte</label>
                 <div>
-                  <label className="text-md font-medium text-muted-foreground">ID Personnel</label>
-                  <p className="font-mono text-md bg-muted px-2 py-1 rounded">{staff.id_}</p>
-                </div>
-                <div>
-                  <label className="text-md font-medium text-muted-foreground">ID Utilisateur</label>
-                  <p className="font-mono text-md bg-muted px-2 py-1 rounded">{staff.user_id}</p>
-                </div>
-                <div>
-                  <label className="text-md font-medium text-muted-foreground">Matricule</label>
-                  <p className="font-mono text-md bg-muted px-2 py-1 rounded">{staff.matricule}</p>
-                </div>
-                <div>
-                  <label className="text-md font-medium text-muted-foreground">Statut</label>
-                  <div>
-                    <Badge
-                      variant={staff.is_active ? "default" : "secondary"}
-                      className={staff.is_active ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}
-                    >
-                      {staff.is_active ? 'Actif' : 'Inactif'}
-                    </Badge>
-                  </div>
+                  <Badge
+                    variant={staff.is_active ? "default" : "secondary"}
+                    className={staff.is_active ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}
+                  >
+                    {staff.is_active ? 'Actif' : 'Inactif'}
+                  </Badge>
                 </div>
               </div>
             </div>
 
             {/* Profession */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Profession</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-6 pt-6 border-t font-sans">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="text-md font-medium text-muted-foreground">Spécialité</label>
+                  <label className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Établissement</label>
+                  <p className="text-md font-medium mt-1">{staff.health_facility_name}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Département</label>
+                  <p className="text-md font-medium mt-1">{staff.department_name}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Spécialité</label>
                   <div className="mt-1">
-                    <Badge variant="secondary">
-                      {formatSpecialty(staff.specialty)}
+                    <Badge variant="secondary" className="capitalize">
+                      {formatSpecialty(staff.specialty).toLowerCase()}
                     </Badge>
                   </div>
                 </div>
                 <div>
-                  <label className="text-md font-medium text-muted-foreground">Département</label>
-                  <div className="mt-1">
-                    <Badge variant="outline">
-                      {formatDepartment(staff.department_id)}
-                    </Badge>
+                  <label className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Statut d'emploi</label>
+                  <div className="mt-1 font-medium">
+                    {staff.employment_status ? formatEmploymentStatus(staff.employment_status) : "Non spécifié"}
                   </div>
                 </div>
                 <div>
-                  <label className="text-md font-medium text-muted-foreground">Années d'expérience</label>
-                  <div className="flex items-center gap-2 mt-1">
+                  <label className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Années d'expérience</label>
+                  <div className="flex items-center gap-2 mt-1 font-medium">
                     <Calendar className="h-4 w-4 text-muted-foreground" />
-                    <span>{staff.year_of_exp === 0 ? 'Débutant' : `${staff.year_of_exp} ans d'expérience`}</span>
+                    <span>{staff.year_of_exp === 0 ? 'Débutant' : `${staff.year_of_exp} ans`}</span>
                   </div>
                 </div>
-                <div>
-                  <label className="text-md font-medium text-muted-foreground">ID Établissement</label>
-                  <div className="flex items-center gap-2 mt-1">
-                    <Building2 className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-mono text-md">{staff.health_facility_id}</span>
+                {staff.order_number && (
+                  <div>
+                    <label className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Numéro d'ordre</label>
+                    <p className="font-mono text-md mt-1 font-bold">{staff.order_number}</p>
                   </div>
-                </div>
+                )}
               </div>
             </div>
           </CardContent>
@@ -233,7 +208,7 @@ export default function HospitalStaffDetailPage() {
 
         {/* Carte latérale */}
         <div className="space-y-6">
-          {/* Statut */}
+          {/* Statut visuel */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -246,11 +221,7 @@ export default function HospitalStaffDetailPage() {
                 <div className="text-center">
                   <div className={`w-16 h-16 rounded-full mx-auto mb-2 flex items-center justify-center ${staff.is_active ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
                     }`}>
-                    {staff.is_active ? (
-                      <UserCheck className="h-8 w-8" />
-                    ) : (
-                      <UserCheck className="h-8 w-8" />
-                    )}
+                    <UserCheck className="h-8 w-8" />
                   </div>
                   <Badge
                     variant={staff.is_active ? "default" : "secondary"}
@@ -259,39 +230,7 @@ export default function HospitalStaffDetailPage() {
                     {staff.is_active ? 'Actif' : 'Inactif'}
                   </Badge>
                 </div>
-                <Button
-                  onClick={handleToggleStatus}
-                  className="w-full cursor-pointer"
-                  variant={staff.is_active ? "destructive" : "default"}
-                >
-                  {staff.is_active ? 'Désactiver' : 'Activer'}
-                </Button>
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Actions rapides */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Actions rapides</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <Button variant="outline" className="w-full cursor-pointer">
-                <Edit className="mr-2 h-4 w-4" />
-                Modifier les informations
-              </Button>
-              <Button variant="outline" className="w-full cursor-pointer">
-                <MapPin className="mr-2 h-4 w-4" />
-                Voir l'établissement
-              </Button>
-              <Button
-                variant="destructive"
-                className="w-full cursor-pointer"
-                onClick={handleDelete}
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Supprimer
-              </Button>
             </CardContent>
           </Card>
         </div>

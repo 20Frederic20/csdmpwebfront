@@ -29,60 +29,61 @@ export function ViewHospitalStaffModal({ staff, isOpen, onClose }: ViewHospitalS
         
         <div className="space-y-6">
           {/* Informations principales */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-md font-medium text-muted-foreground">ID Personnel</label>
-              <p className="font-mono text-md bg-muted px-2 py-1 rounded mt-1">{staff.id_}</p>
-            </div>
-            <div>
-              <label className="text-md font-medium text-muted-foreground">ID Utilisateur</label>
-              <p className="font-mono text-md bg-muted px-2 py-1 rounded mt-1">{staff.user_id}</p>
-            </div>
-            <div>
-              <label className="text-md font-medium text-muted-foreground">Matricule</label>
-              <p className="font-mono text-md bg-muted px-2 py-1 rounded mt-1">{staff.matricule}</p>
-            </div>
-            <div>
-              <label className="text-md font-medium text-muted-foreground">Statut</label>
-              <div className="mt-1">
-                <Badge 
-                  variant={staff.is_active ? "default" : "secondary"}
-                  className={staff.is_active ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}
-                >
-                  {staff.is_active ? 'Actif' : 'Inactif'}
-                </Badge>
-              </div>
+          <div className="flex flex-col gap-1">
+            <h2 className="text-2xl font-bold">{staff.user_full_name}</h2>
+            <div className="flex items-center gap-2">
+              <Badge 
+                variant={staff.is_active ? "default" : "secondary"}
+                className={staff.is_active ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}
+              >
+                {staff.is_active ? 'Actif' : 'Inactif'}
+              </Badge>
+              <span className="text-sm text-muted-foreground">Matricule: {staff.matricule}</span>
             </div>
           </div>
 
           {/* Informations professionnelles */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Informations professionnelles</h3>
-            <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-4 pt-4 border-t">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-4">
               <div>
-                <label className="text-md font-medium text-muted-foreground">Spécialité</label>
+                <label className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Établissement</label>
+                <p className="text-md font-medium mt-1">{staff.health_facility_name}</p>
+              </div>
+              
+              <div>
+                <label className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Département</label>
+                <p className="text-md font-medium mt-1">{staff.department_name}</p>
+              </div>
+
+              <div>
+                <label className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Spécialité</label>
                 <div className="mt-1">
-                  <Badge variant="secondary">
-                    {formatSpecialty(staff.specialty)}
+                  <Badge variant="secondary" className="capitalize">
+                    {formatSpecialty(staff.specialty).toLowerCase()}
                   </Badge>
                 </div>
               </div>
+
               <div>
-                <label className="text-md font-medium text-muted-foreground">Département</label>
+                <label className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Statut d'emploi</label>
                 <div className="mt-1">
                   <Badge variant="outline">
-                    {formatDepartment(staff.department_id)}
+                    {staff.employment_status ? formatEmploymentStatus(staff.employment_status) : "Non spécifié"}
                   </Badge>
                 </div>
               </div>
+
               <div>
-                <label className="text-md font-medium text-muted-foreground">Années d'expérience</label>
-                <p className="mt-1">{staff.year_of_exp === 0 ? 'Débutant' : `${staff.year_of_exp} ans d'expérience`}</p>
+                <label className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Années d'expérience</label>
+                <p className="text-md mt-1">{staff.year_of_exp === 0 ? 'Débutant' : `${staff.year_of_exp} ans`}</p>
               </div>
-              <div>
-                <label className="text-md font-medium text-muted-foreground">ID Établissement</label>
-                <p className="font-mono text-md bg-muted px-2 py-1 rounded mt-1">{staff.health_facility_id}</p>
-              </div>
+
+              {staff.order_number && (
+                <div>
+                  <label className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Numéro d'ordre</label>
+                  <p className="text-md font-mono mt-1">{staff.order_number}</p>
+                </div>
+              )}
             </div>
           </div>
         </div>

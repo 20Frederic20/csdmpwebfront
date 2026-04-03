@@ -21,16 +21,8 @@ export function UserCreationForm({
   onUserDataChange,
   onRolesChange
 }: UserCreationFormProps) {
-  // Rôles disponibles pour le personnel hospitalier
-  const staffRoles = [
-    'HEALTH_PRO',
-    'DOCTOR',
-    'NURSE',
-    'MIDWIFE',
-    'LAB_TECHNICIAN',
-    'PHARMACIST',
-    'COMMUNITY_AGENT'
-  ];
+  // Rôles à exclure pour le personnel hospitalier
+  const excludedRoles = ['PATIENT', 'SUPER_ADMIN', 'ADMIN'];
 
   return (
     <div className="space-y-6">
@@ -43,7 +35,7 @@ export function UserCreationForm({
         <RoleSelector
           selectedRoleIds={selectedRoleIds}
           onChange={onRolesChange}
-          allowedRoles={staffRoles}
+          excludedRoles={excludedRoles}
           label="Rôles du personnel"
         />
       </div>

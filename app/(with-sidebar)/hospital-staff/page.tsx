@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Plus, ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react";
-import { HospitalStaff, MedicalSpecialty, HospitalStaffQueryParams } from "@/features/hospital-staff";
+import { HospitalStaff, MedicalSpecialty, EmploymentStatus, HospitalStaffQueryParams } from "@/features/hospital-staff";
 import { HospitalStaffService } from "@/features/hospital-staff/services/hospital-staff.service";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -35,6 +35,7 @@ export default function HospitalStaffPage() {
     search: "",
     specialty: "" as MedicalSpecialty | "",
     department_id: "" as string | "",
+    employment_status: "" as EmploymentStatus | "",
   });
   const [selectedRows, setSelectedRows] = useState<Record<string, boolean>>({});
 
@@ -54,10 +55,11 @@ export default function HospitalStaffPage() {
       sort_order: sortingOrder,
       specialty: filters.specialty as MedicalSpecialty || undefined,
       department_id: filters.department_id || undefined,
+      employment_status: filters.employment_status as EmploymentStatus || undefined,
       // Inclure les éléments supprimés si on a le droit de restaurer
       include_deleted: canDeleteStaff,
     };
-  }, [currentPage, itemsPerPage, sortingColumn, sortingOrder, filters.search, filters.specialty, filters.department_id, canDeleteStaff]);
+  }, [currentPage, itemsPerPage, sortingColumn, sortingOrder, filters.search, filters.specialty, filters.department_id, filters.employment_status, canDeleteStaff]);
 
   // Utiliser le nouveau hook TanStack Query
   const {
@@ -94,6 +96,7 @@ export default function HospitalStaffPage() {
       search: newFilters.search || "",
       specialty: newFilters.specialty || "",
       department_id: newFilters.department_id || "",
+      employment_status: newFilters.employment_status || "",
     });
   }, []);
 
@@ -123,6 +126,7 @@ export default function HospitalStaffPage() {
       search: "",
       specialty: "" as MedicalSpecialty | "",
       department_id: "" as string | "",
+      employment_status: "" as EmploymentStatus | "",
     });
     setCurrentPage(1);
   };

@@ -8,7 +8,9 @@ import { Badge } from "@/components/ui/badge";
 import { Search, Filter, X, Building2 } from "lucide-react";
 import {
   getSpecialtyOptions,
-  MedicalSpecialty
+  getEmploymentStatusOptions,
+  MedicalSpecialty,
+  EmploymentStatus
 } from "@/features/hospital-staff";
 import CustomSelect from "@/components/ui/custom-select";
 import { DepartmentSelect } from "@/features/departments/components/department-select";
@@ -30,6 +32,7 @@ export interface HospitalStaffFilters {
   search: string;
   specialty: MedicalSpecialty | "";
   department_id: string;
+  employment_status: EmploymentStatus | "";
 }
 
 interface HospitalStaffFiltersProps {
@@ -85,7 +88,8 @@ export function HospitalStaffFilters({
   const hasActiveFilters = !!(
     filters.search ||
     filters.specialty ||
-    filters.department_id
+    filters.department_id ||
+    filters.employment_status
   );
 
   return (
@@ -109,14 +113,14 @@ export function HospitalStaffFilters({
       </CardHeader>
       {isOpen && (
         <CardContent className="space-y-4">
-          {/* Filtres sur 4 colonnes */}
-          <div className="grid grid-cols-4 gap-4">
-            <div className="col-span-2 space-y-2">
+          {/* Filtres sur 6 colonnes pour un meilleur espacement */}
+          <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+            <div className="md:col-span-2 space-y-2">
               <label className="text-sm font-medium">Recherche générale</label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                 <Input
-                  placeholder="Rechercher par nom, prénom, matricule..."
+                  placeholder="Nom, prénom, matricule..."
                   value={localSearch}
                   onChange={(e) => handleSearchChange(e.target.value)}
                   className="pl-10"
@@ -152,6 +156,20 @@ export function HospitalStaffFilters({
                   healthFacilityId={user?.health_facility_id || null}
                 />
               )}
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Statut emploi</label>
+              <CustomSelect
+                options={[
+                  { value: '', label: 'Tous les statuts' },
+                  ...getEmploymentStatusOptions()
+                ]}
+                value={filters.employment_status || ''}
+                onChange={(value) => handleFilterChange('employment_status', value as string)}
+                placeholder="Tous les statuts"
+                height="h-10"
+              />
             </div>
 
             <div className="space-y-2">
@@ -198,6 +216,15 @@ export function HospitalStaffFilters({
                     <X
                       className="h-3 w-3 cursor-pointer"
                       onClick={() => handleFilterChange('department_id', '')}
+                    />
+                  </Badge>
+                )}
+                {filters.employment_status && (
+                  <Badge variant="secondary" className="flex items-center gap-1">
+                    Statut: {getEmploymentStatusOptions().find(opt => opt.value === filters.employment_status)?.label || filters.employment_status}
+                    <X
+                      className="h-3 w-3 cursor-pointer"
+                      onClick={() => handleFilterChange('employment_status', '')}
                     />
                   </Badge>
                 )}

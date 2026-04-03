@@ -84,6 +84,7 @@ export interface HospitalStaff {
   id_: string;
   user_given_name: string;
   user_family_name: string;
+  user_full_name: string;
   user_id: string;
   health_facility_id: string;
   health_facility_name: string;

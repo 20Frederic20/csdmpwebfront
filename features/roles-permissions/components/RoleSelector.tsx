@@ -9,6 +9,7 @@ interface RoleSelectorProps {
   selectedRoleIds: string[]; // UUIDs of selected roles
   onChange: (roleIds: string[]) => void;
   allowedRoles?: string[]; // Names of roles to display for filtering
+  excludedRoles?: string[]; // Names of roles to exclude
   label?: string;
   required?: boolean;
 }
@@ -17,16 +18,23 @@ export function RoleSelector({
   selectedRoleIds,
   onChange,
   allowedRoles,
+  excludedRoles,
   label = "Rôles",
   required = true
 }: RoleSelectorProps) {
   const { data: rolesResponse, isLoading, error } = useRoles({ limit: 100 });
   const allRoles = rolesResponse?.data || [];
 
-  // Filter roles if allowedRoles is provided (by name)
-  const availableRoles = allowedRoles 
-    ? allRoles.filter(role => allowedRoles.includes(role.name))
-    : allRoles;
+  // Filter roles: priority to allowedRoles if provided, then remove excludedRoles
+  let availableRoles = allRoles;
+  
+  if (allowedRoles) {
+    availableRoles = availableRoles.filter(role => allowedRoles.includes(role.name));
+  }
+  
+  if (excludedRoles) {
+    availableRoles = availableRoles.filter(role => !excludedRoles.includes(role.name));
+  }
 
   const toggleRole = (roleId: string) => {
     const newRoleIds = selectedRoleIds.includes(roleId)
